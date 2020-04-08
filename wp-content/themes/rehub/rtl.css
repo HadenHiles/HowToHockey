@@ -1,0 +1,747 @@
+/***************************************
+
+	Theme Name: Rehub theme
+	Theme URI: http://rehub.wpsoul.net/
+	Description: A Hybrid magazine/shop/review/news Wordpress Theme
+	Author: Sizam
+	Author URI: http://sizam-design.com/
+	Version: 5.4.2	
+	Tags: two-columns, fluid-layout, custom-background, threaded-comments, translation-ready, custom-menu
+	License: 
+	License URI:
+	Text Domain: rehub_framework
+
+***************************************/
+
+/****************************************************************************
+
+BASIC STYLES
+
+****************************************************************************/
+
+body { direction: rtl; unicode-bidi: embed; }
+article em { }
+p em { }
+
+/****************************************************************************
+
+Header
+
+****************************************************************************/
+
+.header-top .top-nav { float: right; }
+.header-top .top-nav li { padding-right: 13px; padding-left: 0px; border-left: 0; border-right: 1px solid #666666; margin: 0px 0px 10px 13px; float: right; }
+.header-top .top-nav ul { margin: 9px 15px 0 0px; }
+.header-top .top-nav li:first-child { margin-right: 0px; border-right: 0px; padding-right: 0px; padding-left: 13px; }
+.header-top .top-social { float: left; text-align: left; padding-left: 3px; padding-right: 0px; }
+.header-top .top-social .social_icon.small_i a { float: left; margin: 5px 0px 0 2px }
+.header-top .top-social .social_icon{ float: left;}
+header .logo { float: right; margin-left: 15px; margin-right: 0px; }
+header .header_second_style .logo { margin-left: 9px; margin-right: 0px; }
+header .logo-section.header_five_style, .block_style header .logo-section.header_five_style{ float: right;}
+.header_menu_row .main-nav{ float: left; }
+.header_menu_row .dl-menuwrapper button { right: 50%; left: inherit; margin-right: -24px; margin-left: 0px; }
+header .mediad { float: right;  }
+.top-search-onclick { float: left; }
+.header_top_wrap .icon-in-header-small { float: left; }
+i.re-top-menu-collapse {margin: 9px 10px 10px 7px; }
+form.search-form input[type="text"] { padding: 2px 7px 2px 37px; }
+form.search-form [type="submit"] { left: 0; right: inherit; vertical-align: middle; }
+header .search { float: left; }
+header .is-sticky .main-nav { right: 0; left: inherit; }
+nav.top_menu ul li { float: right; }
+nav.top_menu ul li.rehub-custom-menu-item{ float: left; }
+nav.top_menu > ul > li{ border-right: 1px solid rgba(255, 255, 255, 0.18);}
+.main-nav.dark_style nav.top_menu > ul > li {border-right: 1px solid rgba(255, 255, 255, 0.18);}
+nav.top_menu > ul > li:first-child{ border-right: none; }
+nav.top_menu ul.menu > li.menu-item-has-children > a:before { margin: 3px 7px 0px 0px; float: left; }
+nav.top_menu ul li.menu-item-has-children ul li.menu-item-has-children > a:before { content: "\f104"; float: left; padding-right: 8px; padding-left: 0px; }
+nav.top_menu ul li ul li:hover ul { right: 100%; left: inherit; }
+nav.top_menu > ul > li > ul > li:first-child > a:after {right: 19px;}
+
+/****************************************************************************
+
+    Content Common
+
+****************************************************************************/
+
+a.comment { left: 10px; right: initial }
+a.comment:after { left: 0; right: inherit; border-width: 7px 0px 9px 9px; margin-right: -9px; margin-left: 0px }
+a.comment_two:after { left: 0; right: inherit; border-width: 7px 0px 9px 9px; margin-right: -9px; margin-left: 0px }
+span.vid_icon { right: 10px; left: inherit; text-shadow: 0 0 1px #666; }
+span.vid_icon_min { right: 50%; left: inherit; margin: -18px -18px 0px 0px; }
+a.fa.vid_icon{ left: 10px; right: inherit }
+a.expand { margin-right: 0px; margin-left: 5px }
+.priced_block p {float: right; }
+.priced_block .btn_offer_block { float: right; padding: 0.5em 0.4em 0.5em 0.3em; }
+/*.post_offer_anons {float: right;}*/
+.small_post:hover .priced_block .btn_offer_block, .news:hover .priced_block .btn_offer_block{padding: 0.5em 0.6em 0.5em 0.5em;}
+.priced_block .btn_offer_block:after { right: 100%; left: inherit; }
+.cats_def a { margin-right: 0px; margin-left: 4px; }
+.post-meta span.date { margin-right: 0px; margin-left: 4px; float: none; }
+.post-meta span {float: right}
+.post-meta a.cat { margin-left: 6px; margin-right: 4px; }
+.post-meta a.admin { margin-right: 4px }
+.rcnt_meta a.cat {float:right}
+.rcnt_meta i.fa-eye{ padding-left: 0px; padding-right: 3px }
+.sticky h2 i, .news .detail h4 i { margin-right: 0px; margin-left: 6px }
+
+/******** Feature Slider ********/
+.flex-viewport{direction: ltr;}
+.main_slider.flexslider { float: right }
+.featured_slider .wrap {text-align: right;}
+
+/******** Feature Side Coloumn ********/
+
+.side-twocol { float: left; }
+.columns figure .sidecol-overlay { top: 0px; right: 0px; }
+
+/******** Main Side ********/
+
+.main-side { float: right; }
+.vc_row.vc_rehub_container > .vc_col-sm-8 { float: right; }
+.vc_row.vc_rehub_container > .vc_col-sm-4 { float: left; }
+.main-side .right-sec { float: left; }
+
+/******** All Headings ********/
+
+.heading a { float: left; margin-left: 0px; margin-right: 10px; vertical-align: 2px; }
+.h-three .head_section { margin-left: 0px; margin-right: 20px }
+#reviews_tabs > ul > li { float: right; margin-right: 0%; margin-left: 1%; }
+#reviews_tabs > ul > li:last-child { margin-right: 0px; margin-left: 0px }
+#reviews_tabs .more span { padding-right: 0px; padding-left: 18px }
+.tabs_img { float: right; }
+.video_overlay { right: 0px; left: inherit; }
+.tabs-item .right { float: left; }
+.tabs-item .right figure { float: right; }
+.tabs-item .right figure span.score { right: 0px; left: inherit; }
+.tabs-item .right .detail { float: left; }
+.news_block.news_right .right { float: left; }
+.news_right.news_block .right figure { float: right; }
+.news_right .right .detail { float: left; }
+.article-sec { float: right; }
+.f-post figure { float: right;}
+.f-post article { float: left; }
+.news_block .right { float: left; }
+.news_block .big_img { float: right; }
+.news figure { float: right; }
+.news .detail { float: left; }
+.news .detail h3 { float: right; padding: 0 0 0 36px; }
+.news .detail h3 i { padding-right: 0px; padding-left: 5px }
+.news .detail .comment_two { left: 0; right: inherit }
+
+/****************************************************************************
+
+    News Scroller
+
+****************************************************************************/
+
+ul.newsticker { right: 389px; left: inherit;}
+ul.newsticker li { float: right; margin-right: 0px !important; margin-left: 75px !important; }
+.scroller { float: right;  }
+.scroller.up:before {content: "\f104"; }
+.scroller.down:before { content: "\f105"; }
+.top_theme h5 { float: right; }
+.top_theme h5 strong { float: right; margin-right: 0px; margin-left: 8px; }
+
+/****************************************************************************
+
+    SIDEBAR
+
+****************************************************************************/
+
+.sidebar { float: left; }
+.widget.tabs > ul > li { float: right; margin-right: 0%; margin-left: 2% }
+.widget.tabs > ul > li:last-child { margin-right: 0; margin-left: 0px }
+.sidebar .tabs-item figure, .footer-bottom .tabs-item figure { float: right; margin-right: 0px; margin-left: 10px }
+.sidebar .tabs-item .detail { float: left; }
+.featured_slider .score { right: 50%; left: inherit; margin: -40px -40px 0px 0px; }
+.featured_slider .reviews { left: 0px; right: inherit }
+.featured_slider .flex-control-nav { left: 0px; right: inherit; text-align: left; }
+.category_tab ul.cat_widget_custom li span.counts { float: left; }
+.category_tab ul.cat_widget_custom ul.children li:before{ right: 0; left: inherit; }
+.category_tab .children { display: none; margin: 5px 10px 10px 0px }
+.widget_nav_menu ul.sub-menu li, .widget_product_categories ul.children li { padding-left: 0px; padding-right: 12px; }
+.author-avatar img { float: right; margin: 0px 0px 5px 10px; }
+.widget_rss cite { font-style: normal; }
+.widget_categories  .screen-reader-text { padding-right: 0px; padding-left: 10px; }
+
+/* calendar widget */
+
+#wp-calendar caption { text-align: left; }
+#wp-calendar tfoot #next { text-align: left; }
+.lastcomm-item img { float: right; margin-right: 0px; margin-left: 12px; }
+.lastcomm-item .lastcomm-cat { font-style: normal; }
+.tagcloud a { float: right; margin: 0px 0px 2px 2px; }
+
+.news_lettr { background-position: -60px -224px; }
+
+.news_lettr input[type="text"] { padding-left: 0px; padding-right: 10px; }
+.news_lettr input[type="submit"] { left: 3px; right: inherit }
+.news_lettr i { padding-right: 0px; padding-left: 5px; }
+.sidebar .widget.top_offers .title:before{ padding-right: 0px; padding-left: 10px; }
+.widget.top_offers .title:after { right: 50%; left: inherit; margin-left: 0px; margin-right: -8px;}
+.widget.better_menu li{ padding-left: 0px; padding-right: 12px;}
+.widget.better_menu .title i{ padding-right: 0px; padding-left: 8px;}
+.widget.better_menu ul.sub-menu{ margin: 10px 10px 10px 0px}
+.postimagetrend .wrap a:after{ right: 0; left: inherit; }
+.postimagetrend.two_column .wrap{ float: right; border-right: 0; border-left: 1px solid #ccc;}
+.postimagetrend.two_column{  border-left: 0; }
+
+/*** Contact Form 7 + MAILCHIMP***/
+
+.wpcf7 input, .wpcf7 textarea { margin: 4px 0px 12px 10px; }
+.rehub_chimp #mc_embed_signup input.email { padding-left: 0px; padding-right: 15px; }
+.rehub_chimp #mc_embed_signup input#mc-embedded-subscribe { left: 0; right: inherit; border-top-right-radius: 0px;-moz-border-radius-topright: 0px;-webkit-border-top-right-radius: 0px;border-bottom-right-radius: 0px;-moz-border-radius-bottomright: 0px;-webkit-border-bottom-right-radius: 0px; border-top-left-radius: 5px;-moz-border-radius-topleft: 5px;-webkit-border-top-left-radius: 5px;border-bottom-left-radius: 5px;-moz-border-radius-bottomleft: 5px;-webkit-border-bottom-left-radius: 5px; }
+
+/******** FOOTER ********/
+
+.footer-bottom .footer_widget { float: right; border-right: 0; border-left: 1px solid #1c1c1c; }
+.footer-bottom .footer_widget .widget_categories ul li, .footer-bottom .footer_widget .widget_archive ul li, .footer-bottom .footer_widget .widget_nav_menu ul li { padding-left: 0px; padding-right: 12px; }
+.widget.better_menu li:before, .footer-bottom .footer_widget .widget_categories ul li:before, .footer-bottom .footer_widget .widget_archive ul li:before, .footer-bottom .footer_widget .widget_nav_menu ul li:before{ right: 0; left: inherit; }
+.footer-bottom .footer_widget .woocommerce ul li { padding-right: 0 }
+footer#theme_footer .left { float: right; }
+footer#theme_footer.block_foot .left { padding-left: 0px; padding-right: 20px;}
+footer#theme_footer.block_foot .right { padding-right: 0px; padding-left: 20px;}
+footer#theme_footer .right { float: left; text-align: left; }
+
+/****************************************************************************
+
+    *-*-*-* SOCIAL ICONS *-*-*-*
+
+****************************************************************************/
+
+.social_icon a { margin-right: 0px; margin-left: 2px;}
+.social_icon.small_i a { margin-right: 0px; margin-left: 2px; }
+
+/****************************************************************************
+
+    *-*-*-* HOME GRID *-*-*-*
+
+****************************************************************************/
+
+.small_post { float: right; }
+.small_post .cats_def { float: right; padding-right: 0px; padding-left: 34px}
+.small_post a.comment_two { left: -1px; right: inherit }
+.small_post .overlay { right: 0px; left: inherit; }
+.small_post .post_slider .flex-direction-nav .flex-prev { right: 0; left: inherit }
+.small_post .post_slider .flex-direction-nav .flex-next { left: 0; right: inherit }
+ul.postpagination { margin-left: 0px; margin-right: -5px }
+ul.postpagination li { float: right; margin-left: 0px; margin-right: 5px; }
+
+/****************************************************************************
+
+    *-*-*-* BLOG *-*-*-*
+
+****************************************************************************/
+
+.top_share .post_share{ text-align: right; }
+.top_share .post_share div.share-item{ float: right;}
+.post_share #s-facebook { text-align: right; }
+.post .android.red-rbn { padding: 0px 10px 6px 19px; }
+.post .comment_two, .stream_title .comment_two, .top_single_area .comment_two{ float: left; }
+.post li { margin: 0px 15px 5px 0px; }
+.post ol, .post ul { margin: 0px 5px 15px 0px }
+.share-buttons ul {float:right}
+.post_slider .caption, .slider_post .caption { right: inherit; left: 0px; padding: 3px 5px 3px 6px; }
+.post_slider .caption i, .slider_post .caption i { margin-left: 0px; margin-right: 3px }
+.post_slider .flex-direction-nav .flex-prev { left: inherit; right: 20px; background-position: -0px -160px; }
+.post_slider .flex-direction-nav .flex-next { right: inherit; left: 20px; background-position: -196px -77px; }
+.gallery_top_slider .flex-control-thumbs li { float: right; margin: 0.9125% 0 0 0.9125%; }
+.gallery_top_slider .flex-control-thumbs li:nth-child(9) { margin-right: inherit;  margin-left: 0; }
+.flexslider .fa-pulse{ left: inherit; right: 50%; margin: -13px -13px 0 0; }
+
+/****************************************************************************
+
+    *-*-*-* TOP RATING *-*-*-*
+
+****************************************************************************/
+
+.top_table_block .top_rating_item td.desc_col{ text-align: right;}
+.top_table_block .top_rating_item .column_content { text-align: right !important; }
+.top_rating_block.list_style_rating .desc_col { text-align: right !important; }
+.top_rating_item .rank_count { left: inherit; right: 0; margin: -20px -37px 0 0;}
+.top_rating_item figure { margin: 0 10px 0 0; }
+.top_table_block .ed_choice_label, .top_rating_block.list_style_rating .ed_choice_label{ left: inherit; right: -1px }
+.top_chart_first { float: right; }
+.top_chart_wrap, .swiper-container{float: right; }
+.top_chart_controls{ float: left; }
+.top_chart_controls .controls { float: right; }
+.top_chart_controls .controls.next:after {content: "\f104"; }
+.top_chart_controls .controls.prev:after {content: "\f105";}
+.top_chart_pagination{ float: right; }
+.top_chart_item{ float: left; margin: 0 6px 0 0; }
+.top_chart_item .ed_choice_label{ right: inherit; left: 5px}
+.top_chart.table_view_charts .top_chart_first{ border-left: 0; border-right: 1px solid #ddd }
+.top_chart.table_view_charts .top_chart_first ul li{ text-align: left;}
+.top_chart.table_view_charts ul li.heading_row_chart{ border-right-color: transparent !important; border-left-color: #f2f2f2 !important; }
+.top_chart.table_view_charts .top_chart_item:last-child ul li.heading_row_chart{border-right-color: transparent !important; border-left-color: #ddd !important;}
+.top_chart.table_view_charts ul li{ border-right: 0; border-left: 1px solid #ddd; }
+
+@media (max-width: 468px) {
+.top_chart_wrap, .swiper-container{float: right; }
+}
+
+.rehub_rating_row{ text-align: right; }
+.rehub_rating_row span { float: right; left: inherit; right: 0}
+.rehub_rating_row span:before { left: inherit; right: 0}
+
+/*******=== COUNTDOWN STYLES ===*******/
+
+.dash { float: right; margin-right: 0px; margin-left: 12px; }
+.dash:after { left: inherit; right: 58px }
+.dash .digit:before { left: inherit; right: 0}
+.dash .digit { float: right; margin-right: 0; margin-left: 4px }
+.dash_title { right: inherit; left: 6px }
+
+/****************************************************************************
+
+    *-*-*-* SINGLE *-*-*-*
+
+****************************************************************************/
+
+.single .star { float: left; }
+.single .star.left { float: right }
+.single .rate-line { float: right; }
+.rating_bar .star .title_stars { float: right; }
+.rating_bar .star { text-align: left; }
+#topcontrol { right: inherit; left: 10px }
+
+@media (max-width: 768px) {
+#topcontrol{ right: inherit; left: 0 !important }
+}
+
+.author_quote .avatar { left: inherit; right: 20px }
+.author_quote > div { padding: 0 110px 0 20px }
+.related_articles ul li { margin-right: 0; margin-left: 5%; float: right; }
+.related_articles ul li:last-child { margin-right: inherit; margin-left: 0px }
+ul.postspermonth { border-left: 0; border-right: 2px solid #DFDFE0; margin: 0 35px 30px 0; }
+
+/****************************************************************************
+
+    *-*-*-* COMMENTS *-*-*-*
+
+****************************************************************************/
+
+.commentlist ul.children { margin-left: 0px; padding-left: 0px; margin-right: 23px; padding-right: 23px; }
+.commentlist ul.children .commbox:before { left: initial; right: -24px; }
+.commentlist .comment-author img { float: right; margin-right: 0px; margin-left: 20px; }
+.commentlist .comment-author a div.comment-link { margin-left: 0px; margin-right: -10px; }
+.comment-reply-link, .comment-reply-login { float: left; }
+.comment-reply-link:before, .comment-reply-login:before { padding-right: 0px; padding-left: 2px }
+.comment-edit-link { float: left; margin-left: 0px; margin-right: 8px;}
+.ap_waiting em { font-style: none; }
+.comment-respond .usr_re input, .comment-respond .email_re input, .comment-respond .site_re input { padding: 0 50px 0 0; float: right; }
+.comment-respond .usr_re, .comment-respond .email_re, .comment-respond .site_re{ float: right; margin-right: 0; margin-left: 2% }
+.comment-respond .end { margin-right: inherit !important; margin-left: 0px !important; }
+.comment-respond .usr_re:after, .comment-respond .email_re:after, .comment-respond .site_re:after{ left: auto; right: 0 }
+#rehub-comments-tabs .add_user_review_link{ float: left; margin: 5px 20px 10px 0px;}
+
+/****************************************************************************
+
+    *-*-*-* MEDIA  *-*-*-*
+
+****************************************************************************/
+
+.def-carousel.media_carousel .carousel-next { right: initial; left: 13px }
+.def-carousel.media_carousel .carousel-prev { left: initial; right: 12px }
+.def-carousel.media_carousel .carousel-prev:after{content: "\f105";}
+.def-carousel.media_carousel .carousel-next:after{content: "\f104";}
+.def-carousel.media_carousel .carousel-prev:after, .def-carousel.media_carousel .carousel-next:after{ left: inherit; right: 0}
+.media_video h3 { float: right }
+.media_video > p { float: left; }
+.video-container iframe{ left: inherit; right: 0 }
+.best_from_cat_carousel h5 { text-align: right; }
+.best_from_cat_carousel h5 span { padding: 2px 13px 2px 17px; margin-right: 0px; margin-left: 10px; }
+
+/****************************************************************************
+
+    *-*-*-* CAROUSEL *-*-*-*
+
+****************************************************************************/
+
+.def-carousel .carousel-prev { left: inherit; right: 20px }
+.def-carousel .carousel-next { right: inherit; left: 20px }
+.sec_style_carousel ul li p a { font: 400 12px 'arial', trebuchet ms; }
+.def-carousel.sec_style_carousel .carousel-prev { left: initial; right: 0 }
+.def-carousel.sec_style_carousel .carousel-next { right: initial; left: 0 }
+.def-carousel.sec_style_carousel .carousel-prev:after{content: "\f105"; }
+.def-carousel.sec_style_carousel .carousel-next:after{ content: "\f104"; }
+.def-carousel.sec_style_carousel .carousel-next:after, .def-carousel.sec_style_carousel .carousel-prev:after{ left: inherit; right: 15px }
+.gallery-pics .gp-overlay { left: initial; right: 0 }
+.gallery-pics .gp-overlay a { margin: -20px -20px 0 0; background-position: -43px -101px; }
+.home_carousel .stamp { left: inherit; right: 20px }
+.re_carousel .controls.prev { left: initial; right: 0 }
+.re_carousel .controls.next { right: initial; left: 0 }
+.re_carousel .controls.prev:after{content: "\f105"; left: inherit; right: 22px; }
+.re_carousel .controls.next:after{content: "\f104"; right: inherit; left: 22px; }
+.re_carousel .preview { float: right; }
+.home_carousel .category { left: inherit; right: 108px }
+.views-in-carosel { left: inherit; right: 15px }
+
+/****************************************************************************
+
+    *-*-*-* SHOP CAROUSEL *-*-*-*
+
+****************************************************************************/
+
+.def-carousel.shop_carousel .carousel-next { left: initial; right: 0 }
+.def-carousel.shop_carousel .carousel-prev { right: initial; left: 0 }
+.def-carousel.shop_carousel .carousel-prev:after, .def-carousel.shop_carousel .carousel-next:after{ left: inherit; right: 0 }
+.def-carousel.shop_carousel .carousel-prev:after{content: "\f105";}
+.def-carousel.shop_carousel .carousel-next:after{content: "\f104";}
+.shop_carousel .sale_tag { right: inherit; left: 0 }
+.shop_carousel .product_details .product_data .action { float: right; text-align: right; border-left: 0; border-right: 1px solid #ddd; }
+.shop_carousel .product_details .product_data .action:first-child { text-align: left; border-left: inherit; border-right: none }
+.shop_carousel .product_details .product_data .wishlist a { margin-right: 0px; margin-left: 7px; }
+.shop_carousel .product_details .product_data .compare a { margin-left: 0px; margin-right: 7px; }
+.shop_carousel .quick_view_btn { left: initial; right: 0 }
+.header-top a.cart-contents { margin-right: 0px; margin-left: 8px; }
+.woocommerce .add_to_cart_button:hover{ padding-right: 0px; padding-left: 18px }
+.woocommerce a.add_to_cart_button:after{ right: initial; left: -30% }
+.woocommerce a.add_to_cart_button:hover:after{ right: inherit; left: 5px }
+
+/*** effect - fade ***/
+
+.imagechange3 .prodimglink .loop_product { left: initial; right: 0px }
+
+/* Images */
+
+/* Gallery */
+
+.gallery-item { float: right; margin: 0 0 12px 12px; }
+.gallery-columns-1 .gallery-item:nth-of-type(1n), .gallery-columns-2 .gallery-item:nth-of-type(2n), .gallery-columns-3 .gallery-item:nth-of-type(3n), .gallery-columns-4 .gallery-item:nth-of-type(4n), .gallery-columns-5 .gallery-item:nth-of-type(5n), .gallery-columns-6 .gallery-item:nth-of-type(6n), .gallery-columns-7 .gallery-item:nth-of-type(7n), .gallery-columns-8 .gallery-item:nth-of-type(8n), .gallery-columns-9 .gallery-item:nth-of-type(9n) { margin-right: inherit; margin-left: 0 }
+.gallery-caption { left: initial; right: 0; text-align: right; }
+.gallery-caption:before { left: inherit; right: 0; }
+
+/****************************************************************************
+
+ELEMENTS SHORTCODE
+
+****************************************************************************/
+blockquote:before{ left: 50%; margin-left: 0; margin-right:  -35px }
+blockquote.wpsm-quote cite { float: left; font-style: none; }
+.label_title { padding-right: 0px; padding-left: 10px }
+article.post .wpsm_toplist_heading:before{ float: right; margin: -8px 0 10px 15px; }
+#toplistmenu ol li{ padding: 15px 5px 15px 15px; }
+#toplistmenu > ol li:before { float:right; margin: -3px 15px 20px 20px; }
+
+/*HELPERS*/
+
+/* Colors */
+
+.priced_block .btn_offer_block:after { border-left: 0px transparent; border-right: 0.4em solid #fb7203; }
+.priced_block .btn_offer_block:hover:after { border-right-color: #f99800; }
+.sidebar .tabs-item figure, .news_block .left figure, .f-post figure {box-sizing: border-box; -moz-box-sizing: border-box; }
+
+/* style for block header */
+
+.block_style header .logo { margin-left: 0px; margin-right: 20px }
+.block_style header .search { margin-right: 0px; margin-left: 20px }
+
+/* style for darkheader */
+
+.header_top_wrap.dark_style .header-top .top-social .social_icon.small_i a { border-left: 0 !important; border-right: 1px solid #333 !important  }
+nav.top_menu > ul > li { border-left: 0; border-right: 1px solid rgba(0, 0, 0, 0.08); }
+.main-nav.dark_style nav.top_menu > ul > li { border-left: 0; border-right: 1px solid rgba(255, 255, 255, 0.18); }
+
+/* style for branded pages */
+
+/* DIfferent styles*/
+
+.overlay_editor span{ padding-left: 0px; padding-right: 6px }
+.overlay_post_formats.sale_format span{ padding-left: 0px; padding-right: 3px }
+.re_carousel .preview .overlay_post_formats{ left: inherit; right: 1px }
+.tabs_img .overlay_post_formats.review_formats_score { left: inherit; right: 10px }
+.re-line-badge span:before{margin-right: 0;margin-left: 4px;}
+#infscr-loading { margin-left: 0px; margin-right: -50px }
+#infscr-loading em { font-style: none; margin-left: 0px; margin-right: 7px }
+.categorytable li a:before, .categorytable p a:before{margin-right: 0px; margin-left: 4px }
+
+/*** Post review ***/
+
+.user-rate { float: left; }
+.rate-bar-title { left: initial; right: 0 }
+.rate-bar-percent { right: initial; left: 0 }
+.rate_bar_wrap .review-top .overall-score { float: right; margin: 0px 0px 10px 20px; }
+.rate-line .line { margin-left: 0px; margin-right: 27px }
+.rate-line .line span { float: right; }
+.rate-line.rate-line-inner .line span { padding-right: 0px; padding-left: 5px; text-align: left; }
+span.stars-rate span { float: right; }
+.star-small span.stars-rate span { float: left; }
+
+/*AFFILIATE STYLES*/
+
+.rehub_feat_block .offer_thumb { float: right; margin: 0 0 10px 15px; }
+.rehub_feat_block.table_view_block .offer_thumb { padding-right: 5px; padding-left: 10px }
+.rehub_feat_block.table_view_block .btn_offer_block:after { border-width: 1em 0.4em 1em 0; }
+.rehub_feat_block.table_view_block .btn_offer_block { padding: 0.5em 0.4em 0.5em 0.3em; }
+.rehub_feat_block.table_view_block table.shop_attributes th { text-align: right; }
+.rehub_feat_block.table_view_block table.shop_attributes td { font-style: none; }
+.rehub_offer_coupon.zeroclipboard-is-hover.btn_offer_block{ padding: 0.5em 0.6em 0.5em 0.5em;}
+.rehub_offer_coupon.masked_coupon i.fa{ padding-left: 0px; padding-right: 6px; }
+.rehub_offer_coupon i.fa{ right: auto; left: -12px; transform: rotate(0deg) !important; }
+.rehub_offer_coupon i.fa-check-square{ right: auto; left: -7px }
+.rehub_feat_block .add_to_wishlist, .rehub_feat_block .woocommerce a.compare.button { padding: 4px 18px 4px 6px !important; }
+.rehub_feat_block .block_with_coupon .add_to_wishlist, .rehub_feat_block .block_with_coupon .woocommerce a.compare.button{ padding: 4px 18px 4px 6px !important; }
+.rehub_feat_block .add_to_wishlist:before { left: initial; right: 6px }
+.rehub_feat_block a.compare.button:before { left: initial; right: 6px }
+.rehub_feat_block .yith-wcwl-add-to-wishlist { float: right; }
+.rehub_feat_block .yith-wcwl-add-to-wishlist .ajax-loading{ right: auto; right: -22px }
+.rehub_feat_block .woocommerce.product.compare-button { float: right; margin-right: 0px; margin-left: 5px }
+.rehub_woo_review_tabs.pretty_woo { margin: 0 0 5px 5px; }
+.aff_offer_links_heading { padding: 10px 5px 10px 10px; }
+.rehub_feat_block .start_price { text-align: left; padding-right: 0px; padding-left: 22px }
+.vip_badge{ left: auto; right: -32px; -webkit-transform: rotate(35deg);-ms-transform: rotate(35deg);transform: rotate(35deg); }
+.vip_badge i{ -webkit-transform: rotate(-35deg);-ms-transform: rotate(-35deg);transform: rotate(-35deg); }
+.vip_corner{ left: auto; right: 0px }
+.offer_grid .offer_thumb:before, .offer_grid figure:before { margin-right: 0; margin-left: -0.25em }
+.offer_grid.column_grid{ margin: 0 0 18px 3.2%; }
+.column_grid.col_4_grid{ margin: 0 0 18px 2%; }
+.column_grid.col_4_grid.last-col{ margin-right: inherit; margin-left: 0 }
+.eq_grid .sale_a_proc { right: auto; left: 10px;}
+.offer_grid h4:after { left: auto; right: 0 }
+.offer_grid .priced_block .btn_offer_block:before{ right: auto; left: -30% }
+.offer_grid .priced_block .btn_offer_block:hover{padding-right: 0px; padding-left: 26px }
+.offer_grid .priced_block .btn_offer_block:hover:before {right: inherit; left: 5px }
+.eq_grid.compact_grid .col_item{ text-align: right;}
+.compact_grid .offer_grid .price_count{ padding: 10px 10px 10px 40px; text-align: right; }
+.compact_grid .brand_logo_small{ right: initial; left: 5px }
+.btn_offer_block .mtinside { text-align: left; right: auto; left: 3px }
+.product_egg .btn_offer_block .mtinside, .product_egg_extra .btn_offer_block .mtinside {right: 3px;left: auto;}
+
+/**WOO VC BLOCKS **/
+
+.woocommerce .button_action { left: auto; right: 10px }
+.yith_float_btns div.compare-button, .yith_float_btns div.yith-wcwl-add-to-wishlist { float: right; margin: -10px 0 0 5px; }
+.yith_float_btns:hover div.compare-button, .woocommerce ul.products li:hover div.yith-wcwl-add-to-wishlist, .woocommerce ul.products li:hover div.compare-button, .yith_float_btns:hover div.yith-wcwl-add-to-wishlist{ margin: 0 0 0 5px; opacity: 1; }
+.woocommerce .sale_tag{ right: auto; left: 10px }
+
+/*WOO DEALS*/
+
+.woo_sidebar_deals_links .deals_woo_rehub { float: left; }
+.deals_woo_rehub .product-pic-wrapper{ float: right; }
+.deals_woo_rehub .product-details{ float: left; }
+.deals_woo_rehub .product-name{ float: right; }
+.deals_woo_rehub .left_data_aff{ float: right; }
+.deals_woo_rehub .woobuy_butt { float: left; }
+.deals_woo_rehub .wooprice_count, .deals_woo_rehub .wooaff_tag { float: right }
+.woo_sidebar_deals_links .deals_woo_rehub .product-pic-wrapper{ float: right;}
+.woo_sidebar_deals_links .deals_woo_rehub .product-details{ float: left;}
+.woo_sidebar_deals_links .deals_woo_rehub .left_data_aff{ float: right;}
+.woo_sidebar_deals_links .deals_woo_rehub .woobuy_butt { float: left; }
+.woo_sidebar_deals_links .deals_woo_rehub .product-name{ float:right;}
+.woo_sidebar_deals_links .deals_woo_rehub .wooprice_count, .woo_sidebar_deals_links .deals_woo_rehub .wooaff_tag { text-align: right; }
+.woo_sidebar_deals_links .deals_woo_rehub .woobuy_butt{ text-align: left;}
+
+/*STYLE FOR ADBLOCK NOTICE*/
+
+/*STYLE FOR RESPONSIVE MENU*/
+
+.dl-menuwrapper { float: right; }
+.dl-menuwrapper button.icon-search-onclick, .dl-menuwrapper button.act-rehub-login-popup{ float: left;}
+.dl-menuwrapper li a { padding: 15px 20px 15px 25px; }
+.dl-menuwrapper li.dl-back > a { padding-left: 0px; padding-right: 30px }
+.dl-menuwrapper li.dl-back:after { left: auto; right: 10px }
+.dl-menuwrapper li > a:after { right: auto; left: 15px }
+.dl-menuwrapper > .dl-submenu { left: auto; right: 0 }
+
+/*EASYDOWNLOAD STYLES*/
+
+.widget_edd_cart_widget .edd-cart-number-of-items:after { left: initial; right: 0 }
+.widget_edd_cart_widget .edd-cart .edd-cart-item-title { float: right; text-align: right; }
+.widget_edd_cart_widget .edd-cart-item { text-align: left; }
+.edd_downloads_list.edd_download_columns_1 .edd_download_inner > div.edd_download_text { text-align: right; }
+.edd_download_purchase_form .edd_price_options li { text-align:right;}
+.eddsw-search-field{ margin-right: 0px; margin-left: 5px }
+ul.page-numbers { border-right: inherit; border-left: 0 }
+ul.page-numbers li { border-right: 0; border-left: 1px solid #e0dadf; float: right; }
+
+/*************************************************
+
+rating circle meters
+
+*************************************************/	
+
+.radial-progress .inset { margin-left: 0px; margin-right: 5px }
+.radial-progress .inset .percentage { left: auto; right: 2.5px }
+
+/*************************************************
+
+META FILTERS
+
+*************************************************/	
+
+.mdf_title_data li { margin-left: 0px !important; margin-right: 3px !important; text-align: right; }
+.mdf_title_data li span.mdf_tooltip2 { text-align: right; }
+.news .mdf_title_data li{ margin: 0 0 0 3px !important; }
+.tw-pagination { float: right; }
+.tw-pagination a { margin-right: 0px; margin-left: 4px }
+.tw-pagination .title { margin-right: 0px; margin-left: 4px }
+.tw-pagination .gap { margin-right: 0px; margin-left: 4px }
+.tw-pagination .current { margin-right: 0px; margin-left: 4px }
+.top_rating_text .mdf_sort_panel { float: left;}
+.sidebar .widget.widget-meta-data-filter h4.data-filter-section-title{ padding: 10px 12px; text-align: right; }
+.sidebar .widget.widget-meta-data-filter.widget-meta-data-single h4.data-filter-section-title{text-align: right; padding: 0 10px 0 0;}
+.rehub_specification h4.data-filter-section-title, h5.data-filter-section-title, .mdf_input_container, .mdf_taxonomy_child_container { text-align: right !important; }
+.rehub_specification .value_spec { font-style: none;}
+.column_grid { margin: 0 0 18px 4.8%; float: right; }
+.column_grid.last-col { margin-right: inherit; margin-left: 0 }
+article.column_grid .priced_block.clearfix > div { float: right; }
+.list_grid figure { float: right; margin-right: 0; margin-left: 3%; }
+.list_grid .content_constructor { float: right; }
+.list_grid .btn_more { float: left; }
+.list_grid .priced_block { float: left; margin: 0 0 5px 8px }
+.list_grid .priced_block.clearfix > div { float: right; }
+.rehub_catalog_field_title { float: right; margin-right: 0px; margin-left: 4px }
+.rehub_catalog_field_value { float: right; font-style: none; }
+.rehub_catalog_field_title i { padding-right: 1px; padding-left: 5px }
+ul.mdf_custom_filter_panel { float: left; }
+.chains_shortcode select { margin: 0 0 5px 5px }
+
+/*** USER REVIEWS ***/
+
+.user_rating_left_com, .user_rating_right_com{ float: right; }
+.user_rating_right_com{padding: 0 20px 0 0}
+.user_rating_left_com span{ text-align: left; float: left }
+#user_reviews_in_comment .noUi-horizontal .noUi-handle{position: absolute;    left: -14px;}
+#user_reviews_in_comment .noUi-handle:before, #user_reviews_in_comment .noUi-handle:after{ left: auto; right: 7px }
+#user_reviews_in_comment .noUi-handle:after {left: auto; right: 10px }
+.user-review-vote > span { float: right; margin-right: 0; margin-left: 10px; }
+.us-rev-vote-up .comm_help_title, .us-rev-vote-down .comm_help_title {float: right; margin-left: 3px;}
+.us-rev-vote-up i, .us-rev-vote-down i {float: right; margin-left: 4px}
+.user_reviews_view_box { float: left; }
+.user_reviews_view_proscons{ padding: 0 0 0 20px;  float: right; }
+.user_reviews_view .line span { float: right; } 
+.user_reviews_view_criteria_score{ float:left; text-align:left }
+.user_reviews_view_criteria_name{ float: right; }
+.user_reviews_view_score_count{float: left; }
+.userstar-rating span{ float: right; left: inherit; right: 0 }
+.userstar-rating span:before{ left: inherit; right: 0 }
+.user_reviews_view_criteria_line .userstar-rating{ float: left; }
+.user_reviews_view_score .userstar-rating{ float: right; }
+article.post .rate_bar_wrap_two_reviews a.link_to_review{ right: inherit; left: 0 }
+.rate_bar_wrap_two_reviews .l_criteria span.score_tit{ float: right; }
+.rate_bar_wrap_two_reviews .l_criteria span.score_val{ text-align: left; float: left; }
+.rate_bar_wrap_two_reviews .review-criteria{ float: right; margin-right: 0; margin-left: 4%}
+.rate_bar_wrap_two_reviews .review-criteria:last-child{ margin-right: none; margin-left: 0 }
+.star a.add_user_review_link{ float: left; }
+.rate_bar_wrap .add_user_review_link{ float: left; }
+.total-score-users-head {float: right; }
+.only_user_reviews .review-criteria{float: right; margin-left: 0; margin-right: 25px }
+
+/*****LOGIN POPUPS*****/
+
+.re-user-popup-wrap .wpsm-button.loading:after { left: inherit; right: 100%; margin-left: 0px; margin-right: 20px; }
+.top-social .act-rehub-login-popup{ float: left; }
+.top-social .act-rehub-login-popup i{margin-right: 0px; margin-left: 3px; }
+.user-dropdown-intop-menu{ left: -8px; right: auto; text-align: right; }
+.user-dropdown-intop-menu .menu-item i{ padding-right: 0px; padding-left: 5px }
+.user-name-and-badges-intop span.userpro-badges{ text-align: right !important; }
+.user-image-in-name { float: right; margin: 0 0 0 8px }
+.top-social .user-dropdown-intop{float: left; }
+.main-nav .user-dropdown-intop{margin: 12px 10px 15px 18px !important; float: left;}
+
+@media (max-width: 1023px){
+	.user-dropdown-intop-menu{right: inherit; left: 0 }
+}
+
+/* -- WP SOCIAL LOGIN -- */
+
+/* -- Front-end Submission Form -- */
+
+.qq-upload-list, .qq-upload-list li{ margin-left: inherit !important; margin-right: 0 !important }
+.um-profile-body.posts .um-item-img{ float: right; margin: 0px 0px 4px 20px; }
+.um-account .um-account-main{ padding-right: inherit !important; padding-left: 0 !important}
+
+@media (min-width: 768px) {
+.um-profile-body.posts .com-right{ right: auto; left: 30px }
+.um-profile-body.posts .um-item-link{padding-right: 0px; padding-left: 95px}
+}
+
+#pgwModalBackdrop { left: initial; right: 0 }
+.pgwModal .pm-content { text-align: right; }
+.pgwModal .pm-close { right: auto; left: 0 }
+.re_title_inmodal:after { left: 50%; margin-left: 0px; margin-right: -35px }
+.coupon_code_in_modal .text_copied_coupon{font: 12px Times New Roman;}
+
+/* Categorizator */
+
+.col_wrap_two .col_item { float: right;}
+.col_wrap_three .col_item { float: right;}
+.col_wrap_fourth .col_item { float: right;}
+.col_wrap_fifth .col_item { float: right;}
+.col_wrap_six .col_item {float: right;}
+
+@media (max-width: 1024px) and (min-width: 769px) {
+.col_wrap_fifth .col_item, .col_wrap_six .col_item { float: right;}
+}
+
+.multi_cat { float: right; }
+.multi_cat_lable span { margin-left: 7px; margin-right: 0px; }
+.category-icon { float: right; }
+.multi_cat_image { float: right; margin: 0px 0px 0px 10px; }
+.cat-pagination a { float: right; }
+.categoriesbox h3 a:after { float: left; padding-left: 0px; padding-right: 8px }
+.categoriesbox:hover h3 a:after { padding-right: 0px; padding-left: 5px }
+.categoriesbox-bg a:before { margin: -25px -25px 0 0; }
+
+/* Score box in widget */
+
+.wpsm_score_title .overall-score{ float: left;}
+.wpsm_score_box .priced_block .price_count{ text-align: right; }
+.wpsm_score_box .priced_block .btn_offer_block{ float: left; }
+.wpsm_score_box .post_offer_anons .rehub_offer_coupon{float: left; }
+.simplefavorites-loading {margin-left: 0px; margin-right: 8px }
+.social_icon_inimage{ right: auto; left: -100px}
+.social_icon_inimage a:hover{ right: inherit; left: 2px }
+.small_post:hover .social_icon_inimage, .small_post:hover .favour_in_image{ right: inherit; left: 10px}
+.favour_in_image{ right: auto; left: -100px }
+.favour_in_top.favour_in_single{ float: right; margin: 0 0 5px 15px;}
+.small_post .wprc-container{ left: auto; right: 0}
+.small_post .wprc-container .wprc-switch{ float: right;}
+
+@media (max-width: 768px) {
+.small_post .social_icon_inimage, .small_post .favour_in_image {right: auto; left: 10px}
+}
+
+.egg-wrap .media-left {padding-right: 20px; padding-left: 0px; }
+
+/*****PRETTYPHOTO*****/
+
+div.pp_default .pp_nav .currentTextHolder{ font-family:Times New Roman; font-style:none; left:auto; right:75px; padding:0 10px 0 0}
+div.pp_default .pp_description{margin:5px 0px 5px 50px}
+div.pp_overlay{left: inherit; right: 0}
+.pp_content_container{text-align:right;}
+.pp_content_container .pp_details{float:right;}
+.pp_social{float:right}
+.pp_social .facebook{float:right; margin-left:0px; margin-right:5px}
+.pp_social .twitter{float:right}
+ .pp_nav{ clear:left; float:right; margin:3px 0 0 10px}
+.pp_nav p{ float: right; }
+.pp_nav .pp_play,.pp_nav .pp_pause{ float:right; margin-right: 0px; margin-left: 4px } 
+a.pp_arrow_previous,a.pp_arrow_next{ float:right; } 
+div.pp_default a.pp_arrow_previous{ background-position:-82px -3px}
+div.pp_default a.pp_arrow_next{ background-position: -31px -3px }
+.pp_gallery div{ float:right; }
+.pp_gallery ul{ float:right; margin:0px 5px 0px 0px; }
+.pp_gallery ul a{ float:right; }
+.pp_gallery li{ float:right; margin:0px 0px 0px 5px; }
+a.pp_expand,a.pp_contract{ right: inherit; left: 30px }
+a.pp_close{ right: auto; left: 0 }
+.pp_loaderIcon{margin:-12px -12px 0 0}
+#pp_full_res .pp_inline{text-align:right}
+div.ppt{margin:0px 15px 5px 0px}
+* html .pp_top .pp_middle,* html .pp_bottom .pp_middle{ left: auto; right: 0 }
+div.pp_default .pp_content_container .pp_right { padding-right: 20px }
+
+.user-ava-intop:after{padding-right: 4px}
+.woocommerce .star-rating, .woocommerce-page .star-rating{float: left;}
+.woocommerce ul.products li.product .onsale, .woocommerce-page ul.products li.product .onsale{left: 0; right: auto;}
+.wpsm-tabs ul.ui-tabs-nav li{ float: right !important;}
+.wpsm-table table tr th, .wpsm-table table tr td{text-align: right;}
+.wpsm-price .wpsm-price-column{float: right;}
+.wpsm-bar-title, .vc_progress_bar .vc_single_bar .vc_bar, .wpsm-numbox span, .wpsm-numhead span{right: 0; left: auto;}
+.wpsm-bar-percent{left: 10px; right: auto;}
+.wpsm-numbox, .wpsm-numhead{padding: 0 60px 0 0 !important;}
+.wpsm-testimonial-author img{ margin-left: 10px }

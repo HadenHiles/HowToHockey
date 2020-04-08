@@ -1,0 +1,1 @@
+jQuery.ajax({type:"GET",url:postviewvar.admin_ajax_url,data:"postviews_id="+postviewvar.post_id+"&action=rehubpostviews",cache:!1});

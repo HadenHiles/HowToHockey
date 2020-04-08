@@ -1,0 +1,1 @@
+<?php echo rehub_get_user_rate('admin') ; ?>
