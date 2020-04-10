@@ -28,6 +28,16 @@
     <meta name="msapplication-TileColor" content="#ffffff">
     <meta name="msapplication-TileImage" content="./images/favicon/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">
+
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-154626870-3"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-154626870-3');
+    </script>
 </head>
 
 <body class="template-index scheme_1 ">
@@ -124,21 +134,27 @@
                     </div>
 
                 </div>
-                <div id="shopify-section-1569070987321" class="shopify-section section section_newsletter">
+                <div id="newsletter" class="shopify-section section section_newsletter">
                     <div class="index_newsletter_wrapper">
                         <div class="container">
                             <div class="item__newsletter">
                                 <h4>Subscribe to our hockey newsletter</h4>
                                 <form action="https://app.getresponse.com/add_subscriber.html" accept-charset="utf-8" method="post">
-                                    <p class="alert alert-success hidden">You have successfully subscribed!</p>
+                                    <p class="alert alert-success <?php echo ($_REQUEST['subscribed'] != 'yes' ? 'hidden' : ''); ?>">You have successfully subscribed!</p>
                                     <p class="form_text">You may unsubscribe at any time.</p>
                                     <input type="hidden" name="contact[tags]" value="Newsletter subscriber">
                                     <div class="form_wrapper">
                                         <input type="email" name="email" class="input-group__field newsletter__input" placeholder="Email address">
                                         <button class="btn" type="submit">Subscribe</button>
                                     </div>
-                                    <input type="hidden" name="campaign_token" value="npaD" />
-                                    <input type="hidden" name="start_day" value="0" />
+                                    <!-- Get the token at: https://app.getresponse.com/campaign_list.html -->
+                                  	<input type="hidden" name="campaign_token" value="ot6NK" />
+                                  	<!-- Thank you page (optional) -->
+                                  	<input type="hidden" name="thankyou_url" value="http://howtohockey.com/merch?subscribed=yes#newsletter"/>
+                                  	<!-- Add subscriber to the follow-up sequence with a specified day (optional) -->
+                                  	<input type="hidden" name="start_day" value="0" />
+                                  	<!-- Forward form data to your page (optional) -->
+                                  	<input type="hidden" name="forward_data" value="post" />
                                 </form>
                             </div>
                         </div>
@@ -193,6 +209,8 @@
 
     </div>
 
+    <script type="text/text/javascript" src="./js/main.js"></script>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
 </body>
 
 </html>
