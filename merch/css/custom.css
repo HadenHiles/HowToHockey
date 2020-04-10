@@ -1,0 +1,58 @@
+body {
+  background: #e6e6e6;
+}
+.main_content {
+  padding-bottom: 0;
+}
+.index_newsletter_wrapper {
+  background: #fff;
+  padding-bottom: 25px;
+}
+.banner_100 {
+  background: #cc3333;
+  padding: 0;
+}
+.banner_100 .banner_item .banner_caption .caption_text .logo {
+  max-width: 25vw;
+  width: 300px;
+  margin: 10px auto;
+}
+.banner_100 .banner_item .banner_caption .caption_text h4 {
+  color: #fff;
+  font-size: 1.5vw !important;
+}
+
+.banner_100 .banner_item .banner_caption .caption_text h2 {
+  color: #fff;
+  font-size: 4vw !important;
+}
+
+@media screen and (min-width: 850px) {
+  .banner_100 .banner_item .banner_caption {
+    top: -125px;
+  }
+}
+
+.collections .banner_item .banner_caption .caption_text {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.collections .banner_item .banner_caption .caption_text p.banner_text {
+  font-size: 1.4vw;
+  line-height: 1.4vw;
+}
+
+@media screen and (max-width: 768px) {
+  .collections .banner_item .banner_caption .caption_text p.banner_text {
+    font-size: 2.4vw;
+    line-height: 2.4vw;
+  }
+}
+@media screen and (max-width: 576px) {
+  .collections .banner_item .banner_caption .caption_text p.banner_text {
+    font-size: 3.2vw;
+    line-height: 3.2vw;
+  }
+}

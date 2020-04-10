@@ -1,0 +1,96 @@
+@font-face {
+    font-family: "Fira Sans";
+    font-weight: 400;
+    font-style: normal;
+    src: url("https://fonts.shopifycdn.com/fira_sans/firasans_n4.086e8d8713738f302822db775376e6dd3153d980.woff2?&hmac=111a53fda8909b0d2680f87d738206bab9f4700e7c876d57ca52b9846a73a462") format("woff2"), url("https://fonts.shopifycdn.com/fira_sans/firasans_n4.1b65c27c1439cf29ece2163ea4a810840646dbdc.woff?&hmac=67f25fee11d74ab8def16edf19d274a09843e99443cbf63edc49aecf070d7ec8") format("woff");
+}
+
+@font-face {
+    font-family: "Fira Sans";
+    font-weight: 400;
+    font-style: normal;
+    src: url("https://fonts.shopifycdn.com/fira_sans/firasans_n4.086e8d8713738f302822db775376e6dd3153d980.woff2?&hmac=111a53fda8909b0d2680f87d738206bab9f4700e7c876d57ca52b9846a73a462") format("woff2"), url("https://fonts.shopifycdn.com/fira_sans/firasans_n4.1b65c27c1439cf29ece2163ea4a810840646dbdc.woff?&hmac=67f25fee11d74ab8def16edf19d274a09843e99443cbf63edc49aecf070d7ec8") format("woff");
+}
+
+@font-face {
+    font-family: "Fira Sans";
+    font-weight: 300;
+    font-style: normal;
+    src: url("https://fonts.shopifycdn.com/fira_sans/firasans_n3.9e4ad14665358006509e24260e5f087c3f3885db.woff2?&hmac=d0b2662d668b85483ed7a36ccddd99cae23c44f4a44ebc0774690820f06988be") format("woff2"), url("https://fonts.shopifycdn.com/fira_sans/firasans_n3.3546540e9ab3e52ea7eef2300f91d4379554e588.woff?&hmac=7f557b8ba918dc86c43bd8feb9011f7c745723435036d086ecf669a73a376215") format("woff");
+}
+
+@font-face {
+    font-family: "Fira Sans";
+    font-weight: 400;
+    font-style: normal;
+    src: url("https://fonts.shopifycdn.com/fira_sans/firasans_n4.086e8d8713738f302822db775376e6dd3153d980.woff2?&hmac=111a53fda8909b0d2680f87d738206bab9f4700e7c876d57ca52b9846a73a462") format("woff2"), url("https://fonts.shopifycdn.com/fira_sans/firasans_n4.1b65c27c1439cf29ece2163ea4a810840646dbdc.woff?&hmac=67f25fee11d74ab8def16edf19d274a09843e99443cbf63edc49aecf070d7ec8") format("woff");
+}
+
+@font-face {
+    font-family: "Fira Sans";
+    font-weight: 500;
+    font-style: normal;
+    src: url("https://fonts.shopifycdn.com/fira_sans/firasans_n5.411f96c7d4c283866fd7a169bbc02771c7726428.woff2?&hmac=f93db54eb2d29a5b574efbe57958a2c15874d87b9f1e648349646deb86500487") format("woff2"), url("https://fonts.shopifycdn.com/fira_sans/firasans_n5.00b44be4b5f1b2738ccf0d4f6d5fc7ab5ce4bdb8.woff?&hmac=c3babeca3409d036163c7ebce39d4abcfc028c645b444ff2dcdc9a793e706192") format("woff");
+}
+
+@font-face {
+    font-family: "Fira Sans";
+    font-weight: 700;
+    font-style: normal;
+    src: url("https://fonts.shopifycdn.com/fira_sans/firasans_n7.74c2469af2e69f6fa06837b347dfd6f4e5c11f60.woff2?&hmac=59ce6d18a1cf4bca0f5fafeb9d408a5bb74098e215fad444bfd91eedf40367fc") format("woff2"), url("https://fonts.shopifycdn.com/fira_sans/firasans_n7.8cc413e228e549059ce7be9645a8673d62e3f55c.woff?&hmac=536eaa24c79ba8122147925a0be1f2876bcb4666db7a1437d7c87aedd6d6f5c3") format("woff");
+}
+
+@font-face {
+    font-family: "Fira Sans";
+    font-weight: 600;
+    font-style: normal;
+    src: url("https://fonts.shopifycdn.com/fira_sans/firasans_n6.2405226c96a14a87d7b8e3abf438cc912a2bfc2f.woff2?&hmac=0ee424f2f881cc1420c1aacb79b5c8cb759829e80762b796d0f2cb1183c4eb12") format("woff2"), url("https://fonts.shopifycdn.com/fira_sans/firasans_n6.da968bd0bc9d58721ef6d8d985c29993329ae505.woff?&hmac=40d957fbc57a0da25d4f021193643a8d3aeaab2562a18997d1a72f3e9fc1550d") format("woff");
+}
+
+@font-face {
+    font-family: "Fira Sans";
+    font-weight: 800;
+    font-style: normal;
+    src: url("https://fonts.shopifycdn.com/fira_sans/firasans_n8.186f25dc37b1d969e01828a2f66d356bc51aa49f.woff2?&hmac=389320b487496b2128b77daa46a656a117b3146a2d5a3e0a71da75387b58ce66") format("woff2"), url("https://fonts.shopifycdn.com/fira_sans/firasans_n8.cc92533858470238e462cb03a05870475effa71e.woff?&hmac=b4bb6e38629ad4d8aeb01f18e0ef68b8fd264acb3e82a4e3a06e1744353f2fff") format("woff");
+}
+
+:root {
+    /*  TYPOGRAPHY  */
+    --base-font: "Fira Sans", sans-serif;
+    --base-font-size: 16px;
+    --heading-font: "Fira Sans", sans-serif;
+    --heading-font-size: 30px;
+    --heading-light-font-weight: 300;
+    --heading-regular-font-weight: 400;
+    --heading-medium-font-weight: 500;
+    --heading-bold-font-weight: 700;
+    --heading-semi-bold-font-weight: 600;
+    --heading-extra-bold-font-weight: 800;
+    /*  COLORS  */
+    --color-1: #222222;
+    --color-2: #e4e4e4;
+    --color-3: #ffffff;
+    --color-4: #eb9516;
+    --bg-color: #ffffff;
+    --base-font-color: #888888;
+    --heading-font-color: #222222;
+    --border-color: #e4e4e4;
+    --links-color: #222222;
+    --links-color-hover: #eb9516;
+    --button-color: #eb9516;
+    --button-text-color: #ffffff;
+    --button-border-color: #eb9516;
+    --button-hover-color: #ffffff;
+    --button-hover-text-color: #222222;
+    --button-hover-border-color: #222222;
+    --alt-button-color: rgba(0, 0, 0, 0);
+    --alt-button-text-color: #000000;
+    --alt-button-border-color: #000000;
+    --alt-button-hover-color: #eb9516;
+    --alt-button-hover-text-color: #ffffff;
+    --alt-button-hover-border-color: #eb9516;
+    --product-name-color: #888888;
+    --product-name-color-hover: #8d8d8d;
+    --product-price-color: #222222;
+    --product-price-sale-color: #888888;
+}
