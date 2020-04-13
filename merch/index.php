@@ -29,6 +29,14 @@
     <meta name="msapplication-TileImage" content="./images/favicon/ms-icon-144x144.png">
     <meta name="theme-color" content="#ffffff">
 
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-WMGDH85');</script>
+    <!-- End Google Tag Manager -->
+
     <!-- Global site tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-154626870-3"></script>
     <script>
@@ -41,6 +49,11 @@
 </head>
 
 <body class="template-index scheme_1 ">
+    <!-- Google Tag Manager (noscript) -->
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-WMGDH85"
+    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+    <!-- End Google Tag Manager (noscript) -->
+
     <div class="page_wrapper">
         <div class="page_container">
             <div class="main_content">
@@ -70,7 +83,7 @@
 
                                 <div class="banner_caption style_minimal">
 
-                                    <a class="caption_text" href="https://www.pacificrink.com/collections/how-to-hockey">
+                                    <a class="caption_text merch-link" id="pacific-rink" href="https://www.pacificrink.com/collections/how-to-hockey" target="_blank">
 
                                         <p class="banner_text">The Classics</p>
 
@@ -87,7 +100,7 @@
 
                                 <div class="banner_caption style_minimal">
 
-                                    <a class="caption_text " href="https://teespring.com/stores/howtohockey">
+                                    <a class="caption_text merch-link" id="teespring" href="https://teespring.com/stores/howtohockey" target="_blank">
 
                                         <p class="banner_text">Latest</p>
 
@@ -104,7 +117,7 @@
 
                                 <div class="banner_caption style_minimal">
 
-                                    <a class="caption_text" href="https://mensleaguesweaters.com/products/authentic-custom-how-to-hockey-jersey">
+                                    <a class="caption_text merch-link" id="jerseys" href="https://mensleaguesweaters.com/products/authentic-custom-how-to-hockey-jersey" target="_blank">
 
                                         <p class="banner_text">Jerseys</p>
 
@@ -121,7 +134,7 @@
 
                                 <div class="banner_caption style_minimal">
 
-                                    <a class="caption_text " href="https://www.summerskates.ca/products/how-to-hockey">
+                                    <a class="caption_text merch-link" id="summer-skates" href="https://www.summerskates.ca/products/how-to-hockey" target="_blank">
 
                                         <p class="banner_text">Summer Skates</p>
 
