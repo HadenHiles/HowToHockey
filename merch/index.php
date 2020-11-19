@@ -151,7 +151,7 @@
 
                                 <div class="banner_caption style_minimal">
 
-                                    <a class="caption_text merch-link" id="toques" href="#" target="_blank">
+                                    <a class="caption_text merch-link" id="toques" href="/toques" target="_blank">
 
                                         <p class="banner_text">Toques</p>
 
