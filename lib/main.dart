@@ -1,6 +1,35 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-void main() {
+import 'firebase_options.dart';
+
+const _useFirebaseEmulators = bool.fromEnvironment('USE_EMULATORS');
+const _configuredEmulatorHost = String.fromEnvironment(
+  'FIREBASE_EMULATOR_HOST',
+);
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
+  if (_useFirebaseEmulators) {
+    final emulatorHost = _configuredEmulatorHost.isNotEmpty
+        ? _configuredEmulatorHost
+        : defaultTargetPlatform == TargetPlatform.android
+        ? '10.0.2.2'
+        : '127.0.0.1';
+
+    FirebaseAuth.instance.useAuthEmulator(emulatorHost, 9099);
+    FirebaseFirestore.instance.useFirestoreEmulator(emulatorHost, 8080);
+    FirebaseFunctions.instance.useFunctionsEmulator(emulatorHost, 5001);
+    FirebaseStorage.instance.useStorageEmulator(emulatorHost, 9199);
+  }
+
   runApp(const MyApp());
 }
 

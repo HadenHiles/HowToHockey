@@ -6,7 +6,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 > Update this block at the end of every work session.
 
 - **Current phase:** Phase 1 — Foundations (in progress)
-- **Next task:** Wire `USE_EMULATORS` for Firebase services and add Emulators/Live VS Code launch configurations. Remaining prerequisites are deferred to Phase 8.
+- **Next task:** Enable Anonymous Auth for pre-account session persistence; Phase 4 will link users to real credentials. Remaining prerequisites are deferred to Phase 8.
 - **Blockers:** None
 - **Last updated:** 2026-10-02
 
@@ -15,6 +15,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 |---|---|---|
 | 2026-10-02 | Roadmap, product decisions, design system, brand assets finalized | `2e4daf1` |
 | 2026-10-02 | Created the iOS/Android Flutter app, aligned bundle IDs, moved brand assets, configured Firebase apps, and added `firebase_core` | — |
+| 2026-10-02 | Wired Firebase Auth, Firestore, Functions, and Storage to local emulators with Emulators/Live launch profiles | — |
 
 ### How to Resume a Session
 1. Read **Current Status**, then the current phase's unchecked items.
@@ -292,7 +293,7 @@ Provided in `assets/`: maple-leaf "HTH" monogram (≈square, viewBox 1307×1251)
 ## Phase 1 — Foundations
 - [x] Create the Flutter app **at the repo root**: `flutter create --project-name how_to_hockey --org com.howtohockey --platforms=ios,android .`; move existing `assets/*` into `assets/brand/`
 - [x] Run `flutterfire configure --project=how-to-hockey` (iOS + Android only)
-- [ ] `USE_EMULATORS` dart-define wires Auth/Firestore/Functions/Storage to local emulators; VS Code launch configs for "Emulators" and "Live"
+- [x] `USE_EMULATORS` dart-define wires Auth/Firestore/Functions/Storage to local emulators; VS Code launch configs for "Emulators" and "Live"
 - [ ] Firebase **Anonymous Auth** so Phases 2–3 can persist data before real accounts; Phase 4 links anonymous users to real credentials without data loss
 - [ ] Install core packages (Riverpod, go_router, freezed, Firebase SDKs)
 - [ ] Enable Crashlytics, Analytics, App Check (DeviceCheck/App Attest + Play Integrity)
