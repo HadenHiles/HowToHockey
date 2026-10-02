@@ -23,7 +23,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | 2026-10-02 | Configured local Firebase emulators and deny-by-default rules; added TypeScript Functions, linting, unit tests, and health-check callable | `6a7954d` |
 | 2026-10-02 | Provisioned live Firestore and Storage in Toronto with deny-by-default rules; verified Android live Auth and registered its App Check debug token | — |
 | 2026-10-02 | Added design tokens, light/dark themes, theme extensions, bundled Inter, and persisted Riverpod appearance selection | `8f50c2d` |
-| 2026-10-02 | Generated branded iOS/Android launcher icons and light/dark native splash screens with reusable source assets | `0eabf3b` |
+| 2026-10-02 | Generated branded iOS/Android launcher icons and light/dark native splash screens with reusable source assets | `0eabf3b`, `2b28e83` |
 
 ### How to Resume a Session
 1. Read **Current Status**, then the current phase's unchecked items.
