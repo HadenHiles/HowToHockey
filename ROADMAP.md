@@ -7,7 +7,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 
 - **Current phase:** Phase 1 — Foundations (in progress)
 - **Next task:** Complete Play Integrity and DeviceCheck registration, then verify production App Check on real devices before enabling enforcement.
-- **Blockers:** Play Integrity needs the Play Console app record, Cloud project link, and production SHA-256 signing fingerprint; DeviceCheck needs an Apple DeviceCheck key configured securely in Firebase; the iOS build is blocked by Swift Package Manager tag resolution.
+- **Blockers:** Play Integrity needs the Play Console app record, Cloud project link, and production SHA-256 signing fingerprint; DeviceCheck needs an Apple DeviceCheck key configured securely in Firebase; production App Check still needs signed real-device verification.
 - **Last updated:** 2026-10-02
 
 ### Session Log
@@ -26,6 +26,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | 2026-10-02 | Generated branded iOS/Android launcher icons and light/dark native splash screens with reusable source assets | `0eabf3b`, `2b28e83` |
 | 2026-10-02 | Added a VS Code live launch configuration targeting the connected Samsung S24 | — |
 | 2026-10-02 | Registered Apple Team ID and App Attest in live Firebase; wired the production App Attest entitlement in Xcode; plist validation passes, but real-device verification remains blocked by Swift package tag resolution | — |
+| 2026-10-02 | Diagnosed SwiftPM failure as Git's explicit-only bare-repository policy; verified the unsigned iOS release build with an approved process-scoped exception, documented the command, and refreshed Swift package locks | — |
 
 ### How to Resume a Session
 1. Read **Current Status**, then the current phase's unchecked items.
@@ -578,6 +579,7 @@ Phases **1–7** deliver the full free tier + solo core loop. Phase 8 (monetizat
 ---
 
 ## Resolved Decisions
+- **iOS SwiftPM Git policy:** Use an approved process-scoped `safe.bareRepository=all` exception for trusted iOS dependency builds when the machine requires explicit bare repositories; do not weaken the global Git policy or replace SwiftPM. See the build command in `README.md`. *(Phase 1)*
 - **Free-tier routines:** Free users can generate custom routines but may keep only **3 saved** at a time. *(Phase 5)*
 - **Coach Pro includes Player Pro.** *(Phase 8)*
 - **Child profiles on Free:** Free accounts can create and manage child player profiles. *(Phases 4, 10)*
