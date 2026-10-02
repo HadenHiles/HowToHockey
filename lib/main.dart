@@ -1,7 +1,12 @@
+import 'dart:ui' as ui;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -9,13 +14,27 @@ import 'package:flutter/material.dart';
 import 'firebase_options.dart';
 
 const _useFirebaseEmulators = bool.fromEnvironment('USE_EMULATORS');
-const _configuredEmulatorHost = String.fromEnvironment(
-  'FIREBASE_EMULATOR_HOST',
-);
+const _configuredEmulatorHost = String.fromEnvironment('FIREBASE_EMULATOR_HOST');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  final useDebugProviders = _useFirebaseEmulators || kDebugMode;
+  final collectTelemetry = !_useFirebaseEmulators && !kDebugMode;
+  final androidProvider = useDebugProviders ? const AndroidDebugProvider() : const AndroidPlayIntegrityProvider();
+  final appleProvider = useDebugProviders ? const AppleDebugProvider() : const AppleAppAttestWithDeviceCheckFallbackProvider();
+
+  await FirebaseAppCheck.instance.activate(providerAndroid: androidProvider, providerApple: appleProvider);
+  final analytics = FirebaseAnalytics.instance;
+  await analytics.setAnalyticsCollectionEnabled(collectTelemetry);
+  final crashlytics = FirebaseCrashlytics.instance;
+  await crashlytics.setCrashlyticsCollectionEnabled(collectTelemetry);
+
+  FlutterError.onError = crashlytics.recordFlutterFatalError;
+  ui.PlatformDispatcher.instance.onError = (error, stack) {
+    crashlytics.recordError(error, stack, fatal: true);
+    return true;
+  };
 
   if (_useFirebaseEmulators) {
     final emulatorHost = _configuredEmulatorHost.isNotEmpty
@@ -138,18 +157,11 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: .center,
           children: [
             const Text('You have pushed the button this many times:'),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
+            Text('$_counter', style: Theme.of(context).textTheme.headlineMedium),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: FloatingActionButton(onPressed: _incrementCounter, tooltip: 'Increment', child: const Icon(Icons.add)),
     );
   }
 }
