@@ -20,7 +20,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | 2026-10-02 | Enabled the Anonymous provider in Firebase Authentication | — |
 | 2026-10-02 | Installed Riverpod, GoRouter, Freezed, JSON serialization, and code-generation packages | — |
 | 2026-10-02 | Wired Crashlytics, Analytics, and App Check; analyze/tests and Android build pass; iOS build blocked by Swift package tag resolution | `976647b` |
-| 2026-10-02 | Configured local Firebase emulators and deny-by-default rules; added TypeScript Functions, linting, unit tests, and health-check callable | — |
+| 2026-10-02 | Configured local Firebase emulators and deny-by-default rules; added TypeScript Functions, linting, unit tests, and health-check callable | `6a7954d` |
 
 ### How to Resume a Session
 1. Read **Current Status**, then the current phase's unchecked items.
