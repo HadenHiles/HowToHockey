@@ -6,8 +6,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 > Update this block at the end of every work session.
 
 - **Current phase:** Phase 1 — Foundations (in progress)
-- **Next task:** Follow `README.md` to configure DeviceCheck and Play Console/upload signing, then verify DeviceCheck and the Play-installed Android app.
-- **Blockers:** Play Integrity needs the Play Console app record, Cloud project link, and Play app-signing SHA-256 fingerprint; DeviceCheck needs an Apple DeviceCheck key configured securely in Firebase. App Attest is verified on a signed physical iPhone; enforcement remains pending.
+- **Next task:** Add CI for Flutter analysis/tests, Functions tests, and rules tests; continue local device testing with the Samsung S24 (Live) debug launch configuration.
+- **Blockers:** None for local Android development. Production signing, Play Integrity/DeviceCheck setup, and enforcement are explicitly deferred until release preparation; App Attest is already verified on a signed physical iPhone.
 - **Last updated:** 2026-10-02
 
 ### Session Log
@@ -28,6 +28,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | 2026-10-02 | Registered Apple Team ID and App Attest in live Firebase; wired the production App Attest entitlement in Xcode; plist validation passes, but real-device verification remains blocked by Swift package tag resolution | — |
 | 2026-10-02 | Diagnosed SwiftPM failure as Git's explicit-only bare-repository policy; verified the unsigned iOS release build with an approved process-scoped exception, documented the command, and refreshed Swift package locks | — |
 | 2026-10-02 | Verified fresh production App Attest token exchange on a signed iPhone; added provider-specific device tests and an opt-in production verification build; replaced Android release debug signing with private upload-key configuration and documented remaining console steps; analyze, five unit/widget tests, and Android debug build pass; unsigned Android release is explicitly rejected | — |
+| 2026-10-02 | Clarified the live-Firebase Samsung debug workflow; deferred production App Check, upload signing, and Play Console setup at the user's request so local development can continue with CI next | — |
 
 ### How to Resume a Session
 1. Read **Current Status**, then the current phase's unchecked items.
@@ -312,7 +313,7 @@ Provided in `assets/`: maple-leaf "HTH" monogram (≈square, viewBox 1307×1251)
 - [x] Install core packages (Riverpod, go_router, freezed, Firebase SDKs)
 - [x] Wire Crashlytics error reporting, Analytics collection, and App Check (debug providers for development; App Attest/DeviceCheck + Play Integrity for production)
 - [x] Provision the live Firestore default database and Firebase Storage bucket in Toronto; enable delete protection for Firestore and deploy deny-by-default rules
-- [ ] Register production App Check providers (Play Integrity and Apple App Attest/DeviceCheck) and verify production attestation on real devices; Android development debug token is registered
+- [ ] Register production App Check providers (Play Integrity and Apple App Attest/DeviceCheck) and verify production attestation on real devices; Android development debug token is registered (remaining production setup deferred until release preparation; not a local-development gate)
   - [x] Register Apple Team ID `A3T2KUV3B5` and configure App Attest in live Firebase with the default one-hour token TTL
   - [x] Add the production App Attest entitlement and wire it into all iOS build configurations
   - [x] Wire private Android upload-key configuration; release builds fail explicitly when signing configuration is missing instead of using the debug key
@@ -584,6 +585,7 @@ Phases **1–7** deliver the full free tier + solo core loop. Phase 8 (monetizat
 ---
 
 ## Resolved Decisions
+- **Local testing priority:** Use the Samsung S24 debug launch against live Firebase with its registered App Check debug token; defer remaining production signing, Play Console, DeviceCheck, and enforcement work until release preparation. This deferred Phase 1 item does not block local development or the remaining foundation work. *(Phase 1)*
 - **iOS SwiftPM Git policy:** Use an approved process-scoped `safe.bareRepository=all` exception for trusted iOS dependency builds when the machine requires explicit bare repositories; do not weaken the global Git policy or replace SwiftPM. See the build command in `README.md`. *(Phase 1)*
 - **Free-tier routines:** Free users can generate custom routines but may keep only **3 saved** at a time. *(Phase 5)*
 - **Coach Pro includes Player Pro.** *(Phase 8)*

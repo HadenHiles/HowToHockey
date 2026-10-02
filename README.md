@@ -4,6 +4,25 @@ A new Flutter project.
 
 ## Getting Started
 
+### Local testing on the Samsung S24
+
+Select **Samsung S24 (Live)** in VS Code's Run and Debug panel and press **F5**.
+This runs a debug build on the connected phone against live Firebase, without
+starting Firebase emulators or publishing to Google Play.
+
+Alternatively, run from the repository root:
+
+```sh
+flutter run --debug -d R3CX20HFZJL --dart-define=USE_EMULATORS=false
+```
+
+Debug builds use the App Check debug provider; this Samsung's debug token is
+already registered in Firebase. No upload keystore, Play Console release, or
+DeviceCheck private key is needed for this Android debug workflow. Leave
+`VERIFY_APP_CHECK` unset: it is only for explicit production-attestation checks.
+Production signing, provider verification, and store setup below are deferred
+until release preparation and do not block local development.
+
 This project is a starting point for a Flutter application.
 
 A few resources to get you started if this is your first Flutter project:
