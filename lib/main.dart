@@ -21,32 +21,24 @@ import 'firebase_options.dart';
 
 const _useFirebaseEmulators = bool.fromEnvironment('USE_EMULATORS');
 const _configuredEmulatorHost = String.fromEnvironment('FIREBASE_EMULATOR_HOST');
+const _verifyAppCheck = bool.fromEnvironment('VERIFY_APP_CHECK');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final interLicense = await rootBundle.loadString('assets/fonts/OFL.txt');
-  LicenseRegistry.addLicense(
-    () async* {
-      yield LicenseEntryWithLineBreaks(['Inter'], interLicense);
-    },
-  );
+  LicenseRegistry.addLicense(() async* {
+    yield LicenseEntryWithLineBreaks(['Inter'], interLicense);
+  });
   final preferences = await SharedPreferences.getInstance();
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   final useDebugProviders = _useFirebaseEmulators || kDebugMode;
   final collectTelemetry = !_useFirebaseEmulators && !kDebugMode;
-  final androidProvider = useDebugProviders
-      ? const AndroidDebugProvider()
-      : const AndroidPlayIntegrityProvider();
-  final appleProvider = useDebugProviders
-      ? const AppleDebugProvider()
-      : const AppleAppAttestWithDeviceCheckFallbackProvider();
+  final androidProvider = useDebugProviders ? const AndroidDebugProvider() : const AndroidPlayIntegrityProvider();
+  final appleProvider = useDebugProviders ? const AppleDebugProvider() : const AppleAppAttestWithDeviceCheckFallbackProvider();
 
-  await FirebaseAppCheck.instance.activate(
-    providerAndroid: androidProvider,
-    providerApple: appleProvider,
-  );
+  await FirebaseAppCheck.instance.activate(providerAndroid: androidProvider, providerApple: appleProvider);
   final analytics = FirebaseAnalytics.instance;
   await analytics.setAnalyticsCollectionEnabled(collectTelemetry);
   final crashlytics = FirebaseCrashlytics.instance;
@@ -57,6 +49,20 @@ Future<void> main() async {
     crashlytics.recordError(error, stack, fatal: true);
     return true;
   };
+
+  if (_verifyAppCheck) {
+    if (useDebugProviders) {
+      throw StateError(
+        'App Check verification requires a profile/release build without '
+        'Firebase emulators.',
+      );
+    }
+    final token = await FirebaseAppCheck.instance.getToken(true);
+    if (token == null || token.isEmpty) {
+      throw StateError('Firebase did not issue a valid App Check token.');
+    }
+    debugPrint('App Check verification passed using production attestation.');
+  }
 
   if (_useFirebaseEmulators) {
     final emulatorHost = _configuredEmulatorHost.isNotEmpty
@@ -75,14 +81,7 @@ Future<void> main() async {
     await FirebaseAuth.instance.signInAnonymously();
   }
 
-  runApp(
-    ProviderScope(
-      overrides: [
-        sharedPreferencesProvider.overrideWithValue(preferences),
-      ],
-      child: const MyApp(),
-    ),
-  );
+  runApp(ProviderScope(overrides: [sharedPreferencesProvider.overrideWithValue(preferences)], child: const MyApp()));
 }
 
 class MyApp extends ConsumerWidget {
@@ -92,12 +91,6 @@ class MyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final appearance = ref.watch(appearanceProvider);
 
-    return MaterialApp(
-      title: 'How To Hockey',
-      theme: HockeyTheme.light,
-      darkTheme: HockeyTheme.dark,
-      themeMode: appearance.themeMode,
-      home: const AppearanceSettingsPage(),
-    );
+    return MaterialApp(title: 'How To Hockey', theme: HockeyTheme.light, darkTheme: HockeyTheme.dark, themeMode: appearance.themeMode, home: const AppearanceSettingsPage());
   }
 }

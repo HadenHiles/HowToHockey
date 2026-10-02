@@ -6,8 +6,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 > Update this block at the end of every work session.
 
 - **Current phase:** Phase 1 — Foundations (in progress)
-- **Next task:** Complete Play Integrity and DeviceCheck registration, then verify production App Check on real devices before enabling enforcement.
-- **Blockers:** Play Integrity needs the Play Console app record, Cloud project link, and production SHA-256 signing fingerprint; DeviceCheck needs an Apple DeviceCheck key configured securely in Firebase; production App Check still needs signed real-device verification.
+- **Next task:** Follow `README.md` to configure DeviceCheck and Play Console/upload signing, then verify DeviceCheck and the Play-installed Android app.
+- **Blockers:** Play Integrity needs the Play Console app record, Cloud project link, and Play app-signing SHA-256 fingerprint; DeviceCheck needs an Apple DeviceCheck key configured securely in Firebase. App Attest is verified on a signed physical iPhone; enforcement remains pending.
 - **Last updated:** 2026-10-02
 
 ### Session Log
@@ -27,6 +27,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | 2026-10-02 | Added a VS Code live launch configuration targeting the connected Samsung S24 | — |
 | 2026-10-02 | Registered Apple Team ID and App Attest in live Firebase; wired the production App Attest entitlement in Xcode; plist validation passes, but real-device verification remains blocked by Swift package tag resolution | — |
 | 2026-10-02 | Diagnosed SwiftPM failure as Git's explicit-only bare-repository policy; verified the unsigned iOS release build with an approved process-scoped exception, documented the command, and refreshed Swift package locks | — |
+| 2026-10-02 | Verified fresh production App Attest token exchange on a signed iPhone; added provider-specific device tests and an opt-in production verification build; replaced Android release debug signing with private upload-key configuration and documented remaining console steps; analyze, five unit/widget tests, and Android debug build pass; unsigned Android release is explicitly rejected | — |
 
 ### How to Resume a Session
 1. Read **Current Status**, then the current phase's unchecked items.
@@ -314,9 +315,13 @@ Provided in `assets/`: maple-leaf "HTH" monogram (≈square, viewBox 1307×1251)
 - [ ] Register production App Check providers (Play Integrity and Apple App Attest/DeviceCheck) and verify production attestation on real devices; Android development debug token is registered
   - [x] Register Apple Team ID `A3T2KUV3B5` and configure App Attest in live Firebase with the default one-hour token TTL
   - [x] Add the production App Attest entitlement and wire it into all iOS build configurations
-  - [ ] Create/link the Play Console app to Firebase project `how-to-hockey` and register the production signing certificate SHA-256; current release builds still use the development debug key
+  - [x] Wire private Android upload-key configuration; release builds fail explicitly when signing configuration is missing instead of using the debug key
+  - [ ] Create/link the Play Console app to Firebase project `how-to-hockey` and register the Play app-signing certificate SHA-256
   - [ ] Configure DeviceCheck fallback in Firebase using an Apple DeviceCheck-enabled key; never commit the private key
   - [ ] Verify valid production App Check tokens on Android and iOS before enabling enforcement
+    - [x] Verify a fresh App Attest token on a signed physical iPhone
+    - [ ] Verify DeviceCheck directly on a physical iPhone
+    - [ ] Verify Play Integrity on the Play-installed Android app
 - [x] Set up Firebase Emulator Suite (Auth, Firestore, Functions, Storage) for local dev; Firestore and Storage emulators use deny-by-default rules
 - [x] `functions/` TypeScript project with ESLint and unit tests
 - [x] Design system foundation per §3: tokens, light/dark `ThemeData`, `ThemeExtension`s (pillar colors, motion), bundled Inter variable font, Appearance setting (System/Light/Dark)
