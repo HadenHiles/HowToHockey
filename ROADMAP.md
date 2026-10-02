@@ -6,8 +6,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 > Update this block at the end of every work session.
 
 - **Current phase:** Phase 1 — Foundations (in progress)
-- **Next task:** Build the app icon and native splash screen per §3H.
-- **Blockers:** Configure and verify Play Integrity and Apple App Attest/DeviceCheck before enabling production App Check enforcement.
+- **Next task:** Register and verify production App Check providers before enabling enforcement.
+- **Blockers:** Play Integrity verification requires the deferred Play Console app record; the iOS build is currently blocked by Swift Package Manager tag resolution.
 - **Last updated:** 2026-10-02
 
 ### Session Log
@@ -23,6 +23,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | 2026-10-02 | Configured local Firebase emulators and deny-by-default rules; added TypeScript Functions, linting, unit tests, and health-check callable | `6a7954d` |
 | 2026-10-02 | Provisioned live Firestore and Storage in Toronto with deny-by-default rules; verified Android live Auth and registered its App Check debug token | — |
 | 2026-10-02 | Added design tokens, light/dark themes, theme extensions, bundled Inter, and persisted Riverpod appearance selection | `8f50c2d` |
+| 2026-10-02 | Generated branded iOS/Android launcher icons and light/dark native splash screens with reusable source assets | — |
 
 ### How to Resume a Session
 1. Read **Current Status**, then the current phase's unchecked items.
@@ -273,9 +274,9 @@ Provided in `assets/`: maple-leaf "HTH" monogram (≈square, viewBox 1307×1251)
 | `HTH_LOGO_WHITE_LARGE.png` | White on transparent, 2000×2000 | High-res source for app icon/splash generation and share cards |
 
 - [ ] Move to `assets/brand/` inside the Flutter project; render SVGs with `flutter_svg`; keep PNGs only as `flutter_launcher_icons` / `flutter_native_splash` sources (export at ≥1024px)
-- [ ] **App icon (iOS):** cream mark centered on solid brand-red square (no transparency allowed), ~70% scale; verify the thin maple outline stays legible at 29–40pt
-- [ ] **App icon (Android adaptive):** background = brand red; foreground = cream mark inside the 66% safe zone; monochrome layer from `logo-white.svg`
-- [ ] **Native splash:** light = `#FFFFFF` + red mark; dark = `#0E0E10` + red mark (or cream); Android 12+ splash icon sized to its circular mask
+- [x] **App icon (iOS):** cream mark centered on solid brand-red square (no transparency allowed), ~70% scale; verify the thin maple outline stays legible at 29–40pt
+- [x] **App icon (Android adaptive):** background = brand red; foreground = cream mark inside the 66% safe zone; monochrome layer from `logo-white.svg`
+- [x] **Native splash:** light = `#FFFFFF` + red mark; dark = `#0E0E10` + red mark (or cream); Android 12+ splash icon sized to its circular mask
 - [ ] `BrandLogo` widget that picks the variant from the active theme (red on light, cream on dark/red)
 - [ ] `BrandWordmark` widget: the wordmark is single-color with alpha, so tint at runtime with `Image.asset(color:, colorBlendMode: BlendMode.srcIn)` (textPrimary/red on light, cream on dark/red) instead of shipping per-theme PNGs
 - [ ] Wordmark max display width ≈ 300pt so the 1394px source stays sharp at 3×; request an SVG version for larger uses
@@ -311,7 +312,7 @@ Provided in `assets/`: maple-leaf "HTH" monogram (≈square, viewBox 1307×1251)
 - [x] Set up Firebase Emulator Suite (Auth, Firestore, Functions, Storage) for local dev; Firestore and Storage emulators use deny-by-default rules
 - [x] `functions/` TypeScript project with ESLint and unit tests
 - [x] Design system foundation per §3: tokens, light/dark `ThemeData`, `ThemeExtension`s (pillar colors, motion), bundled Inter variable font, Appearance setting (System/Light/Dark)
-- [ ] App icon + splash per §3H via `flutter_launcher_icons` and `flutter_native_splash`; native splash matches first frame
+- [x] App icon + splash per §3H via `flutter_launcher_icons` and `flutter_native_splash`; native splash matches first frame
 - [ ] CI: `flutter analyze`, `flutter test`, functions tests, rules tests on every PR
 
 **Exit Criteria:** App boots on both platforms against emulators; CI green.

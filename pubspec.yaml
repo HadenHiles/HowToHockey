@@ -63,6 +63,36 @@ dev_dependencies:
   riverpod_generator: ^4.0.9
   freezed: ^4.0.2
   json_serializable: ^6.14.1
+  flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.8
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: assets/brand/generated/app_icon_ios.png
+  image_path_ios: assets/brand/generated/app_icon_ios.png
+  adaptive_icon_background: "#CC3333"
+  adaptive_icon_foreground: assets/brand/generated/app_icon_foreground.png
+  adaptive_icon_monochrome: assets/brand/generated/app_icon_monochrome.png
+  adaptive_icon_foreground_inset: 0
+  remove_alpha_ios: true
+  background_color_ios: "#CC3333"
+
+flutter_native_splash:
+  android: true
+  ios: true
+  color: "#FFFFFF"
+  color_dark: "#0E0E10"
+  image: assets/brand/generated/splash_light.png
+  image_dark: assets/brand/generated/splash_dark.png
+  android_gravity: center
+  ios_content_mode: center
+  fullscreen: false
+  android_12:
+    color: "#FFFFFF"
+    color_dark: "#0E0E10"
+    image: assets/brand/generated/splash_android12_light.png
+    image_dark: assets/brand/generated/splash_android12_dark.png
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
