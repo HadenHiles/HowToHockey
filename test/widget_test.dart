@@ -1,30 +1,66 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-
+import 'package:how_to_hockey/features/settings/appearance_settings_controller.dart';
 import 'package:how_to_hockey/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('appearance setting switches and persists the app theme', (WidgetTester tester) async {
+    final preferences = await SharedPreferences.getInstance();
+    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences)]);
+    addTearDown(container.dispose);
+    await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+    expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode, ThemeMode.system);
+    expect(find.text('Train with purpose.'), findsOneWidget);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    await tester.tap(find.text('Dark'));
+    await tester.pumpAndSettle();
+
+    expect(container.read(appearanceProvider), AppAppearance.dark);
+    expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode, ThemeMode.dark);
+    expect(preferences.getString(AppearanceSettingsNotifier.preferenceKey), 'dark');
+  });
+
+  testWidgets('appearance setting remains usable at 200 percent text scale', (WidgetTester tester) async {
+    tester.view.physicalSize = const Size(720, 1600);
+    tester.view.devicePixelRatio = 2;
+    tester.platformDispatcher.textScaleFactorTestValue = 2;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    final preferences = await SharedPreferences.getInstance();
+    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences)]);
+    addTearDown(container.dispose);
+    await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Appearance'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  test('saved appearance is restored on provider startup', () async {
+    SharedPreferences.setMockInitialValues({'appearance': 'light'});
+    final preferences = await SharedPreferences.getInstance();
+    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences)]);
+    addTearDown(container.dispose);
+
+    expect(container.read(appearanceProvider), AppAppearance.light);
+    expect(container.read(appearanceProvider).themeMode, ThemeMode.light);
+  });
+
+  test('invalid saved appearance fails explicitly', () async {
+    SharedPreferences.setMockInitialValues({'appearance': 'sepia'});
+    final preferences = await SharedPreferences.getInstance();
+    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences)]);
+    addTearDown(container.dispose);
+
+    expect(() => container.read(appearanceProvider), throwsA(predicate<Object>((error) => error.toString().contains('Unrecognized saved appearance preference: sepia'))));
   });
 }
