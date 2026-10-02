@@ -6,8 +6,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 > Update this block at the end of every work session.
 
 - **Current phase:** Phase 1 — Foundations (in progress)
-- **Next task:** Enable the Anonymous provider in Firebase Console to finish the current Auth task.
-- **Blockers:** Firebase Console requires Google sign-in to verify or enable the Anonymous provider.
+- **Next task:** Enable Crashlytics, Analytics, and App Check (Apple App Attest/DeviceCheck and Play Integrity).
+- **Blockers:** None
 - **Last updated:** 2026-10-02
 
 ### Session Log
@@ -17,6 +17,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | 2026-10-02 | Created the iOS/Android Flutter app, aligned bundle IDs, moved brand assets, configured Firebase apps, and added `firebase_core` | — |
 | 2026-10-02 | Wired Firebase Auth, Firestore, Functions, and Storage to local emulators with Emulators/Live launch profiles | — |
 | 2026-10-02 | Added startup anonymous sign-in when no user exists; project provider enablement remains pending | — |
+| 2026-10-02 | Enabled the Anonymous provider in Firebase Authentication | — |
+| 2026-10-02 | Installed Riverpod, GoRouter, Freezed, JSON serialization, and code-generation packages | — |
 
 ### How to Resume a Session
 1. Read **Current Status**, then the current phase's unchecked items.
@@ -295,10 +297,10 @@ Provided in `assets/`: maple-leaf "HTH" monogram (≈square, viewBox 1307×1251)
 - [x] Create the Flutter app **at the repo root**: `flutter create --project-name how_to_hockey --org com.howtohockey --platforms=ios,android .`; move existing `assets/*` into `assets/brand/`
 - [x] Run `flutterfire configure --project=how-to-hockey` (iOS + Android only)
 - [x] `USE_EMULATORS` dart-define wires Auth/Firestore/Functions/Storage to local emulators; VS Code launch configs for "Emulators" and "Live"
-- [ ] Firebase **Anonymous Auth** so Phases 2–3 can persist data before real accounts; Phase 4 links anonymous users to real credentials without data loss
+- [x] Firebase **Anonymous Auth** so Phases 2–3 can persist data before real accounts; Phase 4 links anonymous users to real credentials without data loss
   - [x] Sign in anonymously at startup when no user is already signed in, after emulator routing is configured
-  - [ ] Enable the Anonymous provider in Firebase Console for `how-to-hockey`
-- [ ] Install core packages (Riverpod, go_router, freezed, Firebase SDKs)
+  - [x] Enable the Anonymous provider in Firebase Console for `how-to-hockey`
+- [x] Install core packages (Riverpod, go_router, freezed, Firebase SDKs)
 - [ ] Enable Crashlytics, Analytics, App Check (DeviceCheck/App Attest + Play Integrity)
 - [ ] Set up Firebase Emulator Suite (Auth, Firestore, Functions, Storage) for local dev
 - [ ] `functions/` TypeScript project with ESLint and unit tests
