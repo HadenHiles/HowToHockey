@@ -5,8 +5,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 ## 📍 Current Status
 > Update this block at the end of every work session.
 
-- **Current phase:** Phase 1 — Foundations (not started)
-- **Next task:** First Phase 1 checkbox (create the Flutter app at repo root). Remaining prerequisites are deferred to Phase 8.
+- **Current phase:** Phase 1 — Foundations (in progress)
+- **Next task:** Wire `USE_EMULATORS` for Firebase services and add Emulators/Live VS Code launch configurations. Remaining prerequisites are deferred to Phase 8.
 - **Blockers:** None
 - **Last updated:** 2026-10-02
 
@@ -14,6 +14,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | Date | Summary | Commit |
 |---|---|---|
 | 2026-10-02 | Roadmap, product decisions, design system, brand assets finalized | `2e4daf1` |
+| 2026-10-02 | Created the iOS/Android Flutter app, aligned bundle IDs, moved brand assets, configured Firebase apps, and added `firebase_core` | — |
 
 ### How to Resume a Session
 1. Read **Current Status**, then the current phase's unchecked items.
@@ -289,8 +290,8 @@ Provided in `assets/`: maple-leaf "HTH" monogram (≈square, viewBox 1307×1251)
 ---
 
 ## Phase 1 — Foundations
-- [ ] Create the Flutter app **at the repo root**: `flutter create --project-name how_to_hockey --org com.howtohockey --platforms=ios,android .`; move existing `assets/*` into `assets/brand/`
-- [ ] Run `flutterfire configure --project=how-to-hockey` (iOS + Android only)
+- [x] Create the Flutter app **at the repo root**: `flutter create --project-name how_to_hockey --org com.howtohockey --platforms=ios,android .`; move existing `assets/*` into `assets/brand/`
+- [x] Run `flutterfire configure --project=how-to-hockey` (iOS + Android only)
 - [ ] `USE_EMULATORS` dart-define wires Auth/Firestore/Functions/Storage to local emulators; VS Code launch configs for "Emulators" and "Live"
 - [ ] Firebase **Anonymous Auth** so Phases 2–3 can persist data before real accounts; Phase 4 links anonymous users to real credentials without data loss
 - [ ] Install core packages (Riverpod, go_router, freezed, Firebase SDKs)

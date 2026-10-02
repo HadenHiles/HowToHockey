@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "591675097325",
+    "project_id": "how-to-hockey",
+    "storage_bucket": "how-to-hockey.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:591675097325:android:1c798db5330225f22e8ce4",
+        "android_client_info": {
+          "package_name": "com.howtohockey.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCY4NhX0Nw-Ms3YXVfu_6jkqByoQonvBJA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
