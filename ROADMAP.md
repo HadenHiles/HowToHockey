@@ -2,6 +2,39 @@
 
 This roadmap turns the product spec into ordered, checkable milestones. Each phase ends in a shippable or testable state. Work top to bottom; do not start a phase until the previous phase's **Exit Criteria** are met.
 
+## 📍 Current Status
+> Update this block at the end of every work session.
+
+- **Current phase:** Phase 1 — Foundations (not started)
+- **Next task:** First Phase 1 checkbox (create the Flutter app at repo root). Remaining prerequisites are deferred to Phase 8.
+- **Blockers:** None
+- **Last updated:** 2026-10-02
+
+### Session Log
+| Date | Summary | Commit |
+|---|---|---|
+| 2026-10-02 | Roadmap, product decisions, design system, brand assets finalized | `2e4daf1` |
+
+### How to Resume a Session
+1. Read **Current Status**, then the current phase's unchecked items.
+2. Work one checkbox at a time; check it off (`[x]`) in the same commit as the code.
+3. When all items in a phase pass its **Exit Criteria**, advance **Current phase**.
+4. New product decisions go in **Resolved Decisions** (bottom); never silently change a locked decision.
+5. Before ending: update **Current Status** + add a **Session Log** row.
+
+### Prerequisites (Before Phase 1)
+- [x] Flutter SDK (stable) + Firebase CLI installed and logged in
+- [x] FlutterFire CLI 1.4.1 (`~/.pub-cache/bin` must be on `PATH`)
+- [x] Xcode 26.6 + CocoaPods 1.16.2; Android Studio + SDK 36 (`flutter doctor` clean)
+- [x] Node **24 LTS** (Homebrew `node@24`, v24.21.0) for Cloud Functions; set `"engines": {"node": "24"}` in `functions/package.json`
+- [x] Bundle/application ID: `com.howtohockey.app`
+- [x] Apple Developer Program account
+- [ ] App Store Connect app record for `com.howtohockey.app` (deferred: needed before Phase 8 IAP / first TestFlight)
+- [x] Google Play Console account
+- [ ] Play Console app record for `com.howtohockey.app` (deferred: needed before Phase 8 IAP / first internal test)
+- [x] Firebase project `how-to-hockey` on the **Blaze** plan
+- [ ] RevenueCat account (needed by Phase 8; can wait)
+
 ---
 
 ## 0. Architecture Decisions (Locked Before Coding)
@@ -22,7 +55,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | Wake/haptics | `wakelock_plus`, `HapticFeedback` | Screen stays on during sessions |
 | Sharing | `RepaintBoundary` → PNG → `share_plus` | Native share sheet only |
 | Local persistence | Firestore offline cache + `shared_preferences` for setup/focus presets | Garage/rink often has bad signal |
-| Environments | Firebase projects: `howtohockey-dev`, `howtohockey-prod`; Flutter flavors `dev` / `prod` | |
+| Environments | Single Firebase project `how-to-hockey`, single app ID `com.howtohockey.app`; no flavors. Local development runs against the **Firebase Emulator Suite**; real-device testing hits production with test accounts flagged `isTester` (excluded from leaderboards/analytics) | Simplicity; emulators keep test data out of prod |
 | CI/CD | GitHub Actions (analyze, test, build) + Fastlane / Codemagic for store uploads | |
 
 ### Guiding Principles
@@ -37,8 +70,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 
 ```
 lib/
-  main_dev.dart / main_prod.dart
-  app/                 # App widget, router, flavors, role shells (player/parent/coach)
+  main.dart            # `--dart-define=USE_EMULATORS=true` for local dev
+  app/                 # App widget, router, role shells (player/parent/coach)
   design/              # tokens (color, type, spacing, radius, motion), ThemeData light/dark, ThemeExtensions
   core/                # constants, utils, extensions, error types
   data/
@@ -256,9 +289,10 @@ Provided in `assets/`: maple-leaf "HTH" monogram (≈square, viewBox 1307×1251)
 ---
 
 ## Phase 1 — Foundations
-- [ ] `flutter create --platforms=ios,android --org com.howtohockey how_to_hockey`
-- [ ] Add flavors (dev/prod), bundle IDs, app icons, splash
-- [ ] Create both Firebase projects; run `flutterfire configure` per flavor
+- [ ] Create the Flutter app **at the repo root**: `flutter create --project-name how_to_hockey --org com.howtohockey --platforms=ios,android .`; move existing `assets/*` into `assets/brand/`
+- [ ] Run `flutterfire configure --project=how-to-hockey` (iOS + Android only)
+- [ ] `USE_EMULATORS` dart-define wires Auth/Firestore/Functions/Storage to local emulators; VS Code launch configs for "Emulators" and "Live"
+- [ ] Firebase **Anonymous Auth** so Phases 2–3 can persist data before real accounts; Phase 4 links anonymous users to real credentials without data loss
 - [ ] Install core packages (Riverpod, go_router, freezed, Firebase SDKs)
 - [ ] Enable Crashlytics, Analytics, App Check (DeviceCheck/App Attest + Play Integrity)
 - [ ] Set up Firebase Emulator Suite (Auth, Firestore, Functions, Storage) for local dev
@@ -311,7 +345,7 @@ Build as a pure-Dart `SessionController` (Riverpod Notifier) with a thin UI on t
 ---
 
 ## Phase 4 — Accounts & Profiles
-- [ ] Firebase Auth: Sign in with Apple (required on iOS when offering third-party login), Google, email/password
+- [ ] Firebase Auth: Sign in with Apple (required on iOS when offering third-party login), Google, email/password; `linkWithCredential` upgrades the Phase 1 anonymous user
 - [ ] Age gate at signup (birth year). Under-13 users cannot create an account; they must be created as a **child profile by a parent** (COPPA / GDPR-K)
 - [ ] `users` / `profiles` split: one account can own multiple player profiles
 - [ ] **Any account tier (including Free)** can create and manage child player profiles (cap: 3, enforced in a callable Function)
@@ -531,6 +565,7 @@ Phases **1–7** deliver the full free tier + solo core loop. Phase 8 (monetizat
 - **Leaderboards:** Team-only visibility; public teams are discoverable via search. Ranked metric is active training time only. *(Phase 9)*
 - **Team membership:** Per player profile; parents manage children across the same or different teams. Player, Parent, and Coach modes are separate UI shells. *(Phases 4B, 9)*
 - **Long-form video:** Firebase Storage with signed URLs. *(Phase 12)*
+- **Environments:** One Firebase project (`how-to-hockey`) and one app ID (`com.howtohockey.app`); emulators for local dev. *(Phase 1)*
 - **Team Pro Month scope:** Once per profile ever; only the rostered player profile receives it. *(Phase 11)*
 - **Public teams:** Discoverable with name, player count, and generic team stats; feed and leaderboard stay members-only. *(Phase 9)*
 - **Child devices:** Kid-device QR sign-in **or** parent-device profile switching. Siblings can train concurrently on separate devices or together via Group Session. *(Phases 4, 10B)*
