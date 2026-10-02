@@ -16,6 +16,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | Backend | Firebase: Auth, Firestore, Cloud Functions (TypeScript, 2nd gen), Storage, FCM, Remote Config, Analytics, Crashlytics, App Check | |
 | Payments | RevenueCat (`purchases_flutter`) + webhook → Cloud Function → Firestore/custom claims | Handles subs, one-time IAP, intro/discount offers, cross-platform entitlements |
 | Charts | `fl_chart` (Radar chart, bar/line charts) | |
+| Motion | `animations` (shared axis, fade through, container transform) + implicit animations | Fluid, consistent transitions (see §3) |
 | Media | Looping MP4 (H.264, muted, 3–5s) via `video_player` + `flutter_cache_manager`; long-form as progressive MP4 streamed from Firebase Storage via short-lived signed URLs | MP4 is far smaller than GIF; long-form volume is small, so no separate video provider |
 | Audio | `just_audio` (chimes) + `audio_session` (mix with user's music) | |
 | Wake/haptics | `wakelock_plus`, `HapticFeedback` | Screen stays on during sessions |
@@ -37,7 +38,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 ```
 lib/
   main_dev.dart / main_prod.dart
-  app/                 # App widget, router, theme, flavors, role shells (player/parent/coach)
+  app/                 # App widget, router, flavors, role shells (player/parent/coach)
+  design/              # tokens (color, type, spacing, radius, motion), ThemeData light/dark, ThemeExtensions
   core/                # constants, utils, extensions, error types
   data/
     models/            # freezed models (Drill, Routine, Session, SetLog, ...)
@@ -54,7 +56,7 @@ lib/
     parent/            # child profiles, verification
     paywall/           # tiers, offerings, signature programs
     share/             # share card rendering
-  shared/widgets/
+  shared/widgets/      # design-system components (StatTile, MetricCard, NumberPad, Stepper, TimerRing, ...)
 functions/             # Cloud Functions (TypeScript)
 firestore.rules
 storage.rules
@@ -151,6 +153,108 @@ parentLinks/{uid}                 childProfileIds[] (max 3)
 
 ---
 
+## 3. Design System & Brand
+
+### 3A. Look & Feel
+Modern, calm, data-forward, in the style of **MacroFactor Workouts** but with How To Hockey branding:
+- **Content first, low chrome:** mostly neutral surfaces with a **single brand accent (red)** reserved for primary actions, active state, and progress. No gradients, heavy shadows, or decorative clutter.
+- **Big, confident numbers:** stats, timers, and set inputs are the hero of each screen (large tabular numerals, small muted labels).
+- **Card-based layouts** with generous spacing; information density increases only in analytics/coach views.
+- **One-handed, glove-friendly:** primary actions in the bottom thumb zone; minimum 48dp touch targets, 56–64dp for in-session controls.
+- **Hockey identity through details**, not ornament: How To Hockey logo/wordmark, subtle ice/rink line motifs on empty states and share cards, Coach Jeremy media front and center.
+
+### 3B. Brand Color & Palette
+> Brand primary is **`#CC3333`**, matching the logo SVG.
+
+| Token | Light | Dark | Notes |
+|---|---|---|---|
+| `brand/primary` | `#CC3333` | `#CC3333` | Buttons/fills. White text on it ≈ 5.1:1 (AA) |
+| `brand/primaryOnDark` | — | `#E05555` | Red text/icons on dark surfaces (≈5.1:1); `#CC3333` on near-black is only ≈3.7:1 and fails AA for small text |
+| `brand/primaryContainer` | `#FAE6E6` | `#3A1616` | Selected chips, highlights |
+| `brand/cream` | — | `#F7F4E7` | From the white logo; logo on red/dark, share-card text, splash on dark |
+| `bg` | `#FFFFFF` | `#0E0E10` | Not pure black, to avoid OLED smearing on scroll |
+| `surface` | `#F5F5F7` | `#1A1A1D` | Cards |
+| `surfaceElevated` | `#FFFFFF` + hairline border | `#232327` | Sheets/dialogs; dark mode uses lighter surfaces instead of shadows |
+| `textPrimary` / `textSecondary` | `#111114` / `#6B6B73` | `#F5F5F7` / `#9A9AA3` | |
+| `success` | `#1E9E5A` | `#3CCB7F` | Completed sets, PRs |
+| `warning` | `#D98E04` | `#F2B233` | |
+| `error` | `#B3261E` + icon | `#FF6B6B` + icon | Always paired with an icon/label so it's never confused with the brand red |
+
+- **Pillar colors** (radar, charts, tags): five distinct, colorblind-checked hues tuned to sit next to the brand red (e.g., Shooting = brand red, Stickhandling = blue, Skating = teal, Passing = amber, IQ/Conditioning = violet). Validate with a CVD simulator.
+- Generate `ColorScheme` manually from tokens (not `fromSeed`) so the exact brand red is preserved.
+
+### 3C. Typography
+- Primary font: **Inter** (variable, v4+, SIL OFL). It's modern, neutral, very legible at small sizes, and has true tabular figures. Use its optical-size axis (`opsz`) so large numerals and titles automatically get the tighter "Display" cut.
+  - Bundle locally in `assets/fonts/` (no runtime `google_fonts` fetching, since sessions must work offline); register the OFL license with `LicenseRegistry`
+  - Weights used: 400 (body), 500 (labels), 600 (titles), 700/800 (hero numerals, headlines)
+  - Tabular figures (`FontFeature.tabularFigures()`) for all numbers/timers so digits don't jitter
+  - Slightly tightened letter-spacing on Display/Headline sizes, default on body
+- Scale: Display (timers/hero stats) · Headline (screen titles) · Title (cards) · Body · Label (muted caps for metric labels).
+- Respect OS text scaling up to 200%; hero numerals scale with a cap so layouts don't break.
+
+### 3D. Shape, Spacing, Elevation
+- 4pt spacing grid; screen padding 20; card padding 16.
+- Radii: cards 20, buttons 14, chips/fields 12, sheets 28 (top corners).
+- Flat by default; elevation expressed by surface tone, plus a hairline border in light mode.
+
+### 3E. Motion & Navigation
+- **Navigation structure:** bottom nav per role shell with preserved tab state (`StatefulShellRoute`), large collapsing titles (`SliverAppBar.large`), modal bottom sheets for quick inputs/filters, full-screen immersive mode for active sessions.
+- **Transitions:** fade-through between tabs; shared-axis (horizontal) for drill-to-drill in a session; container transform from a routine/drill card into its detail; Hero for drill media.
+- **Durations/curves:** 150ms micro, 250–300ms standard, 400ms large; Material 3 emphasized easing. Token-driven via a `MotionTokens` ThemeExtension.
+- **Micro-interactions:** animated number counters on stat changes, progress ring fills, spring-y stepper taps, confetti-lite PR celebration (brief, skippable).
+- **Haptics:** light on stepper/selection, medium on Log Set, success pattern on session complete/PR.
+- **Platform feel:** iOS edge swipe-back and Android predictive back both supported; one shared visual language on both platforms.
+- Honor **Reduce Motion** (`MediaQuery.disableAnimations`): swap transitions to fades, disable counters/confetti.
+
+### 3F. Light & Dark Themes
+- `ThemeMode.system` by default; in-app **Appearance** setting (System / Light / Dark) in Me/Account, persisted per device (`shared_preferences`) and applied before first frame (no flash).
+- Both themes built from the same tokens; every component and screen must be designed and reviewed in both.
+- Coach Jeremy media and share cards: share cards always render in a fixed branded style regardless of theme.
+- Status bar/navigation bar icon brightness follows the active theme (`SystemUiOverlayStyle`).
+
+### 3G. Key Screen Patterns
+- **Train home:** today's suggestion card (large), quick-start setup chips (location/pucks), saved routines carousel, streak + weekly time ring.
+- **Active session:** dark-leaning immersive layout in both themes, media card top, huge input/timer center, sticky action bar bottom; minimal text.
+- **Rest timer:** full-width ring countdown with `−15s` / `+15s` / `Skip` as large pill buttons.
+- **Progress:** radar hero, PR Vault as a clean list of metric cards, lifetime totals as big-number tiles.
+- **Locker Room:** compact system-post cards with stick-tap button and verified badge; no input fields.
+- **Coach/Parent:** table-like dense lists with filter chips; same tokens, higher density.
+
+### 3H. Brand Assets & Usage
+Provided in `assets/`: maple-leaf "HTH" monogram (≈square, viewBox 1307×1251) and "How To Hockey" wordmark PNGs.
+
+| File | Color | Use |
+|---|---|---|
+| `logo-red.svg` / `.png` | `#CC3333` | Light theme headers, auth screens, splash (light), share cards on light |
+| `logo-white.svg` / `.png` | `#F7F4E7` (cream) | Dark theme, on brand-red backgrounds, splash (dark), app icon foreground, Android themed (monochrome) icon |
+| `HTH_TEXT_ONLY.png` | White on transparent, 1394×187 | "How To Hockey" wordmark: auth/welcome screen, Train home header, paywall, share-card footer |
+| `HTH_LOGO_WHITE_LARGE.png` | White on transparent, 2000×2000 | High-res source for app icon/splash generation and share cards |
+
+- [ ] Move to `assets/brand/` inside the Flutter project; render SVGs with `flutter_svg`; keep PNGs only as `flutter_launcher_icons` / `flutter_native_splash` sources (export at ≥1024px)
+- [ ] **App icon (iOS):** cream mark centered on solid brand-red square (no transparency allowed), ~70% scale; verify the thin maple outline stays legible at 29–40pt
+- [ ] **App icon (Android adaptive):** background = brand red; foreground = cream mark inside the 66% safe zone; monochrome layer from `logo-white.svg`
+- [ ] **Native splash:** light = `#FFFFFF` + red mark; dark = `#0E0E10` + red mark (or cream); Android 12+ splash icon sized to its circular mask
+- [ ] `BrandLogo` widget that picks the variant from the active theme (red on light, cream on dark/red)
+- [ ] `BrandWordmark` widget: the wordmark is single-color with alpha, so tint at runtime with `Image.asset(color:, colorBlendMode: BlendMode.srcIn)` (textPrimary/red on light, cream on dark/red) instead of shipping per-theme PNGs
+- [ ] Wordmark max display width ≈ 300pt so the 1394px source stays sharp at 3×; request an SVG version for larger uses
+- [ ] Clear space around the mark ≥ ¼ of its width; minimum in-app size 24dp
+- [ ] Small-size check: if the outline/monogram blurs below ~32px, request a simplified glyph for tiny sizes (notification icon, favicon-like uses)
+- [ ] Android notification small icon: single-color white silhouette derived from the mark
+
+### 3I. Design Deliverables & Tooling
+- [x] Logo mark (SVG + PNG, red and cream variants)
+- [x] "How To Hockey" wordmark (PNG) and large white logo (PNG)
+- [x] Font: Inter (variable)
+- [x] Primary color confirmed: `#CC3333`
+- [ ] Nice-to-have: wordmark as SVG
+- [ ] Figma file: tokens, components, and key screens in light + dark before Phase 3 UI work
+- [ ] Design tokens mirrored in `lib/design/` (single source; no hard-coded colors/sizes in features)
+- [ ] `widgetbook` catalog of design-system components with a light/dark toggle
+- [ ] Golden tests per component in light and dark, plus large text scale
+- [ ] Lint rule/review check: no raw `Color(...)`/`TextStyle(...)` outside `lib/design/`
+
+---
+
 ## Phase 1 — Foundations
 - [ ] `flutter create --platforms=ios,android --org com.howtohockey how_to_hockey`
 - [ ] Add flavors (dev/prod), bundle IDs, app icons, splash
@@ -159,7 +263,8 @@ parentLinks/{uid}                 childProfileIds[] (max 3)
 - [ ] Enable Crashlytics, Analytics, App Check (DeviceCheck/App Attest + Play Integrity)
 - [ ] Set up Firebase Emulator Suite (Auth, Firestore, Functions, Storage) for local dev
 - [ ] `functions/` TypeScript project with ESLint and unit tests
-- [ ] Theme: brand colors, typography, large touch targets (gloves/sweaty hands)
+- [ ] Design system foundation per §3: tokens, light/dark `ThemeData`, `ThemeExtension`s (pillar colors, motion), bundled Inter variable font, Appearance setting (System/Light/Dark)
+- [ ] App icon + splash per §3H via `flutter_launcher_icons` and `flutter_native_splash`; native splash matches first frame
 - [ ] CI: `flutter analyze`, `flutter test`, functions tests, rules tests on every PR
 
 **Exit Criteria:** App boots on both platforms against emulators; CI green.
@@ -402,7 +507,8 @@ An account can hold multiple roles (e.g., a coach who is also a parent). Each ro
 - [ ] Firestore/Storage rules test suite (emulator) covering every role: player, parent, coach, non-member
 - [ ] App Check enforced on Firestore, Functions, Storage
 - [ ] Performance: video preloading, list virtualization, cold-start budget
-- [ ] Accessibility: dynamic type, contrast, VoiceOver/TalkBack labels on timers and inputs
+- [ ] Accessibility: dynamic type, contrast (AA in both themes), VoiceOver/TalkBack labels on timers and inputs, Reduce Motion
+- [ ] Design QA pass: every screen reviewed in light + dark, small + large phones, 200% text
 - [ ] Integration tests for core loop (setup → generate → session → summary → feed)
 - [ ] Privacy: privacy policy, App Store privacy nutrition labels, Play Data Safety form, COPPA-compliant parental consent flow
 - [ ] Store category/age rating review (kids-targeted content rules for ads/analytics — no third-party ad SDKs)
