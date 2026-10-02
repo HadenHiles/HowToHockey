@@ -6,7 +6,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 > Update this block at the end of every work session.
 
 - **Current phase:** Phase 1 — Foundations (in progress)
-- **Next task:** Verify the new CI workflow on GitHub before advancing to Phase 2 drill models; continue Samsung S24 (Live) debug testing.
+- **Next task:** Confirm the normal app boots on both mobile platforms to finish the Phase 1 boot exit check, then begin Phase 2 drill models; keep production release setup deferred.
 - **Blockers:** None for local Android development. Production signing, Play Integrity/DeviceCheck setup, and enforcement are explicitly deferred until release preparation; App Attest is already verified on a signed physical iPhone.
 - **Last updated:** 2026-10-02
 
@@ -29,7 +29,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | 2026-10-02 | Diagnosed SwiftPM failure as Git's explicit-only bare-repository policy; verified the unsigned iOS release build with an approved process-scoped exception, documented the command, and refreshed Swift package locks | — |
 | 2026-10-02 | Verified fresh production App Attest token exchange on a signed iPhone; added provider-specific device tests and an opt-in production verification build; replaced Android release debug signing with private upload-key configuration and documented remaining console steps; analyze, five unit/widget tests, and Android debug build pass; unsigned Android release is explicitly rejected | — |
 | 2026-10-02 | Clarified the live-Firebase Samsung debug workflow; deferred production App Check, upload signing, and Play Console setup at the user's request so local development can continue with CI next | — |
-| 2026-10-02 | Added SHA-pinned CI for Flutter analysis/tests/Android debug build, Functions lint/tests/build, and isolated demo-project rules tests; all local checks and 13 rules tests pass; GitHub run awaits publication; rules tooling retains three moderate upstream telemetry audit entries | — |
+| 2026-10-02 | Added SHA-pinned CI for Flutter analysis/tests/Android debug build, Functions lint/tests/build, and isolated demo-project rules tests; all local checks and 13 rules tests pass; all three jobs passed in [GitHub CI run 37056693374](https://github.com/HadenHiles/HowToHockey/actions/runs/37056693374); rules tooling retains three moderate upstream telemetry audit entries | `3dcbcc4` |
 
 ### How to Resume a Session
 1. Read **Current Status**, then the current phase's unchecked items.
@@ -329,7 +329,7 @@ Provided in `assets/`: maple-leaf "HTH" monogram (≈square, viewBox 1307×1251)
 - [x] Design system foundation per §3: tokens, light/dark `ThemeData`, `ThemeExtension`s (pillar colors, motion), bundled Inter variable font, Appearance setting (System/Light/Dark)
 - [x] App icon + splash per §3H via `flutter_launcher_icons` and `flutter_native_splash`; native splash matches first frame
 - [x] CI: `flutter analyze`, `flutter test`, functions tests, rules tests on every PR
-  - [ ] Verify a green GitHub Actions run before advancing to Phase 2
+  - [x] Verify a green GitHub Actions run before advancing to Phase 2
 
 **Exit Criteria:** App boots on both platforms against emulators; CI green.
 
