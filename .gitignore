@@ -35,6 +35,8 @@ migrate_working_dir/
 /coverage/
 /functions/node_modules/
 /functions/lib/
+/rules_test/node_modules/
+/rules_test/*-debug.log
 
 # Symbolication related
 app.*.symbols

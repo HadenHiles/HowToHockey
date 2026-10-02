@@ -23,6 +23,45 @@ DeviceCheck private key is needed for this Android debug workflow. Leave
 Production signing, provider verification, and store setup below are deferred
 until release preparation and do not block local development.
 
+### Continuous integration and rules tests
+
+The GitHub Actions workflow runs on every pull request and push to `master`:
+
+- Flutter analysis, unit/widget tests, and an Android debug APK build.
+- Functions lint, unit tests, and TypeScript build with Node 24.
+- Firestore and Storage rules tests with Node 24 and Java 21.
+
+Device-only App Check integration tests are intentionally not part of the
+headless Flutter test job. CI does not deploy anything or need Firebase secrets.
+
+Run the same checks locally:
+
+```sh
+flutter analyze
+flutter test test
+flutter build apk --debug
+npm ci --prefix functions
+npm --prefix functions run lint
+npm --prefix functions test
+npm --prefix functions run build
+npm ci --prefix rules_test
+npm --prefix rules_test test
+```
+
+The rules runner starts only Firestore and Storage emulators and shuts them down
+after testing. It uses `demo-how-to-hockey`, never the live Firebase project.
+The test harness rejects missing or non-local emulator addresses. Tests seed
+existing resources, then verify that all client access remains denied for
+unauthenticated users, anonymous users, owners, other players, coaches, and admin
+claims. This baseline must evolve alongside rules as features introduce access.
+
+The rules-test package has scoped dependency overrides for patched gRPC, FTP,
+and UUID versions. These are development tooling only, not app or Functions
+dependencies. Firebase CLI 15.32.1 still brings in an OpenTelemetry baggage
+allocation advisory through its Pub/Sub dependency (three moderate audit
+entries); the rules runner does not use Pub/Sub. Revisit this when updating the
+CLI rather than forcing an incompatible telemetry major version.
+
 This project is a starting point for a Flutter application.
 
 A few resources to get you started if this is your first Flutter project:
