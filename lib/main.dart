@@ -30,6 +30,10 @@ Future<void> main() async {
     FirebaseStorage.instance.useStorageEmulator(emulatorHost, 9199);
   }
 
+  if (FirebaseAuth.instance.currentUser == null) {
+    await FirebaseAuth.instance.signInAnonymously();
+  }
+
   runApp(const MyApp());
 }
 
