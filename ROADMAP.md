@@ -6,8 +6,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 > Update this block at the end of every work session.
 
 - **Current phase:** Phase 1 — Foundations (in progress)
-- **Next task:** Register App Check providers for the iOS and Android apps in Firebase/Apple/Play consoles and verify on real devices.
-- **Blockers:** Console-side App Check provider registration is required before production attestation can be verified.
+- **Next task:** Build the design-system foundation; App Check production verification remains blocked on console enrollment and real-device access.
+- **Blockers:** Register the iOS and Android App Check providers in Firebase/Apple/Play consoles and verify production attestation on real devices.
 - **Last updated:** 2026-10-02
 
 ### Session Log
@@ -19,7 +19,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | 2026-10-02 | Added startup anonymous sign-in when no user exists; project provider enablement remains pending | — |
 | 2026-10-02 | Enabled the Anonymous provider in Firebase Authentication | — |
 | 2026-10-02 | Installed Riverpod, GoRouter, Freezed, JSON serialization, and code-generation packages | — |
-| 2026-10-02 | Wired Crashlytics, Analytics, and App Check; analyze/tests and Android build pass; iOS build blocked by Swift package tag resolution | — |
+| 2026-10-02 | Wired Crashlytics, Analytics, and App Check; analyze/tests and Android build pass; iOS build blocked by Swift package tag resolution | `976647b` |
+| 2026-10-02 | Configured local Firebase emulators and deny-by-default rules; added TypeScript Functions, linting, unit tests, and health-check callable | — |
 
 ### How to Resume a Session
 1. Read **Current Status**, then the current phase's unchecked items.
@@ -303,9 +304,9 @@ Provided in `assets/`: maple-leaf "HTH" monogram (≈square, viewBox 1307×1251)
   - [x] Enable the Anonymous provider in Firebase Console for `how-to-hockey`
 - [x] Install core packages (Riverpod, go_router, freezed, Firebase SDKs)
 - [x] Wire Crashlytics error reporting, Analytics collection, and App Check (debug providers for development; App Attest/DeviceCheck + Play Integrity for production)
-- [ ] Register App Check providers for the iOS and Android apps in Firebase/Apple/Play consoles and verify production attestation on real devices
-- [ ] Set up Firebase Emulator Suite (Auth, Firestore, Functions, Storage) for local dev
-- [ ] `functions/` TypeScript project with ESLint and unit tests
+- [ ] Register App Check providers for the iOS and Android apps in Firebase/Apple/Play consoles and verify production attestation on real devices (blocked on console enrollment and real-device access)
+- [x] Set up Firebase Emulator Suite (Auth, Firestore, Functions, Storage) for local dev; Firestore and Storage emulators use deny-by-default rules
+- [x] `functions/` TypeScript project with ESLint and unit tests
 - [ ] Design system foundation per §3: tokens, light/dark `ThemeData`, `ThemeExtension`s (pillar colors, motion), bundled Inter variable font, Appearance setting (System/Light/Dark)
 - [ ] App icon + splash per §3H via `flutter_launcher_icons` and `flutter_native_splash`; native splash matches first frame
 - [ ] CI: `flutter analyze`, `flutter test`, functions tests, rules tests on every PR
