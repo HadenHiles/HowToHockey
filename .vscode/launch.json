@@ -58,6 +58,7 @@
   "compounds": [
     {
       "name": "Android + iOS Emulators (Live)",
+      "preLaunchTask": "Prepare Android + iOS emulators",
       "configurations": [
         "Android Emulator (Live)",
         "iOS Simulator (Live)"

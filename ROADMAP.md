@@ -5,7 +5,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 ## 📍 Current Status
 > Update this block at the end of every work session.
 
-- **Current phase:** UX-first — actual app screens (in progress); swipeable training workflow and optional per-drill rest implemented; Phase 2 backend/content work paused
+- **Current phase:** UX-first — actual app screens (in progress); swipeable training workflow and optional per-drill rest implemented; dual-device CLI launches verified, VS Code compound startup under validation; Phase 2 backend/content work paused
 - **Next task:** Review the revised training workflow, then continue actual Progress screens (radar, PR Vault, history/detail, share-card layouts), followed by Team, Me, Parent/Coach, and account/commerce/program flows.
 - **Blockers:** None for screen development: local sample data and illustrated media replace live content. Real drill media remains necessary when Phase 2 resumes. Production release setup remains deferred.
 - **Last updated:** 2026-10-05
@@ -13,6 +13,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 ### Session Log
 | Date | Summary | Commit |
 |---|---|---|
+| 2026-10-05 | Revised compound startup to prepare both virtual devices sequentially before starting either debugger, rather than relying only on each debug profile's boot task; individual profile boot checks remain available. CLI launch success does not verify the VS Code compound launch itself | — |
+| 2026-10-05 | Restarted VS Code Dart analysis after user enabled macOS automation permission; full Problems panel now reports no errors, Flutter analysis passes, and committed compound preparation plus troubleshooting documentation | — |
 | 2026-10-02 | Roadmap, product decisions, design system, brand assets finalized | `2e4daf1` |
 | 2026-10-02 | Created the iOS/Android Flutter app, aligned bundle IDs, moved brand assets, configured Firebase apps, and added `firebase_core` | — |
 | 2026-10-02 | Wired Firebase Auth, Firestore, Functions, and Storage to local emulators with Emulators/Live launch profiles | — |
@@ -37,6 +39,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | 2026-10-05 | Corrected UX-first scope to actual app screens: normal Firebase-backed launches now open the Player shell, moved UI/state into the app layer, removed separate preview flag/profiles/banners and timer fast-forward control; hot-restarted the connected iPhone Live app and confirmed Train renders with no runtime errors; analysis and all 20 unit/widget tests pass | — |
 | 2026-10-05 | Reworked actual training UX into swipeable drills and workout overview with independent set progress, retained inputs, elapsed/estimated active training time, explicit Finish workout, and optional inline rest off by default; per-drill rest preferences persist on-device and are editable from session/detail; analysis, 29 unit/widget tests, and normal Firebase-backed iOS Simulator integration test pass | — |
 | 2026-10-05 | Added Android + iOS Emulators (Live) compound debug launch, individual virtual-device profiles, boot/readiness tasks, and usage documentation; user selected live Firebase; committed the launch setup together with all pending training UX changes | — |
+| 2026-10-05 | Investigated reported launch/editor errors: current source and launch/tasks have no diagnostics, CLI analysis passes, editor problems reference deleted preview files, and pasted syntax errors predate successful hot reloads. Ran both boot tasks and simultaneous live-Firebase Flutter launches, confirmed Train in both widget trees and no runtime errors; documented stale-editor recovery without masking diagnostics | — |
 
 ### How to Resume a Session
 1. Read **Current Status**, then the current phase's unchecked items.

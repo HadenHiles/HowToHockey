@@ -57,7 +57,10 @@ suite.
 ### Android and iOS emulators together (live Firebase)
 
 Select **Android + iOS Emulators (Live)** in VS Code's Run and Debug panel and
-press **F5**. This compound starts two independent Flutter debug sessions:
+press **F5**. The compound first runs **Prepare Android + iOS emulators**,
+which boots Android and then iOS and waits for both to be ready before
+starting either Flutter debug session. The individual profiles retain their
+own boot checks when launched separately:
 
 - **Android Emulator (Live):** boots/reuses `Medium_Phone_API_36.0` on
   `emulator-5554` and waits for Android to finish booting.
@@ -82,6 +85,16 @@ UUID in both the boot script and [.vscode/launch.json](.vscode/launch.json).
 
 The existing **Emulators** profile still means a selected mobile device backed
 by the separately started local Firebase Emulator Suite.
+
+If Problems lists deleted files under `lib/preview/` or the old
+`integration_test/ux_preview_test.dart`, close those obsolete editor tabs
+without saving them, then run **Dart: Restart Analysis Server** from the Command
+Palette. If diagnostics remain, use **Developer: Reload Window**. Do not
+recreate the deleted preview files or exclude current app code from analysis.
+The Debug Console may retain failed hot-reload output from earlier edits;
+check the output from a fresh launch before treating it as a current failure.
+App Check debug-token registration messages and Gradle compatibility warnings
+alone do not mean the app failed to launch.
 
 ### Local testing on the Samsung S24
 

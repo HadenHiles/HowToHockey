@@ -2,6 +2,12 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Prepare Android + iOS emulators",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Boot Android emulator", "Boot iOS simulator"],
+      "problemMatcher": []
+    },
+    {
       "label": "Boot Android emulator",
       "type": "process",
       "command": "bash",
