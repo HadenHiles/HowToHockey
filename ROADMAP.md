@@ -10,9 +10,12 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 - **Blockers:** None for screen development: local sample data and illustrated media replace live content. Real drill media remains necessary when Phase 2 resumes. Production release setup remains deferred.
 - **Last updated:** 2026-10-05
 
+Detailed Copilot development notes live in [.github/COPILOT_REFERENCE.md](.github/COPILOT_REFERENCE.md); keep the public README focused on the app's purpose and high-level setup.
+
 ### Session Log
 | Date | Summary | Commit |
 |---|---|---|
+| 2026-10-05 | Simplified the public README to the app purpose, development status, high-level setup, and checks; preserved detailed development/release notes in .github/COPILOT_REFERENCE.md and linked them from agent instructions | — |
 | 2026-10-05 | Revised compound startup to prepare both virtual devices sequentially before starting either debugger, rather than relying only on each debug profile's boot task; individual profile boot checks remain available. CLI launch success does not verify the VS Code compound launch itself | — |
 | 2026-10-05 | Restarted VS Code Dart analysis after user enabled macOS automation permission; full Problems panel now reports no errors, Flutter analysis passes, and committed compound preparation plus troubleshooting documentation | — |
 | 2026-10-02 | Roadmap, product decisions, design system, brand assets finalized | `2e4daf1` |
@@ -622,7 +625,7 @@ Phases **1–7** deliver the full free tier + solo core loop. Phase 8 (monetizat
 - **Training workflow:** User requested a Macrofactor-style workout flow: swipe between drills or open an overview with workout status/info/time, rather than forced sequential rest screens. Rest is optional, off by default (user-confirmed), with per-drill enable/duration settings saved on this device for now. Timed drill inputs pause when leaving their page; rest does not block swiping/logging. Local active-time estimates are disclosed and are not production leaderboard accounting. Backend resume/history/audio/background notification requirements remain outstanding. *(UX-first, 2026-10-05)*
 - **UX-first actual screens:** Pause Phases 2–14 backend/content work to build all planned screens in the normal Flutter app with placeholder data/media, then connect functionality to those same screens. The earlier separate opt-in preview was a misunderstanding and is superseded by the user's clarification. Flutter replaces the Figma-before-UI prerequisite. Work Player training first, then remaining Player, Parent/Coach, and account/commerce/program flows. *(UX-first, 2026-10-05)*
 - **Local testing priority:** Use the Samsung S24 debug launch against live Firebase with its registered App Check debug token; defer remaining production signing, Play Console, DeviceCheck, and enforcement work until release preparation. This deferred Phase 1 item does not block local development or the remaining foundation work. *(Phase 1)*
-- **iOS SwiftPM Git policy:** Use an approved process-scoped `safe.bareRepository=all` exception for trusted iOS dependency builds when the machine requires explicit bare repositories; do not weaken the global Git policy or replace SwiftPM. See the build command in `README.md`. *(Phase 1)*
+- **iOS SwiftPM Git policy:** Use an approved process-scoped `safe.bareRepository=all` exception for trusted iOS dependency builds when the machine requires explicit bare repositories; do not weaken the global Git policy or replace SwiftPM. See the build command in [.github/COPILOT_REFERENCE.md](.github/COPILOT_REFERENCE.md#ios-builds-with-restricted-bare-git-repositories). *(Phase 1)*
 - **Free-tier routines:** Free users can generate custom routines but may keep only **3 saved** at a time. *(Phase 5)*
 - **Coach Pro includes Player Pro.** *(Phase 8)*
 - **Child profiles on Free:** Free accounts can create and manage child player profiles. *(Phases 4, 10)*
