@@ -7,23 +7,11 @@ import '../tokens/app_spacing.dart';
 import '../tokens/app_typography.dart';
 
 abstract final class HockeyTheme {
-  static final ThemeData light = _buildTheme(
-    brightness: Brightness.light,
-    colors: AppColors.light,
-    pillars: PillarColors.light,
-  );
+  static final ThemeData light = _buildTheme(brightness: Brightness.light, colors: AppColors.light, pillars: PillarColors.light);
 
-  static final ThemeData dark = _buildTheme(
-    brightness: Brightness.dark,
-    colors: AppColors.dark,
-    pillars: PillarColors.dark,
-  );
+  static final ThemeData dark = _buildTheme(brightness: Brightness.dark, colors: AppColors.dark, pillars: PillarColors.dark);
 
-  static ThemeData _buildTheme({
-    required Brightness brightness,
-    required AppColors colors,
-    required PillarColors pillars,
-  }) {
+  static ThemeData _buildTheme({required Brightness brightness, required AppColors colors, required PillarColors pillars}) {
     final dark = brightness == Brightness.dark;
     final colorScheme = ColorScheme(
       brightness: brightness,
@@ -51,9 +39,7 @@ abstract final class HockeyTheme {
       surfaceContainerLow: colors.surface,
       surfaceContainer: colors.surface,
       surfaceContainerHigh: colors.elevatedSurface,
-      surfaceContainerHighest: dark
-          ? const Color(0xFF2B2B30)
-          : const Color(0xFFEDEDF0),
+      surfaceContainerHighest: dark ? const Color(0xFF2B2B30) : const Color(0xFFEDEDF0),
       onSurfaceVariant: colors.textSecondary,
       outline: colors.textSecondary,
       outlineVariant: colors.border,
@@ -65,10 +51,7 @@ abstract final class HockeyTheme {
       surfaceTint: colors.brandPrimary,
     );
 
-    final textTheme = AppTypography.textTheme(colors.textPrimary).apply(
-      bodyColor: colors.textPrimary,
-      displayColor: colors.textPrimary,
-    );
+    final textTheme = AppTypography.textTheme(colors.textPrimary).apply(bodyColor: colors.textPrimary, displayColor: colors.textPrimary);
 
     return ThemeData(
       useMaterial3: true,
@@ -77,18 +60,8 @@ abstract final class HockeyTheme {
       scaffoldBackgroundColor: colors.background,
       fontFamily: AppTypography.fontFamily,
       textTheme: textTheme,
-      extensions: <ThemeExtension<dynamic>>[
-        colors,
-        pillars,
-        const MotionTokens(),
-      ],
-      appBarTheme: AppBarTheme(
-        backgroundColor: colors.background,
-        foregroundColor: colors.textPrimary,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        titleTextStyle: textTheme.titleLarge,
-      ),
+      extensions: <ThemeExtension<dynamic>>[colors, pillars, const MotionTokens()],
+      appBarTheme: AppBarTheme(backgroundColor: colors.background, foregroundColor: colors.textPrimary, elevation: 0, scrolledUnderElevation: 0, titleTextStyle: textTheme.titleLarge),
       cardTheme: CardThemeData(
         color: colors.elevatedSurface,
         elevation: 0,
@@ -101,27 +74,24 @@ abstract final class HockeyTheme {
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
           minimumSize: const Size.fromHeight(48),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.button),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
+          foregroundColor: dark ? colors.brandPrimaryOnDark : colors.brandPrimary,
           minimumSize: const Size.fromHeight(48),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.button),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadii.button)),
           side: BorderSide(color: colors.border),
         ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: dark ? colors.brandPrimaryOnDark : colors.brandPrimary, minimumSize: const Size(48, 48)),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: colors.surface,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.md,
-        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: AppSpacing.md, vertical: AppSpacing.md),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AppRadii.control),
           borderSide: BorderSide(color: colors.border),
@@ -136,11 +106,29 @@ abstract final class HockeyTheme {
         ),
       ),
       dividerTheme: DividerThemeData(color: colors.border, thickness: 1),
-      segmentedButtonTheme: SegmentedButtonThemeData(
-        style: ButtonStyle(
-          minimumSize: WidgetStateProperty.all(const Size(0, 48)),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: colors.surface,
+        indicatorColor: colors.primaryContainer,
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            color: states.contains(WidgetState.selected)
+                ? dark
+                      ? colors.brandPrimaryOnDark
+                      : colors.brandPrimary
+                : colors.textSecondary,
+          ),
+        ),
+        labelTextStyle: WidgetStateProperty.resolveWith(
+          (states) => textTheme.labelMedium?.copyWith(
+            color: states.contains(WidgetState.selected)
+                ? dark
+                      ? colors.brandPrimaryOnDark
+                      : colors.brandPrimary
+                : colors.textSecondary,
+          ),
         ),
       ),
+      segmentedButtonTheme: SegmentedButtonThemeData(style: ButtonStyle(minimumSize: WidgetStateProperty.all(const Size(0, 48)))),
     );
   }
 }

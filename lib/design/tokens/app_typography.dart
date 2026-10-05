@@ -24,6 +24,6 @@ abstract final class AppTypography {
   }
 
   static TextStyle _style({required double size, required int weight, required Color color, double? letterSpacing, double? height}) {
-    return TextStyle(fontFamily: fontFamily, fontSize: size, fontWeight: FontWeight.values[weight ~/ 100 - 1], fontVariations: [FontVariation('wght', weight.toDouble()), FontVariation.opticalSize(size.clamp(14, 32).toDouble())], color: color, letterSpacing: letterSpacing, height: height);
+    return TextStyle(fontFamily: fontFamily, fontSize: size, fontWeight: FontWeight.values[weight ~/ 100 - 1], fontFeatures: const [FontFeature.tabularFigures()], fontVariations: [FontVariation('wght', weight.toDouble()), FontVariation.opticalSize(size.clamp(14, 32).toDouble())], color: color, letterSpacing: letterSpacing, height: height);
   }
 }

@@ -109,6 +109,7 @@ flutter:
 
   assets:
     - assets/fonts/OFL.txt
+    - assets/brand/HTH_TEXT_ONLY.png
 
   fonts:
     - family: Inter

@@ -4,6 +4,39 @@ A new Flutter project.
 
 ## Getting Started
 
+### UX-first design preview
+
+Select **UX Preview (Local)** in VS Code and choose an iOS/Android device, or
+**iPhone (UX Preview)** for the connected iPhone. Run from the command line with:
+
+```sh
+flutter run --dart-define=UX_PREVIEW=true -d <mobile-device-id>
+```
+
+This is a separate, explicitly labeled design preview. It skips Firebase
+initialization, authentication, telemetry setup, purchases, and server writes.
+Use it without Firebase emulators or real drill videos. Training interactions
+are held in local Riverpod state and reset on restart; only Appearance is
+persisted. Do not combine `UX_PREVIEW` with `USE_EMULATORS` or `VERIFY_APP_CHECK`.
+Existing Live and Emulators launches retain their original behavior.
+
+The first review slice includes Player navigation, Train home, equipment setup,
+100-point focus controls, a fixed routine, drill library/detail, all six set
+logging styles, rest, and summary. Illustrated rink media is deliberately
+marked **DEMO MEDIA**. Timed sets have a preview-only fast-forward action.
+Setup/focus choices are interactive but do not generate/filter the sample
+workout. Progress/Team are initial sample overviews, not completed designs;
+Parent/Coach, onboarding, commerce, and programs follow in the ordered
+[UX Preview milestone](ROADMAP.md#ux-preview--design-before-backend-current-priority).
+Preview screens do not satisfy production roadmap acceptance criteria.
+
+Check the real offline startup path on a mobile simulator/device:
+
+```sh
+flutter test integration_test/ux_preview_test.dart \
+  -d <mobile-device-id> --dart-define=UX_PREVIEW=true
+```
+
 ### Local testing on the Samsung S24
 
 Select **Samsung S24 (Live)** in VS Code's Run and Debug panel and press **F5**.
