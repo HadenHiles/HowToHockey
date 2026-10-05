@@ -16,16 +16,34 @@ Firebase startup, anonymous sign-in, App Check, and telemetry configuration
 retain their existing behavior. Local Riverpod providers currently supply
 sample content and in-memory training state; persistence and server features
 will be connected to these same screens as the roadmap resumes. Appearance
-already persists on the device. Workouts are not yet saved to history or
-published to teams, and purchases remain unimplemented.
+and per-drill rest settings already persist on the device. Workouts are not yet
+saved to history or published to teams, and purchases remain unimplemented.
 
 The first slice includes Train home, setup/focus, routine detail, drill
-library/detail, all six logging styles, real countdown controls, rest, and
-summary. Setup/focus choices do not yet generate/filter the sample routine.
+library/detail, all six logging styles, real countdown controls, optional rest,
+and summary. Setup/focus choices do not yet generate/filter the sample routine.
 Media illustrations remain labeled placeholders. Progress/Team are starter
 screens; Parent/Coach, account, commerce, and programs follow in the ordered
 [UX-first milestone](ROADMAP.md#ux-first--actual-app-screens-current-priority).
 Building a screen does not mark its unimplemented backend criteria complete.
+
+During a workout, swipe between drills or open **Workout overview** to inspect
+set completion and jump to any drill. Logging a set stays on that drill; sets
+can be completed out of order. Draft inputs survive swiping and opening the
+overview; timed drill inputs pause when leaving the drill. Finish the workout
+once all sets are logged to open the summary.
+
+**Drill settings** is available in the session and drill detail. Rest is off
+by default. Enable it per drill and select 15–600 seconds; this preference is
+saved for that drill on this device, not synced to an account. Enabled rest
+starts an inline countdown after logging a set, with `−15s`, `+15s`, and
+**Skip rest** controls. It never blocks logging or navigation and is omitted
+after the final workout set.
+
+Elapsed time includes rest and is fixed when the final set is logged. Active
+training totals use the logged timer duration for timed sets and the catalog's
+estimate for untimed sets, explicitly labeled as estimated when applicable.
+These local UX totals are not production history or leaderboard metrics.
 
 Test the normal Firebase-backed entrypoint and Player flow on a mobile device:
 
@@ -35,6 +53,35 @@ flutter test integration_test/player_flow_test.dart -d <mobile-device-id>
 
 Add `--dart-define=USE_EMULATORS=true` when running against the local Firebase
 suite.
+
+### Android and iOS emulators together (live Firebase)
+
+Select **Android + iOS Emulators (Live)** in VS Code's Run and Debug panel and
+press **F5**. This compound starts two independent Flutter debug sessions:
+
+- **Android Emulator (Live):** boots/reuses `Medium_Phone_API_36.0` on
+  `emulator-5554` and waits for Android to finish booting.
+- **iOS Simulator (Live):** boots/reuses the configured iPhone 16 Plus and opens
+  Simulator. Its build uses the process-scoped SwiftPM Git-policy exception
+  described below.
+
+Both apps use **live Firebase**, not the local Firebase Emulator Suite.
+No Firebase emulator process is started. Debug App Check tokens for these
+virtual devices may need registering in the Firebase console before accessing
+App Check-protected services. Stopping either debug session stops both; the
+virtual devices stay open for the next launch.
+
+The device-specific profiles also work individually. This setup requires macOS,
+Xcode, Flutter, and the existing Android AVD. The boot tasks are in
+[.vscode/tasks.json](.vscode/tasks.json), with checks in
+[tool/boot_mobile_emulator.sh](tool/boot_mobile_emulator.sh). Android SDK discovery
+uses `ANDROID_HOME`, then `ANDROID_SDK_ROOT`, then the standard macOS SDK path.
+If another AVD occupies `emulator-5554`, the task fails explicitly rather than
+launching on the wrong device. If you recreate the iPhone Simulator, update its
+UUID in both the boot script and [.vscode/launch.json](.vscode/launch.json).
+
+The existing **Emulators** profile still means a selected mobile device backed
+by the separately started local Firebase Emulator Suite.
 
 ### Local testing on the Samsung S24
 

@@ -9,6 +9,29 @@
       "toolArgs": ["--dart-define=USE_EMULATORS=true"]
     },
     {
+      "name": "Android Emulator (Live)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "emulator-5554",
+      "preLaunchTask": "Boot Android emulator",
+      "toolArgs": ["--dart-define=USE_EMULATORS=false"]
+    },
+    {
+      "name": "iOS Simulator (Live)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "57C6D957-4A0B-40FD-B10F-73364BDF931B",
+      "preLaunchTask": "Boot iOS simulator",
+      "toolArgs": ["--dart-define=USE_EMULATORS=false"],
+      "env": {
+        "GIT_CONFIG_COUNT": "1",
+        "GIT_CONFIG_KEY_0": "safe.bareRepository",
+        "GIT_CONFIG_VALUE_0": "all"
+      }
+    },
+    {
       "name": "Live",
       "request": "launch",
       "type": "dart",
@@ -30,6 +53,16 @@
       "program": "lib/main.dart",
       "deviceId": "00008140-001824D63C53001C",
       "toolArgs": ["--dart-define=USE_EMULATORS=false"]
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Android + iOS Emulators (Live)",
+      "configurations": [
+        "Android Emulator (Live)",
+        "iOS Simulator (Live)"
+      ],
+      "stopAll": true
     }
   ]
 }

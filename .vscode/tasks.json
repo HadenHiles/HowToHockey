@@ -1,0 +1,19 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Boot Android emulator",
+      "type": "process",
+      "command": "bash",
+      "args": ["${workspaceFolder}/tool/boot_mobile_emulator.sh", "android"],
+      "problemMatcher": []
+    },
+    {
+      "label": "Boot iOS simulator",
+      "type": "process",
+      "command": "bash",
+      "args": ["${workspaceFolder}/tool/boot_mobile_emulator.sh", "ios"],
+      "problemMatcher": []
+    }
+  ]
+}

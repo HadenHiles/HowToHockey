@@ -22,6 +22,7 @@ void main() {
     expect(find.text('View workout'), findsOneWidget);
     final container = ProviderScope.containerOf(tester.element(find.byType(HockeyApp)));
     final router = container.read(appRouterProvider);
+    await container.read(drillRestSettingsProvider.notifier).configure(sampleDrills.first.id, (enabled: false, seconds: 45));
     router.go('/setup');
     await tester.pumpAndSettle();
     await tester.tap(find.text('Next: choose your focus'));
@@ -33,16 +34,26 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Log set'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Skip rest'));
-    await tester.pumpAndSettle();
     await tester.tap(find.text('Log set'));
     await tester.pumpAndSettle();
     expect(container.read(trainingSessionProvider).logs.length, 2);
+    expect(find.text('Skip rest'), findsNothing);
+    await tester.drag(find.byType(PageView), const Offset(-400, 0));
+    await tester.pumpAndSettle();
+    expect(container.read(trainingSessionProvider).drillIndex, 1);
+    await tester.tap(find.byTooltip('Workout overview'));
+    await tester.pumpAndSettle();
+    expect(find.text('Workout overview'), findsOneWidget);
+    await tester.tap(find.text('Quick-release wrist shots'));
+    await tester.pumpAndSettle();
+    expect(container.read(trainingSessionProvider).drillIndex, 0);
 
     container.read(trainingSessionProvider.notifier).start([sampleDrills.first.copyWith(defaultPrescription: sampleDrills.first.defaultPrescription.copyWith(sets: 1))]);
     router.go('/session');
     await tester.pumpAndSettle();
     await tester.tap(find.text('Log set'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Finish workout'));
     await tester.pumpAndSettle();
     expect(find.text('Shots logged'), findsOneWidget);
     expect(container.read(trainingSessionProvider).finished, isTrue);

@@ -5,8 +5,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 ## 📍 Current Status
 > Update this block at the end of every work session.
 
-- **Current phase:** UX-first — actual app screens (in progress); Phase 2 backend/content work paused
-- **Next task:** Continue building the actual Progress screens (radar, PR Vault, history/detail, share-card layouts), then Team, Me, Parent/Coach, and account/commerce/program flows; incorporate visual feedback as screens develop.
+- **Current phase:** UX-first — actual app screens (in progress); swipeable training workflow and optional per-drill rest implemented; Phase 2 backend/content work paused
+- **Next task:** Review the revised training workflow, then continue actual Progress screens (radar, PR Vault, history/detail, share-card layouts), followed by Team, Me, Parent/Coach, and account/commerce/program flows.
 - **Blockers:** None for screen development: local sample data and illustrated media replace live content. Real drill media remains necessary when Phase 2 resumes. Production release setup remains deferred.
 - **Last updated:** 2026-10-05
 
@@ -35,6 +35,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | 2026-10-05 | Verified emulator-backed app launch on Android API 36 and iOS Simulator; enabled cleartext only in Android debug builds; added Freezed drill models, Firestore timestamp conversion, catalog schema, and guarded Firebase seeder; local emulator upload smoke test passed | — |
 | 2026-10-05 | Initially implemented the UX-first request as a separate preview (later corrected below); added Player navigation, Train/setup/focus/routine/library/detail, six logging styles, rest and summary; analysis, 20 unit/widget tests, and offline iOS integration test passed | `bf65929` |
 | 2026-10-05 | Corrected UX-first scope to actual app screens: normal Firebase-backed launches now open the Player shell, moved UI/state into the app layer, removed separate preview flag/profiles/banners and timer fast-forward control; hot-restarted the connected iPhone Live app and confirmed Train renders with no runtime errors; analysis and all 20 unit/widget tests pass | — |
+| 2026-10-05 | Reworked actual training UX into swipeable drills and workout overview with independent set progress, retained inputs, elapsed/estimated active training time, explicit Finish workout, and optional inline rest off by default; per-drill rest preferences persist on-device and are editable from session/detail; analysis, 29 unit/widget tests, and normal Firebase-backed iOS Simulator integration test pass | — |
+| 2026-10-05 | Added Android + iOS Emulators (Live) compound debug launch, individual virtual-device profiles, boot/readiness tasks, and usage documentation; user selected live Firebase; committed the launch setup together with all pending training UX changes | — |
 
 ### How to Resume a Session
 1. Read **Current Status**, then the current phase's unchecked items.
@@ -268,8 +270,8 @@ Modern, calm, data-forward, in the style of **MacroFactor Workouts** but with Ho
 
 ### 3G. Key Screen Patterns
 - **Train home:** today's suggestion card (large), quick-start setup chips (location/pucks), saved routines carousel, streak + weekly time ring.
-- **Active session:** dark-leaning immersive layout in both themes, media card top, huge input/timer center, sticky action bar bottom; minimal text.
-- **Rest timer:** full-width ring countdown with `−15s` / `+15s` / `Skip` as large pill buttons.
+- **Active session:** dark-leaning immersive layout in both themes, swipeable drill pages, media card top, huge input/timer center, sticky action bar bottom; workout overview with completion status, drill jumping, elapsed and training time.
+- **Rest timer:** optional inline countdown, off by default and configured per drill; `−15s` / `+15s` / `Skip` controls do not block drill navigation or logging. *(User-approved workflow revision, 2026-10-05)*
 - **Progress:** radar hero, PR Vault as a clean list of metric cards, lifetime totals as big-number tiles.
 - **Locker Room:** compact system-post cards with stick-tap button and verified badge; no input fields.
 - **Coach/Parent:** table-like dense lists with filter chips; same tokens, higher density.
@@ -360,7 +362,8 @@ The normal Live and Emulators launches show these screens with the existing Fire
 
 Work these slices in order, reviewing the visual direction between slices:
 - [x] Normal app launch opens real Player routes, local fixtures, shared branded components, and preserved Player tab navigation
-- [x] Player training: Train home → setup/focus → routine detail → all six set-input types → rest → summary; drill library/detail and manual logger entry points
+- [x] Player training: Train home → setup/focus → routine detail → all six set-input types → optional inline rest → summary; drill library/detail and manual logger entry points
+- [x] Training workflow refinement: swipe between drills, workout overview/jump/status, retained draft inputs, independent set completion, elapsed/estimated active time, and device-persisted per-drill rest settings (off by default)
 - [ ] Player progress: radar, PR Vault, lifetime totals, session history/detail, share-card preview
 - [ ] Player team: locker room, stick taps, leaderboards, homework, invite/join/discovery, member-only/empty/locked states
 - [ ] Player Me: appearance, profile switching, role switcher, account/subscription entry points
@@ -377,8 +380,8 @@ Work these slices in order, reviewing the visual direction between slices:
 ## Phase 3 — Active Training Engine (Core Loop Step 2)
 Build as a pure-Dart `SessionController` (Riverpod Notifier) with a thin UI on top so it is unit-testable.
 
-- [ ] Session state machine: `notStarted → drillActive → resting → drillActive … → summary`
-- [ ] Top bar: "Drill X of N" + overall timer (wall-clock based)
+- [ ] Production session controller: independent per-drill progress, swipe/overview selection, optional concurrent rest, explicit completion → summary
+- [ ] Top bar: "Drill X of N" + overall timer (wall-clock based); overview with per-drill status and production active-time accounting
 - [ ] Media card with looping demo + 3 form cues
 - [ ] Dynamic Input Module, one widget per `TrackingType`:
   - [ ] **Volume:** stepper + direct numeric entry per set
@@ -388,7 +391,7 @@ Build as a pure-Dart `SessionController` (Riverpod Notifier) with a thin UI on t
   - [ ] **Streak:** single numeric entry for max consecutive
   - [ ] **Binary:** large toggle per set
 - [ ] Action bar: `Log Set`, `Swap Drill` (same `swapGroup`, still matching setup), `Rest Timer`
-- [ ] Rest mechanics: auto-start after Log Set (default 45s), `+15s`, `-15s`, `Skip Rest`; chime + haptic on end
+- [ ] Production rest mechanics: off by default, configurable enable/duration per drill; when enabled auto-start inline after Log Set except the final workout set; `+15s`, `-15s`, `Skip Rest`; chime + haptic on end
 - [ ] Local notification when rest ends while app is backgrounded
 - [ ] Wakelock on during session; audio session mixes with user's music
 - [ ] Persist session progress after every set (resume after app kill)
@@ -613,6 +616,7 @@ Phases **1–7** deliver the full free tier + solo core loop. Phase 8 (monetizat
 ---
 
 ## Resolved Decisions
+- **Training workflow:** User requested a Macrofactor-style workout flow: swipe between drills or open an overview with workout status/info/time, rather than forced sequential rest screens. Rest is optional, off by default (user-confirmed), with per-drill enable/duration settings saved on this device for now. Timed drill inputs pause when leaving their page; rest does not block swiping/logging. Local active-time estimates are disclosed and are not production leaderboard accounting. Backend resume/history/audio/background notification requirements remain outstanding. *(UX-first, 2026-10-05)*
 - **UX-first actual screens:** Pause Phases 2–14 backend/content work to build all planned screens in the normal Flutter app with placeholder data/media, then connect functionality to those same screens. The earlier separate opt-in preview was a misunderstanding and is superseded by the user's clarification. Flutter replaces the Figma-before-UI prerequisite. Work Player training first, then remaining Player, Parent/Coach, and account/commerce/program flows. *(UX-first, 2026-10-05)*
 - **Local testing priority:** Use the Samsung S24 debug launch against live Firebase with its registered App Check debug token; defer remaining production signing, Play Console, DeviceCheck, and enforcement work until release preparation. This deferred Phase 1 item does not block local development or the remaining foundation work. *(Phase 1)*
 - **iOS SwiftPM Git policy:** Use an approved process-scoped `safe.bareRepository=all` exception for trusted iOS dependency builds when the machine requires explicit bare repositories; do not weaken the global Git policy or replace SwiftPM. See the build command in `README.md`. *(Phase 1)*

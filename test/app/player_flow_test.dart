@@ -73,7 +73,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('all six input types log local sets through rest and summary', (tester) async {
+  testWidgets('all six input types log without forced rest and reach summary', (tester) async {
     phoneSize(tester);
     final container = await mountApp(tester);
     final router = container.read(appRouterProvider);
@@ -81,7 +81,11 @@ void main() {
     container.read(trainingSessionProvider.notifier).start(fixtures);
     router.go('/session');
     await tester.pumpAndSettle();
-    for (final drill in fixtures) {
+    for (final (index, drill) in fixtures.indexed) {
+      if (index > 0) {
+        await tester.tap(find.text('Next drill').first);
+        await tester.pumpAndSettle();
+      }
       if (drill.trackingType == TrackingType.duration || drill.trackingType == TrackingType.density) {
         final startTimer = find.text('Start timer');
         await tester.ensureVisible(startTimer);
@@ -98,10 +102,6 @@ void main() {
       }
       await tester.tap(find.text('Log set'));
       await tester.pumpAndSettle();
-      if (drill != fixtures.last) {
-        await tester.tap(find.text('Skip rest'));
-        await tester.pumpAndSettle();
-      }
     }
     final session = container.read(trainingSessionProvider);
     expect(session.finished, isTrue);
@@ -113,6 +113,8 @@ void main() {
     expect(session.logs[3].log.hits, 0);
     expect(session.logs[4].log.streak, 0);
     expect(session.logs[5].log.completed, isTrue);
+    await tester.tap(find.text('Finish workout'));
+    await tester.pumpAndSettle();
     expect(find.text('You showed up.'), findsWidgets);
     expect(find.text('Shots logged'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -170,20 +172,23 @@ void main() {
     expect(container.read(trainingSessionProvider).logs.single.log.hits, 8);
   });
 
-  testWidgets('rest resumes counting after reaching zero and adding time', (tester) async {
+  testWidgets('optional rest is inline and does not block logging or swiping', (tester) async {
     phoneSize(tester);
     final container = await mountApp(tester);
-    container.read(appRouterProvider).go('/rest', extra: 1);
+    await container.read(drillRestSettingsProvider.notifier).configure(sampleDrills.first.id, (enabled: true, seconds: 45));
+    container.read(trainingSessionProvider.notifier).start(sampleDrills);
+    container.read(appRouterProvider).go('/session');
     await tester.pumpAndSettle();
-    await tester.pump(const Duration(seconds: 2));
-    expect(find.text('Next set'), findsOneWidget);
-    await tester.ensureVisible(find.text('+15s'));
-    await tester.pump();
-    await tester.tap(find.text('+15s'));
-    await tester.pump();
+    await tester.tap(find.text('Log set'));
+    await tester.pumpAndSettle();
     expect(find.text('Skip rest'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 1));
-    expect(find.text('0:14'), findsOneWidget);
+    expect(find.text('Log set'), findsOneWidget);
+    await tester.drag(find.byType(PageView), const Offset(-300, 0));
+    await tester.pumpAndSettle();
+    expect(container.read(trainingSessionProvider).drillIndex, 1);
+    await tester.tap(find.text('Skip rest'));
+    await tester.pumpAndSettle();
+    expect(find.text('Skip rest'), findsNothing);
   });
 
   testWidgets('Player tabs preserve Train scroll position', (tester) async {
@@ -199,5 +204,121 @@ void main() {
     await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Train')));
     await tester.pumpAndSettle();
     expect(tester.state<ScrollableState>(find.byType(Scrollable).first).position.pixels, trainPosition);
+  });
+
+  testWidgets('drill drafts survive swiping and overview, with out-of-order progress', (tester) async {
+    phoneSize(tester);
+    final container = await mountApp(tester);
+    container.read(trainingSessionProvider.notifier).start([sampleDrills.first, sampleDrills[3]]);
+    container.read(appRouterProvider).go('/session');
+    await tester.pumpAndSettle();
+    expect(find.text('Skip rest'), findsNothing);
+    await tester.ensureVisible(find.text('10'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('10'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), '7');
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(PageView), const Offset(-300, 0));
+    await tester.pumpAndSettle();
+    expect(container.read(trainingSessionProvider).drillIndex, 1);
+    await tester.tap(find.text('Log set'));
+    await tester.pumpAndSettle();
+    expect(container.read(trainingSessionProvider).setsLogged(1), 1);
+    expect(find.text('Skip rest'), findsNothing);
+    await tester.tap(find.byTooltip('Workout overview'));
+    await tester.pumpAndSettle();
+    expect(find.text('Workout overview'), findsOneWidget);
+    expect(find.text('0 / 2 sets · Reps'), findsOneWidget);
+    expect(find.text('1 / 2 sets · Accuracy'), findsOneWidget);
+    await tester.tap(find.text('Quick-release wrist shots'));
+    await tester.pumpAndSettle();
+    expect(find.text('7'), findsOneWidget);
+    await tester.tap(find.text('Log set'));
+    await tester.pumpAndSettle();
+    final session = container.read(trainingSessionProvider);
+    expect(session.logs.map((entry) => entry.log.setIndex), [0, 0]);
+    expect(session.logs.last.log.reps, 7);
+    expect(session.finished, isFalse);
+    expect(session.activeSeconds, sampleDrills.first.estimatedSecondsPerSet + sampleDrills[3].estimatedSecondsPerSet);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('rest settings persist per drill and survive a new provider container', (tester) async {
+    phoneSize(tester, scale: 2);
+    final container = await mountApp(tester);
+    container.read(appRouterProvider).go('/session');
+    await tester.pumpAndSettle();
+    final settingsButton = find.text('Drill settings · Rest off');
+    await tester.ensureVisible(settingsButton);
+    await tester.pumpAndSettle();
+    await tester.tap(settingsButton);
+    await tester.pumpAndSettle();
+    expect(find.text('Rest duration: 45 seconds'), findsOneWidget);
+    await tester.ensureVisible(find.byType(Switch));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byType(Switch));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Save settings'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save settings'));
+    await tester.pumpAndSettle();
+    expect(container.read(drillRestSettingsProvider)[sampleDrills.first.id], (enabled: true, seconds: 45));
+    expect(container.read(drillRestSettingsProvider)[sampleDrills[1].id], isNull);
+    final restored = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(container.read(sharedPreferencesProvider))]);
+    addTearDown(restored.dispose);
+    expect(restored.read(drillRestSettingsProvider)[sampleDrills.first.id], (enabled: true, seconds: 45));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('timed drill pauses in overview and resumes from its retained countdown', (tester) async {
+    phoneSize(tester);
+    final container = await mountApp(tester);
+    container.read(trainingSessionProvider.notifier).start([sampleDrills[1].copyWith(defaultPrescription: sampleDrills[1].defaultPrescription.copyWith(seconds: 3))]);
+    container.read(appRouterProvider).go('/session');
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Start timer'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start timer'));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.text('0:02'), findsOneWidget);
+    await tester.tap(find.byTooltip('Workout overview'));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 5));
+    await tester.tap(find.text('Quiet hands, quick feet'));
+    await tester.pumpAndSettle();
+    expect(find.text('0:02'), findsOneWidget);
+    await tester.ensureVisible(find.text('Start timer'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start timer'));
+    await tester.pump(const Duration(seconds: 2));
+    await tester.tap(find.text('Log set'));
+    await tester.pumpAndSettle();
+    expect(container.read(trainingSessionProvider).logs.single.log.seconds, 3);
+  });
+
+  testWidgets('completing the last drill first offers the next unfinished drill', (tester) async {
+    phoneSize(tester);
+    final container = await mountApp(tester);
+    container.read(trainingSessionProvider.notifier).start([
+      for (final drill in [sampleDrills.first, sampleDrills[3]])
+        drill.copyWith(defaultPrescription: drill.defaultPrescription.copyWith(sets: 1)),
+    ]);
+    container.read(appRouterProvider).go('/session');
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(PageView), const Offset(-300, 0));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Log set'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Next drill'));
+    await tester.pumpAndSettle();
+    expect(container.read(trainingSessionProvider).drillIndex, 0);
+    await tester.tap(find.text('Log set'));
+    await tester.pumpAndSettle();
+    expect(find.text('Finish workout'), findsOneWidget);
+    expect(find.text('Next drill'), findsNothing);
+    expect(container.read(trainingSessionProvider).finished, isTrue);
+    expect(tester.takeException(), isNull);
   });
 }

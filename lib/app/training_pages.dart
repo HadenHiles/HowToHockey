@@ -10,6 +10,7 @@ import 'player_pages.dart';
 import 'sample_data.dart';
 import 'app_page.dart';
 import 'training_state.dart';
+import 'session_pages.dart';
 
 class SetupPage extends ConsumerWidget {
   const SetupPage({super.key});
@@ -184,6 +185,7 @@ class DrillDetailPage extends ConsumerWidget {
       );
     }
     final drill = matches.single;
+    final rest = ref.watch(drillRestSettingsProvider)[drill.id];
     final theme = Theme.of(context);
     return AppPage(
       title: 'Drill detail',
@@ -218,7 +220,12 @@ class DrillDetailPage extends ConsumerWidget {
             children: [
               Text('Recommended sets', style: theme.textTheme.titleLarge),
               const SizedBox(height: AppSpacing.sm),
-              Text('${drill.prescriptionLabel} · ${drill.defaultPrescription.restSeconds}s rest'),
+              Text('${drill.prescriptionLabel} · ${rest?.enabled == true ? '${rest!.seconds}s rest' : 'Rest off'}'),
+              TextButton.icon(
+                onPressed: () => showDrillRestSettings(context, drill),
+                icon: const Icon(Icons.tune),
+                label: const Text('Drill settings'),
+              ),
             ],
           ),
         ),

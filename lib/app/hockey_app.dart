@@ -39,10 +39,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, state) => DrillDetailPage(drillId: state.pathParameters['id']!),
       ),
       GoRoute(path: '/session', builder: (_, _) => const SessionPage()),
-      GoRoute(
-        path: '/rest',
-        builder: (_, state) => RestPage(seconds: state.extra is int ? state.extra! as int : 45),
-      ),
+      GoRoute(path: '/rest', redirect: (_, _) => '/session'),
       GoRoute(path: '/summary', builder: (_, _) => const SummaryPage()),
     ],
     errorBuilder: (context, state) => AppPage(
