@@ -40,17 +40,20 @@ Accuracy and Power are shot-focused. Keep the locked How To Hockey logo, brand
 red/cream, Inter type, accessible contrast, and light/dark appearance setting
 intact when extending the screens.
 
-The active workout is a draggable bottom sheet over Train. Its horizontal drill
-preview strip selects the same drills as swiping the drill pages; the sheet can
-be expanded for the active drill and **Workout overview**, or minimized to
-expose Train. The minimized header keeps only the drag handle and elapsed,
-training-time, and set-count status; vertical sheet scrolling moves the workout
-title/actions, drill previews, rest controls, and active drill content out of
-view without displacing that status. Logging a set stays on that drill; sets
-can be completed out of order. Draft inputs survive swiping and opening the
-overview; timed drill inputs pause when leaving the drill. Finish the workout
-once all sets are logged to open the summary. The bottom navigation uses
-animated selection and tap feedback; respect **Reduce Motion**.
+The active workout is a draggable bottom sheet over Train. Let the sheet's
+shared scroll controller drive both its native resize gesture and vertical
+content scrolling—do not add a competing manual drag recognizer. The sheet
+floats above the persistent app navigation and has no modal barrier, so the
+navigation remains usable while the sheet is collapsed. Keep the red status
+header (handle and elapsed/active/set metrics) and bottom Log action pinned;
+the workout title, horizontal drill preview strip, optional rest controls, and
+active drill or **Workout overview** scroll together in the sheet body.
+Selecting a preview selects the same drill as swiping the drill pages. Logging
+a set stays on that drill; sets can be completed out of order. Draft inputs
+survive swiping and opening the overview; timed drill inputs pause when leaving
+the drill. Finish the workout once all sets are logged to open the summary.
+The Train app bar has a centered How To Hockey wordmark. The bottom navigation
+uses animated selection and tap feedback; respect **Reduce Motion**.
 
 **Routine management** is available from Train through **Manage routines**.
 The local routine library supports creating/editing routines from preset styles,

@@ -17,7 +17,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state, shell) => _PlayerShell(shell: shell),
         branches: [
           StatefulShellBranch(
-            routes: [GoRoute(path: '/train', builder: (_, _) => const TrainPage())],
+            routes: [
+              GoRoute(path: '/train', builder: (_, _) => const TrainPage()),
+              GoRoute(path: '/session', builder: (_, _) => const SessionPage()),
+            ],
           ),
           StatefulShellBranch(
             routes: [GoRoute(path: '/progress', builder: (_, _) => const ProgressPage())],
@@ -41,7 +44,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/drills/:id',
         builder: (_, state) => DrillDetailPage(drillId: state.pathParameters['id']!),
       ),
-      GoRoute(path: '/session', builder: (_, _) => const SessionPage()),
       GoRoute(path: '/rest', redirect: (_, _) => '/session'),
       GoRoute(path: '/summary', builder: (_, _) => const SummaryPage()),
     ],

@@ -22,12 +22,8 @@ class TrainPage extends ConsumerWidget {
     final setup = ref.watch(trainingSetupProvider);
     return AppPage(
       title: 'Train',
-      actions: const [
-        Padding(
-          padding: EdgeInsets.only(right: AppSpacing.screen),
-          child: BrandWordmark(),
-        ),
-      ],
+      appBarTitle: const BrandWordmark(),
+      centerAppBarTitle: true,
       children: [
         TrainingHeroCard(eyebrow: 'Today on the ice', title: 'Build your\nfoundation', detail: 'A little better. Every day.', metrics: const [('20', 'minutes'), ('06', 'drills'), ('12', 'sets')], actionLabel: 'View workout', onTap: () => context.push('/routine')),
         const SizedBox(height: AppSpacing.xl),

@@ -22,6 +22,9 @@ void main() {
     expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode, ThemeMode.system);
     expect(find.text('View workout'), findsOneWidget);
     expect(find.byType(NavigationBar), findsOneWidget);
+    final logo = find.bySemanticsLabel('How To Hockey');
+    expect(logo, findsOneWidget);
+    expect(tester.getCenter(logo).dx, closeTo(tester.getSize(find.byType(MaterialApp)).width / 2, 1));
     expect(find.textContaining('UX PREVIEW'), findsNothing);
     container.read(appRouterProvider).go('/me');
     await tester.pumpAndSettle();

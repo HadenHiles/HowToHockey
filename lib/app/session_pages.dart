@@ -25,33 +25,27 @@ class SessionPage extends ConsumerStatefulWidget {
 class _SessionPageState extends ConsumerState<SessionPage> {
   late final PageController _pages = PageController(initialPage: ref.read(trainingSessionProvider).drillIndex);
   final DraggableScrollableController _sheet = DraggableScrollableController();
+  final ValueNotifier<_DrillAction?> _drillAction = ValueNotifier(null);
   Timer? _ticker;
   bool _overview = false;
-  bool _sheetExpanded = true;
 
   @override
   void initState() {
     super.initState();
-    _sheet.addListener(_updateSheetMode);
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
   }
 
   @override
   void dispose() {
     _ticker?.cancel();
-    _sheet.removeListener(_updateSheetMode);
     _pages.dispose();
     _sheet.dispose();
+    _drillAction.dispose();
     super.dispose();
   }
 
-  void _updateSheetMode() {
-    if (!_sheet.isAttached) return;
-    final expanded = _sheet.size > .42;
-    if (_sheetExpanded != expanded) setState(() => _sheetExpanded = expanded);
-  }
-
   void _select(int index) {
+    _drillAction.value = null;
     ref.read(trainingSessionProvider.notifier).selectDrill(index);
     setState(() => _overview = false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -67,111 +61,45 @@ class _SessionPageState extends ConsumerState<SessionPage> {
     final totalSets = session.drills.fold<int>(0, (sum, drill) => sum + drill.defaultPrescription.sets);
     final pillars = HockeyTheme.dark.extension<PillarColors>()!;
     final textScale = MediaQuery.textScalerOf(context).scale(1);
-    final previewHeight = 112.0 + ((textScale - 1).clamp(0, 2) * 32).toDouble();
-    final minSheetSize = (.19 + ((textScale - 1).clamp(0, 1) * .13)).toDouble();
-    final statusHeaderHeight = 104 + ((textScale - 1).clamp(0, 2) * 80).toDouble();
-    final headerActions = _sheetExpanded && textScale < 1.5;
-    final headerHeight = statusHeaderHeight + (headerActions ? 92 : 0);
+    final screenHeight = MediaQuery.sizeOf(context).height;
+    final statusHeaderHeight = 104 + ((textScale - 1).clamp(0, 1) * 44).toDouble();
+    final actionHeight = 76 + MediaQuery.viewPaddingOf(context).bottom;
+    final minSheetSize = ((statusHeaderHeight + actionHeight + 20) / screenHeight).clamp(.3, .46).toDouble();
     return Stack(
       children: [
         const TrainPage(),
-        const ModalBarrier(color: Color(0x99000000), dismissible: false),
         Theme(
           data: HockeyTheme.dark,
           child: DraggableScrollableSheet(
             controller: _sheet,
-            initialChildSize: .88,
+            initialChildSize: .96,
             minChildSize: minSheetSize,
-            maxChildSize: .98,
+            maxChildSize: .96,
             snap: true,
-            snapSizes: [minSheetSize, .88],
-            builder: (context, scrollController) => Material(
-              color: Theme.of(context).scaffoldBackgroundColor,
-              clipBehavior: Clip.antiAlias,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: headerHeight,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.xs, AppSpacing.sm, AppSpacing.xs),
-                      child: GestureDetector(
-                        key: const ValueKey('workout-sheet-handle'),
-                        behavior: HitTestBehavior.opaque,
-                        onVerticalDragUpdate: (details) {
-                          if (_sheet.isAttached) {
-                            final nextSize = _sheet.size - details.delta.dy / MediaQuery.sizeOf(context).height;
-                            _sheet.jumpTo(nextSize.clamp(minSheetSize, .98).toDouble());
-                          }
-                        },
-                        onVerticalDragEnd: (details) {
-                          if (!_sheet.isAttached) return;
-                          final velocity = details.velocity.pixelsPerSecond.dy;
-                          final midpoint = (minSheetSize + .88) / 2;
-                          final target = velocity < -250 || (velocity.abs() <= 250 && _sheet.size >= midpoint) ? .88 : minSheetSize;
-                          _sheet.animateTo(target, duration: const Duration(milliseconds: 280), curve: Curves.easeOutCubic);
-                        },
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SizedBox(
-                              width: double.infinity,
-                              height: 20,
-                              child: Center(
-                                child: Container(
-                                  width: 42,
-                                  height: 4,
-                                  decoration: BoxDecoration(color: Theme.of(context).colorScheme.onSurface.withValues(alpha: .32), borderRadius: BorderRadius.circular(4)),
-                                ),
-                              ),
+            snapSizes: [minSheetSize, .82, .96],
+            builder: (context, scrollController) => Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+              child: Material(
+                color: Theme.of(context).scaffoldBackgroundColor,
+                clipBehavior: Clip.antiAlias,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: CustomScrollView(
+                        key: const ValueKey('workout-session-scroll'),
+                        controller: scrollController,
+                        slivers: [
+                          SliverPersistentHeader(
+                            pinned: true,
+                            delegate: _WorkoutStatusHeaderDelegate(
+                              height: statusHeaderHeight,
+                              child: _WorkoutStatusHeader(elapsed: elapsed, active: session.activeSeconds, setsLogged: session.logs.length, totalSets: totalSets, estimated: session.hasEstimatedTime),
                             ),
-                            const SizedBox(height: AppSpacing.xs),
-                            Wrap(
-                              alignment: WrapAlignment.spaceBetween,
-                              spacing: AppSpacing.md,
-                              runSpacing: AppSpacing.xs,
-                              children: [
-                                Text('Elapsed ${_time(elapsed)}', style: Theme.of(context).textTheme.labelSmall),
-                                Text('Training ${_time(session.activeSeconds)}${session.hasEstimatedTime ? ' est.' : ''}', style: Theme.of(context).textTheme.labelSmall),
-                                Text('${session.logs.length}/$totalSets sets', style: Theme.of(context).textTheme.labelSmall),
-                              ],
-                            ),
-                            if (headerActions) ...[
-                              const SizedBox(height: AppSpacing.sm),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text('WORKOUT IN PROGRESS', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: pillars.shotAccuracy, letterSpacing: 1)),
-                                        Text('Your session', style: Theme.of(context).textTheme.titleLarge),
-                                      ],
-                                    ),
-                                  ),
-                                  IconButton(tooltip: _overview ? 'Show drills' : 'Workout overview', onPressed: () => setState(() => _overview = !_overview), icon: Icon(_overview ? Icons.view_carousel_outlined : Icons.list_alt)),
-                                  IconButton(
-                                    tooltip: 'Minimize workout',
-                                    onPressed: () => _sheet.animateTo(minSheetSize, duration: const Duration(milliseconds: 350), curve: Curves.easeOutCubic),
-                                    icon: const Icon(Icons.keyboard_arrow_down),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: CustomScrollView(
-                      key: const ValueKey('workout-session-scroll'),
-                      controller: scrollController,
-                      slivers: [
-                        if (_sheetExpanded && !headerActions)
+                          ),
                           SliverToBoxAdapter(
                             child: Padding(
-                              padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.xs, AppSpacing.screen, 0),
+                              padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.xs, AppSpacing.sm, 0),
                               child: Row(
                                 children: [
                                   Expanded(
@@ -183,142 +111,150 @@ class _SessionPageState extends ConsumerState<SessionPage> {
                                       ],
                                     ),
                                   ),
-                                  IconButton(tooltip: _overview ? 'Show drills' : 'Workout overview', onPressed: () => setState(() => _overview = !_overview), icon: Icon(_overview ? Icons.view_carousel_outlined : Icons.list_alt)),
                                   IconButton(
-                                    tooltip: 'Minimize workout',
-                                    onPressed: () => _sheet.animateTo(minSheetSize, duration: const Duration(milliseconds: 350), curve: Curves.easeOutCubic),
-                                    icon: const Icon(Icons.keyboard_arrow_down),
+                                    tooltip: _overview ? 'Show drills' : 'Workout overview',
+                                    onPressed: () => setState(() {
+                                      _overview = !_overview;
+                                      if (_overview) _drillAction.value = null;
+                                    }),
+                                    icon: Icon(_overview ? Icons.view_carousel_outlined : Icons.list_alt),
                                   ),
                                 ],
                               ),
                             ),
                           ),
-                        SliverToBoxAdapter(
-                          child: SizedBox(
-                            height: previewHeight,
-                            child: ListView.separated(
-                              key: const ValueKey('workout-drill-previews'),
-                              scrollDirection: Axis.horizontal,
-                              padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
-                              itemCount: session.drills.length,
-                              separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
-                              itemBuilder: (context, index) {
-                                final drill = session.drills[index];
-                                final selected = !_overview && index == session.drillIndex;
-                                final color = drill.pillar.color(pillars);
-                                return Semantics(
-                                  button: true,
-                                  selected: selected,
-                                  label: '${drill.pillar.label}: ${drill.title}, ${session.setsLogged(index)} of ${drill.defaultPrescription.sets} sets',
-                                  child: SizedBox(
-                                    width: 112,
-                                    child: Material(
-                                      color: selected ? color.withValues(alpha: .2) : Theme.of(context).colorScheme.surface,
-                                      shape: RoundedRectangleBorder(
-                                        side: BorderSide(color: selected ? color : Theme.of(context).dividerColor, width: selected ? 2 : 1),
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      clipBehavior: Clip.antiAlias,
-                                      child: InkWell(
-                                        onTap: () => _select(index),
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(AppSpacing.sm),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              SizedBox(
-                                                height: 32,
-                                                width: double.infinity,
-                                                child: DecoratedBox(
-                                                  decoration: BoxDecoration(color: color.withValues(alpha: .16), borderRadius: BorderRadius.circular(9)),
-                                                  child: Center(child: Icon(drill.pillar.icon, color: color, size: 24)),
+                          SliverToBoxAdapter(
+                            child: SizedBox(
+                              height: 112 + ((textScale - 1).clamp(0, 2) * 32).toDouble(),
+                              child: ListView.separated(
+                                key: const ValueKey('workout-drill-previews'),
+                                scrollDirection: Axis.horizontal,
+                                padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screen),
+                                itemCount: session.drills.length,
+                                separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
+                                itemBuilder: (context, index) {
+                                  final drill = session.drills[index];
+                                  final selected = !_overview && index == session.drillIndex;
+                                  final color = drill.pillar.color(pillars);
+                                  return Semantics(
+                                    button: true,
+                                    selected: selected,
+                                    label: '${drill.pillar.label}: ${drill.title}, ${session.setsLogged(index)} of ${drill.defaultPrescription.sets} sets',
+                                    child: SizedBox(
+                                      width: 112,
+                                      child: Material(
+                                        color: selected ? color.withValues(alpha: .2) : Theme.of(context).colorScheme.surface,
+                                        shape: RoundedRectangleBorder(
+                                          side: BorderSide(color: selected ? color : Theme.of(context).dividerColor, width: selected ? 2 : 1),
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                        clipBehavior: Clip.antiAlias,
+                                        child: InkWell(
+                                          onTap: () => _select(index),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(AppSpacing.sm),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                SizedBox(
+                                                  height: 32,
+                                                  width: double.infinity,
+                                                  child: DecoratedBox(
+                                                    decoration: BoxDecoration(color: color.withValues(alpha: .16), borderRadius: BorderRadius.circular(9)),
+                                                    child: Center(child: Icon(drill.pillar.icon, color: color, size: 24)),
+                                                  ),
                                                 ),
-                                              ),
-                                              Text(drill.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelMedium),
-                                              Text('${session.setsLogged(index)}/${drill.defaultPrescription.sets} sets', maxLines: 1, style: Theme.of(context).textTheme.labelSmall),
-                                            ],
+                                                Text(drill.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelMedium),
+                                                Text('${session.setsLogged(index)}/${drill.defaultPrescription.sets} sets', maxLines: 1, style: Theme.of(context).textTheme.labelSmall),
+                                              ],
+                                            ),
                                           ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                        if (remaining > 0)
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.sm, AppSpacing.screen, 0),
-                              child: TrainingCard(
-                                child: Wrap(
-                                  spacing: AppSpacing.sm,
-                                  crossAxisAlignment: WrapCrossAlignment.center,
-                                  children: [
-                                    Text('Rest ${_time(remaining)}'),
-                                    TextButton(onPressed: () => ref.read(trainingSessionProvider.notifier).adjustRest(-15), child: const Text('−15s')),
-                                    TextButton(onPressed: () => ref.read(trainingSessionProvider.notifier).adjustRest(15), child: const Text('+15s')),
-                                    TextButton(onPressed: () => ref.read(trainingSessionProvider.notifier).skipRest(), child: const Text('Skip rest')),
-                                  ],
-                                ),
+                                  );
+                                },
                               ),
                             ),
                           ),
-                        SliverToBoxAdapter(
-                          child: SizedBox(
-                            height: MediaQuery.sizeOf(context).height * .44,
-                            child: Column(
-                              children: [
-                                Expanded(
-                                  child: IndexedStack(
-                                    index: _overview ? 0 : 1,
+                          if (remaining > 0)
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.sm, AppSpacing.screen, 0),
+                                child: TrainingCard(
+                                  child: Wrap(
+                                    spacing: AppSpacing.sm,
+                                    crossAxisAlignment: WrapCrossAlignment.center,
                                     children: [
-                                      ListView(
-                                        padding: const EdgeInsets.all(AppSpacing.screen),
-                                        children: [
-                                          const SectionHeading(title: 'Workout overview'),
-                                          const SizedBox(height: AppSpacing.md),
-                                          const Text('Active time counts logged training sets, not rest. Untimed sets use estimated training time. Elapsed includes rest.'),
-                                          const SizedBox(height: AppSpacing.md),
-                                          for (final (index, drill) in session.drills.indexed) ...[
-                                            TrainingCard(
-                                              onTap: () => _select(index),
-                                              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(drill.title), Text('${session.setsLogged(index)} / ${drill.defaultPrescription.sets} sets · ${drill.trackingType.label}'), Text(session.setsLogged(index) >= drill.defaultPrescription.sets ? 'Complete' : 'Continue drill')]),
-                                            ),
-                                            const SizedBox(height: AppSpacing.sm),
-                                          ],
-                                        ],
-                                      ),
-                                      PageView.builder(
-                                        controller: _pages,
-                                        itemCount: session.drills.length,
-                                        onPageChanged: (index) => ref.read(trainingSessionProvider.notifier).selectDrill(index),
-                                        itemBuilder: (_, index) => _ActiveDrill(
-                                          key: ValueKey('${session.drills[index].id}-${session.setsLogged(index)}'),
-                                          session: session.copyWith(drillIndex: index),
-                                          active: !_overview && index == session.drillIndex,
-                                          onSelect: _select,
-                                        ),
-                                      ),
+                                      Text('Rest ${_time(remaining)}'),
+                                      TextButton(onPressed: () => ref.read(trainingSessionProvider.notifier).adjustRest(-15), child: const Text('−15s')),
+                                      TextButton(onPressed: () => ref.read(trainingSessionProvider.notifier).adjustRest(15), child: const Text('+15s')),
+                                      TextButton(onPressed: () => ref.read(trainingSessionProvider.notifier).skipRest(), child: const Text('Skip rest')),
                                     ],
                                   ),
                                 ),
-                                if (session.finished)
-                                  SafeArea(
-                                    top: false,
-                                    minimum: const EdgeInsets.all(AppSpacing.screen),
-                                    child: FilledButton(onPressed: () => context.pushReplacement('/summary'), child: const Text('Finish workout')),
+                              ),
+                            ),
+                          SliverToBoxAdapter(
+                            child: SizedBox(
+                              height: screenHeight * .44,
+                              child: IndexedStack(
+                                index: _overview ? 0 : 1,
+                                children: [
+                                  ListView(
+                                    key: const ValueKey('workout-overview-scroll'),
+                                    padding: const EdgeInsets.all(AppSpacing.screen),
+                                    children: [
+                                      const SectionHeading(title: 'Workout overview'),
+                                      const SizedBox(height: AppSpacing.md),
+                                      const Text('Active time counts logged training sets, not rest. Untimed sets use estimated training time. Elapsed includes rest.'),
+                                      const SizedBox(height: AppSpacing.md),
+                                      for (final (index, drill) in session.drills.indexed) ...[
+                                        TrainingCard(
+                                          onTap: () => _select(index),
+                                          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(drill.title), Text('${session.setsLogged(index)} / ${drill.defaultPrescription.sets} sets · ${drill.trackingType.label}'), Text(session.setsLogged(index) >= drill.defaultPrescription.sets ? 'Complete' : 'Continue drill')]),
+                                        ),
+                                        const SizedBox(height: AppSpacing.sm),
+                                      ],
+                                    ],
                                   ),
-                              ],
+                                  PageView.builder(
+                                    controller: _pages,
+                                    itemCount: session.drills.length,
+                                    onPageChanged: (index) => ref.read(trainingSessionProvider.notifier).selectDrill(index),
+                                    itemBuilder: (_, index) => _ActiveDrill(
+                                      key: ValueKey('${session.drills[index].id}-${session.setsLogged(index)}'),
+                                      session: session.copyWith(drillIndex: index),
+                                      active: !_overview && index == session.drillIndex,
+                                      onSelect: _select,
+                                      actionNotifier: _drillAction,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        SliverToBoxAdapter(child: SizedBox(height: MediaQuery.sizeOf(context).height * .08)),
-                      ],
+                          SliverToBoxAdapter(child: SizedBox(height: screenHeight * .08)),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                    SafeArea(
+                      top: false,
+                      minimum: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.sm, AppSpacing.screen, AppSpacing.sm),
+                      child: ValueListenableBuilder<_DrillAction?>(
+                        valueListenable: _drillAction,
+                        builder: (context, action, _) {
+                          final label = session.finished ? 'Finish workout' : action?.label;
+                          final onPressed = session.finished ? () => context.pushReplacement('/summary') : action?.onPressed;
+                          return SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(onPressed: onPressed, icon: const Icon(Icons.check), label: Text(label ?? 'Log set')),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -328,7 +264,120 @@ class _SessionPageState extends ConsumerState<SessionPage> {
   }
 }
 
+class _WorkoutStatusHeader extends StatelessWidget {
+  const _WorkoutStatusHeader({required this.elapsed, required this.active, required this.setsLogged, required this.totalSets, required this.estimated});
+
+  final int elapsed;
+  final int active;
+  final int setsLogged;
+  final int totalSets;
+  final bool estimated;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      key: const ValueKey('workout-status-header'),
+      decoration: BoxDecoration(color: theme.colorScheme.primary),
+      padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.xs, AppSpacing.screen, AppSpacing.sm),
+      child: Column(
+        children: [
+          SizedBox(
+            key: const ValueKey('workout-sheet-handle'),
+            width: double.infinity,
+            height: 24,
+            child: Center(
+              child: Container(
+                width: 38,
+                height: 4,
+                decoration: BoxDecoration(color: theme.colorScheme.onPrimary.withValues(alpha: .55), borderRadius: BorderRadius.circular(4)),
+              ),
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          Row(
+            children: [
+              Expanded(
+                child: _WorkoutMetric(label: 'ELAPSED', value: _time(elapsed), color: theme.colorScheme.onPrimary),
+              ),
+              Expanded(
+                child: _WorkoutMetric(label: estimated ? 'ACTIVE · EST.' : 'ACTIVE', value: _time(active), centered: true, color: theme.colorScheme.onPrimary),
+              ),
+              Expanded(
+                child: _WorkoutMetric(label: 'SETS', value: '$setsLogged/$totalSets', alignEnd: true, color: theme.colorScheme.onPrimary),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WorkoutMetric extends StatelessWidget {
+  const _WorkoutMetric({required this.label, required this.value, required this.color, this.centered = false, this.alignEnd = false});
+
+  final String label;
+  final String value;
+  final Color color;
+  final bool centered;
+  final bool alignEnd;
+
+  @override
+  Widget build(BuildContext context) {
+    final alignment = alignEnd
+        ? CrossAxisAlignment.end
+        : centered
+        ? CrossAxisAlignment.center
+        : CrossAxisAlignment.start;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: alignment,
+      children: [
+        Text(
+          label,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: color.withValues(alpha: .78)),
+        ),
+        Text(
+          value,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: color),
+        ),
+      ],
+    );
+  }
+}
+
+class _WorkoutStatusHeaderDelegate extends SliverPersistentHeaderDelegate {
+  const _WorkoutStatusHeaderDelegate({required this.height, required this.child});
+
+  final double height;
+  final Widget child;
+
+  @override
+  double get minExtent => height;
+
+  @override
+  double get maxExtent => height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) => child;
+
+  @override
+  bool shouldRebuild(_WorkoutStatusHeaderDelegate oldDelegate) => height != oldDelegate.height || child != oldDelegate.child;
+}
+
 String _time(int seconds) => '${seconds ~/ 60}:${(seconds % 60).toString().padLeft(2, '0')}';
+
+class _DrillAction {
+  const _DrillAction({required this.label, required this.onPressed});
+
+  final String label;
+  final VoidCallback? onPressed;
+}
 
 Future<void> showDrillRestSettings(BuildContext context, Drill drill) => showModalBottomSheet<void>(
   context: context,
@@ -416,11 +465,12 @@ class _DrillRestSheetState extends ConsumerState<_DrillRestSheet> {
 }
 
 class _ActiveDrill extends ConsumerStatefulWidget {
-  const _ActiveDrill({required this.session, required this.active, required this.onSelect, super.key});
+  const _ActiveDrill({required this.session, required this.active, required this.onSelect, required this.actionNotifier, super.key});
 
   final TrainingSession session;
   final bool active;
   final ValueChanged<int> onSelect;
+  final ValueNotifier<_DrillAction?> actionNotifier;
 
   @override
   ConsumerState<_ActiveDrill> createState() => _ActiveDrillState();
@@ -519,60 +569,63 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> with AutomaticKeepAl
     super.build(context);
     final theme = Theme.of(context);
     final type = drill.trackingType;
-    return AppPage(
-      title: 'Drill ${widget.session.drillIndex + 1} of ${widget.session.drills.length}',
-      showAppBar: false,
-      action: widget.session.finished
-          ? null
-          : FilledButton.icon(
-              onPressed: _drillComplete
-                  ? _nextIncomplete != null
-                        ? () => widget.onSelect(_nextIncomplete!)
-                        : null
-                  : _canLog
-                  ? _log
-                  : null,
-              icon: const Icon(Icons.check),
-              label: Text(_drillComplete ? 'Next drill' : 'Log set'),
-            ),
-      children: [
-        Text('Drill ${widget.session.drillIndex + 1} of ${widget.session.drills.length}', style: theme.textTheme.titleMedium),
-        const SizedBox(height: AppSpacing.sm),
-        const Text('Swipe between drills · Overview shows the whole workout'),
-        const SizedBox(height: AppSpacing.sm),
-        TextButton.icon(onPressed: () => showDrillRestSettings(context, drill), icon: const Icon(Icons.tune), label: Text(ref.watch(drillRestSettingsProvider)[drill.id]?.enabled == true ? 'Drill settings · Rest on' : 'Drill settings · Rest off')),
-        LinearProgressIndicator(value: widget.session.logs.length / widget.session.drills.fold<int>(0, (total, drill) => total + drill.defaultPrescription.sets)),
-        const SizedBox(height: AppSpacing.md),
-        DrillMediaPlaceholder(title: drill.title, compact: true),
-        const SizedBox(height: AppSpacing.xl),
-        Text(drill.title, style: theme.textTheme.headlineSmall),
-        const SizedBox(height: AppSpacing.xs),
-        Text(_drillComplete ? 'All sets logged' : 'Set ${widget.session.setIndex + 1} of ${drill.defaultPrescription.sets}', style: theme.textTheme.titleMedium),
-        const SizedBox(height: AppSpacing.xl),
-        if (_drillComplete)
-          const TrainingCard(child: Text('Drill complete. Swipe to another drill or open the workout overview.'))
-        else if (_timed) ...[
-          Center(
-            child: TrainingProgressRing(progress: 1 - _remaining / drill.defaultPrescription.seconds!, value: '${_remaining ~/ 60}:${(_remaining % 60).toString().padLeft(2, '0')}', label: _remaining == 0 ? 'Set complete' : 'seconds remaining'),
-          ),
+    final nextIncomplete = _nextIncomplete;
+    final action = widget.active && !widget.session.finished
+        ? _DrillAction(
+            label: _drillComplete ? 'Next drill' : 'Log set',
+            onPressed: _drillComplete
+                ? (nextIncomplete == null ? null : () => widget.onSelect(nextIncomplete))
+                : _canLog
+                ? _log
+                : null,
+          )
+        : null;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && widget.active) widget.actionNotifier.value = action;
+    });
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(AppSpacing.screen),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text('Drill ${widget.session.drillIndex + 1} of ${widget.session.drills.length}', style: theme.textTheme.titleMedium),
+          const SizedBox(height: AppSpacing.sm),
+          const Text('Swipe between drills · Overview shows the whole workout'),
+          const SizedBox(height: AppSpacing.sm),
+          TextButton.icon(onPressed: () => showDrillRestSettings(context, drill), icon: const Icon(Icons.tune), label: Text(ref.watch(drillRestSettingsProvider)[drill.id]?.enabled == true ? 'Drill settings · Rest on' : 'Drill settings · Rest off')),
+          LinearProgressIndicator(value: widget.session.logs.length / widget.session.drills.fold<int>(0, (total, drill) => total + drill.defaultPrescription.sets)),
           const SizedBox(height: AppSpacing.md),
-          if (_remaining > 0) OutlinedButton.icon(onPressed: _toggleTimer, icon: Icon(_running ? Icons.pause : Icons.play_arrow), label: Text(_running ? 'Pause timer' : 'Start timer')),
-          if (type == TrackingType.density && _remaining == 0) ...[const SizedBox(height: AppSpacing.md), _counter('Shots in this window', 999)],
-        ] else if (type == TrackingType.binary)
-          SwitchListTile.adaptive(contentPadding: EdgeInsets.zero, title: const Text('Drill completed'), subtitle: const Text('Mark whether you finished this set.'), value: _completed, onChanged: (value) => setState(() => _completed = value))
-        else
-          _counter(switch (type) {
-            TrackingType.accuracy => 'Hits out of ${drill.defaultPrescription.reps}',
-            TrackingType.streak => 'Best consecutive passes',
-            _ => 'Reps completed',
-          }, type == TrackingType.accuracy ? drill.defaultPrescription.reps! : 999),
-        if (type == TrackingType.accuracy) ...[const SizedBox(height: AppSpacing.md), Text('${(_count / drill.defaultPrescription.reps! * 100).round()}% accuracy', textAlign: TextAlign.center, style: theme.textTheme.titleLarge)],
-        if (type == TrackingType.density && _remaining == 0) ...[const SizedBox(height: AppSpacing.md), Text('${(_count / drill.defaultPrescription.seconds! * 60).round()} shots / min', textAlign: TextAlign.center, style: theme.textTheme.titleLarge)],
-        const SizedBox(height: AppSpacing.xl),
-        const SectionHeading(title: 'Remember'),
-        const SizedBox(height: AppSpacing.md),
-        for (final cue in drill.formCues) ...[Text(cue, style: theme.textTheme.bodyLarge), const SizedBox(height: AppSpacing.sm)],
-      ],
+          DrillMediaPlaceholder(title: drill.title, compact: true),
+          const SizedBox(height: AppSpacing.xl),
+          Text(drill.title, style: theme.textTheme.headlineSmall),
+          const SizedBox(height: AppSpacing.xs),
+          Text(_drillComplete ? 'All sets logged' : 'Set ${widget.session.setIndex + 1} of ${drill.defaultPrescription.sets}', style: theme.textTheme.titleMedium),
+          const SizedBox(height: AppSpacing.xl),
+          if (_drillComplete)
+            const TrainingCard(child: Text('Drill complete. Swipe to another drill or open the workout overview.'))
+          else if (_timed) ...[
+            Center(
+              child: TrainingProgressRing(progress: 1 - _remaining / drill.defaultPrescription.seconds!, value: '${_remaining ~/ 60}:${(_remaining % 60).toString().padLeft(2, '0')}', label: _remaining == 0 ? 'Set complete' : 'seconds remaining'),
+            ),
+            const SizedBox(height: AppSpacing.md),
+            if (_remaining > 0) OutlinedButton.icon(onPressed: _toggleTimer, icon: Icon(_running ? Icons.pause : Icons.play_arrow), label: Text(_running ? 'Pause timer' : 'Start timer')),
+            if (type == TrackingType.density && _remaining == 0) ...[const SizedBox(height: AppSpacing.md), _counter('Shots in this window', 999)],
+          ] else if (type == TrackingType.binary)
+            SwitchListTile.adaptive(contentPadding: EdgeInsets.zero, title: const Text('Drill completed'), subtitle: const Text('Mark whether you finished this set.'), value: _completed, onChanged: (value) => setState(() => _completed = value))
+          else
+            _counter(switch (type) {
+              TrackingType.accuracy => 'Hits out of ${drill.defaultPrescription.reps}',
+              TrackingType.streak => 'Best consecutive passes',
+              _ => 'Reps completed',
+            }, type == TrackingType.accuracy ? drill.defaultPrescription.reps! : 999),
+          if (type == TrackingType.accuracy) ...[const SizedBox(height: AppSpacing.md), Text('${(_count / drill.defaultPrescription.reps! * 100).round()}% accuracy', textAlign: TextAlign.center, style: theme.textTheme.titleLarge)],
+          if (type == TrackingType.density && _remaining == 0) ...[const SizedBox(height: AppSpacing.md), Text('${(_count / drill.defaultPrescription.seconds! * 60).round()} shots / min', textAlign: TextAlign.center, style: theme.textTheme.titleLarge)],
+          const SizedBox(height: AppSpacing.xl),
+          const SectionHeading(title: 'Remember'),
+          const SizedBox(height: AppSpacing.md),
+          for (final cue in drill.formCues) ...[Text(cue, style: theme.textTheme.bodyLarge), const SizedBox(height: AppSpacing.sm)],
+        ],
+      ),
     );
   }
 
