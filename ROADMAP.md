@@ -8,7 +8,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 - **Current phase:** Phase 1 — Foundations (in progress)
 - **Next task:** Confirm the normal app boots on both mobile platforms to finish the Phase 1 boot exit check, then begin Phase 2 drill models; keep production release setup deferred.
 - **Blockers:** None for local Android development. Production signing, Play Integrity/DeviceCheck setup, and enforcement are explicitly deferred until release preparation; App Attest is already verified on a signed physical iPhone.
-- **Last updated:** 2026-10-02
+- **Last updated:** 2026-10-05
 
 ### Session Log
 | Date | Summary | Commit |
@@ -30,6 +30,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | 2026-10-02 | Verified fresh production App Attest token exchange on a signed iPhone; added provider-specific device tests and an opt-in production verification build; replaced Android release debug signing with private upload-key configuration and documented remaining console steps; analyze, five unit/widget tests, and Android debug build pass; unsigned Android release is explicitly rejected | — |
 | 2026-10-02 | Clarified the live-Firebase Samsung debug workflow; deferred production App Check, upload signing, and Play Console setup at the user's request so local development can continue with CI next | — |
 | 2026-10-02 | Added SHA-pinned CI for Flutter analysis/tests/Android debug build, Functions lint/tests/build, and isolated demo-project rules tests; all local checks and 13 rules tests pass; all three jobs passed in [GitHub CI run 37056693374](https://github.com/HadenHiles/HowToHockey/actions/runs/37056693374); rules tooling retains three moderate upstream telemetry audit entries | `3dcbcc4` |
+| 2026-10-05 | Added a VS Code live-Firebase debug launch configuration targeting the plugged-in iPhone | — |
 
 ### How to Resume a Session
 1. Read **Current Status**, then the current phase's unchecked items.

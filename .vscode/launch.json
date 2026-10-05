@@ -22,6 +22,14 @@
       "program": "lib/main.dart",
       "deviceId": "R3CX20HFZJL",
       "toolArgs": ["--dart-define=USE_EMULATORS=false"]
+    },
+    {
+      "name": "iPhone (Live)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "00008140-001824D63C53001C",
+      "toolArgs": ["--dart-define=USE_EMULATORS=false"]
     }
   ]
 }
