@@ -31,6 +31,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | 2026-10-02 | Clarified the live-Firebase Samsung debug workflow; deferred production App Check, upload signing, and Play Console setup at the user's request so local development can continue with CI next | — |
 | 2026-10-02 | Added SHA-pinned CI for Flutter analysis/tests/Android debug build, Functions lint/tests/build, and isolated demo-project rules tests; all local checks and 13 rules tests pass; all three jobs passed in [GitHub CI run 37056693374](https://github.com/HadenHiles/HowToHockey/actions/runs/37056693374); rules tooling retains three moderate upstream telemetry audit entries | `3dcbcc4` |
 | 2026-10-05 | Added a VS Code live-Firebase debug launch configuration targeting the plugged-in iPhone | — |
+| 2026-10-05 | Excluded generated Firebase CLI Dart templates under rules-test dependencies from app analysis; Flutter analysis and VS Code problems now report no issues | — |
 
 ### How to Resume a Session
 1. Read **Current Status**, then the current phase's unchecked items.
