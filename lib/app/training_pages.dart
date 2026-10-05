@@ -145,7 +145,7 @@ class RoutinePage extends ConsumerWidget {
           actionLabel: 'Start workout',
           onTap: () {
             ref.read(trainingSessionProvider.notifier).start(sampleDrills);
-            context.push('/session');
+            context.go('/train/session');
           },
         ),
         const SizedBox(height: AppSpacing.md),
@@ -190,7 +190,7 @@ class RoutineLibraryPage extends ConsumerWidget {
                           ? null
                           : () {
                               ref.read(trainingSessionProvider.notifier).start(routine.drills);
-                              context.push('/session');
+                              context.go('/train/session');
                             },
                       icon: const Icon(Icons.play_arrow),
                       label: const Text('Start'),
@@ -433,18 +433,23 @@ class _LibraryPageState extends State<LibraryPage> {
 }
 
 class DrillDetailPage extends ConsumerWidget {
-  const DrillDetailPage({required this.drillId, super.key});
+  const DrillDetailPage({required this.drillId, this.fromSession = false, super.key});
 
   final String drillId;
+  final bool fromSession;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final matches = sampleDrills.where((drill) => drill.id == drillId);
+    final drills = fromSession ? ref.watch(trainingSessionProvider).drills : sampleDrills;
+    final matches = drills.where((drill) => drill.id == drillId);
     if (matches.isEmpty) {
       return AppPage(
         title: 'Drill unavailable',
-        action: OutlinedButton(onPressed: () => context.go('/library'), child: const Text('Go to drill library')),
-        children: const [Text('This drill is unavailable. Return to the library to choose a drill.')],
+        action: OutlinedButton(
+          onPressed: () => fromSession ? context.pop() : context.go('/library'),
+          child: Text(fromSession ? 'Back to workout' : 'Go to drill library'),
+        ),
+        children: [Text(fromSession ? 'This drill is no longer in the workout.' : 'This drill is unavailable. Return to the library to choose a drill.')],
       );
     }
     final drill = matches.single;
@@ -452,10 +457,12 @@ class DrillDetailPage extends ConsumerWidget {
     final theme = Theme.of(context);
     return AppPage(
       title: 'Drill detail',
-      action: FilledButton(
+      action: fromSession
+          ? FilledButton(onPressed: () => context.pop(), child: const Text('Back to workout'))
+          : FilledButton(
         onPressed: () {
           ref.read(trainingSessionProvider.notifier).start([drill]);
-          context.push('/session');
+          context.go('/train/session');
         },
         child: const Text('Try this drill'),
       ),

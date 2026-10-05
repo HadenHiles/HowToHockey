@@ -150,3 +150,12 @@ class TrainingSessionNotifier extends Notifier<TrainingSession> {
 }
 
 final trainingSessionProvider = NotifierProvider<TrainingSessionNotifier, TrainingSession>(TrainingSessionNotifier.new);
+
+class WorkoutSheetProgress extends Notifier<double> {
+  @override
+  double build() => 0;
+
+  void update(double progress) => state = progress.clamp(0, 1).toDouble();
+}
+
+final workoutSheetProgressProvider = NotifierProvider<WorkoutSheetProgress, double>(WorkoutSheetProgress.new);

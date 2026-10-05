@@ -40,20 +40,37 @@ Accuracy and Power are shot-focused. Keep the locked How To Hockey logo, brand
 red/cream, Inter type, accessible contrast, and light/dark appearance setting
 intact when extending the screens.
 
-The active workout is a draggable bottom sheet over Train. Let the sheet's
-shared scroll controller drive both its native resize gesture and vertical
-content scrolling—do not add a competing manual drag recognizer. The sheet
-floats above the persistent app navigation and has no modal barrier, so the
-navigation remains usable while the sheet is collapsed. Keep the red status
-header (handle and elapsed/active/set metrics) and bottom Log action pinned;
+The active workout is a draggable bottom sheet over Train. Keep the sheet
+bounded above the app navigation; its red status header is a dedicated drag
+surface so the sheet can always collapse even while its body is scrolled.
+Move the app navigation in sync with the sheet extent: it slides down while
+the sheet expands and returns as the sheet collapses. Keep the shared sheet
+scroll controller on the vertical content—do not add a competing drag
+recognizer inside the scroll body. Keep the red status header (handle and
+elapsed/active/set metrics) and bottom Log action pinned;
 the workout title, horizontal drill preview strip, optional rest controls, and
 active drill or **Workout overview** scroll together in the sheet body.
-Selecting a preview selects the same drill as swiping the drill pages. Logging
-a set stays on that drill; sets can be completed out of order. Draft inputs
-survive swiping and opening the overview; timed drill inputs pause when leaving
-the drill. Finish the workout once all sets are logged to open the summary.
+Swiping the logging pages changes the active drill, highlights its preview,
+and scrolls the horizontal strip to keep it visible. Tapping a preview opens
+a separate instruction/media screen at `/session-drills/:id`, backed by the
+current session's drills (including custom routine templates), without changing
+the active drill or starting a new workout. Keep media and coach's cues out of
+the logging body. Logging a set stays on that drill; sets can be completed out
+of order. Draft inputs survive swiping, opening the overview, and returning
+from details; timed drill inputs pause when leaving the drill or viewing
+details and must be explicitly resumed. Finish the workout once all sets are
+logged to open the summary. The fixed header uses pointer vertical deltas
+directly, not synthesized axis-constrained drag details; diagonal and canceled
+drags must settle safely.
 The Train app bar has a centered How To Hockey wordmark. The bottom navigation
 uses animated selection and tap feedback; respect **Reduce Motion**.
+The active workout route is nested under `/train` at `/train/session`;
+`/session` redirects there for compatibility. All session-start actions use
+`context.go('/train/session')`, not `push`: pushing back into the Player shell
+from a root-level preview already pushed above it can duplicate the shell's
+page key. Starting a workout replaces the preview/setup stack with Train and
+its session, so Back returns to Train. The session draws its Train background
+within its page because the default session route is opaque.
 
 **Routine management** is available from Train through **Manage routines**.
 The local routine library supports creating/editing routines from preset styles,

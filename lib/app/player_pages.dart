@@ -76,7 +76,7 @@ class TrainPage extends ConsumerWidget {
             OutlinedButton.icon(
               onPressed: () {
                 ref.read(trainingSessionProvider.notifier).start([sampleDrills.first]);
-                context.push('/session');
+                context.go('/train/session');
               },
               icon: const Icon(Icons.add_circle_outline),
               label: const Text('Shot logger'),
@@ -84,7 +84,7 @@ class TrainPage extends ConsumerWidget {
             OutlinedButton.icon(
               onPressed: () {
                 ref.read(trainingSessionProvider.notifier).start([sampleDrills[1]]);
-                context.push('/session');
+                context.go('/train/session');
               },
               icon: const Icon(Icons.timer_outlined),
               label: const Text('Timer'),

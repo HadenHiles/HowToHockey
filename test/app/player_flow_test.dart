@@ -42,6 +42,56 @@ Future<void> revealWorkoutDrill(WidgetTester tester) async {
 }
 
 void main() {
+  testWidgets('starting a workout from Train keeps navigator page keys unique', (tester) async {
+    phoneSize(tester);
+    final container = await mountApp(tester);
+    await tester.tap(find.text('View workout'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    await tester.ensureVisible(find.text('Start workout'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start workout'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.byType(DraggableScrollableSheet), findsOneWidget);
+    expect(container.read(appRouterProvider).routeInformationProvider.value.uri.path, '/train/session');
+    expect(container.read(trainingSessionProvider).startedAt, isNotNull);
+    for (final navigator in tester.widgetList<Navigator>(find.byType(Navigator, skipOffstage: false))) {
+      final keys = navigator.pages.map((page) => page.key).toList();
+      expect(keys.toSet().length, keys.length);
+    }
+    container.read(appRouterProvider).pop();
+    await tester.pumpAndSettle();
+    expect(find.byType(DraggableScrollableSheet), findsNothing);
+    expect(find.text('View workout'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final entry in [(route: '/routines', label: 'Start', drills: 6), (route: '/drills/quick-release', label: 'Try this drill', drills: 1), (route: '/train', label: 'Shot logger', drills: 1), (route: '/train', label: 'Timer', drills: 1)]) {
+    testWidgets('${entry.label} enters the existing Player shell without duplicate pages', (tester) async {
+      phoneSize(tester);
+      final container = await mountApp(tester);
+      final router = container.read(appRouterProvider);
+      if (entry.route != '/train') {
+        router.push(entry.route);
+        await tester.pumpAndSettle();
+      }
+      await tester.ensureVisible(find.text(entry.label).first);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(entry.label).first);
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(router.routeInformationProvider.value.uri.path, '/train/session');
+      expect(find.byType(DraggableScrollableSheet), findsOneWidget);
+      expect(container.read(trainingSessionProvider).drills.length, entry.drills);
+      expect(container.read(trainingSessionProvider).startedAt, isNotNull);
+      for (final navigator in tester.widgetList<Navigator>(find.byType(Navigator, skipOffstage: false))) {
+        final keys = navigator.pages.map((page) => page.key).toList();
+        expect(keys.toSet().length, keys.length);
+      }
+    });
+  }
+
   test('the six requested skills are labeled and represented in sample drills', () {
     expect(SkillPillar.values.map((pillar) => pillar.label), ['Accuracy', 'Hands', 'Power', 'Passing', 'Speed/Strength', 'Endurance']);
     expect(sampleDrills.map((drill) => drill.pillar).toSet(), SkillPillar.values.toSet());
@@ -78,6 +128,12 @@ void main() {
     await tester.tap(find.text('View my workout'));
     await tester.pumpAndSettle();
     expect(find.text('Start workout'), findsOneWidget);
+    await tester.ensureVisible(find.text('Start workout'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start workout'));
+    await tester.pumpAndSettle();
+    expect(find.byType(DraggableScrollableSheet), findsOneWidget);
+    expect(tester.takeException(), isNull);
     router.go('/me');
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Dark'));
@@ -231,6 +287,74 @@ void main() {
     expect(tester.state<ScrollableState>(find.byType(Scrollable).first).position.pixels, trainPosition);
   });
 
+  testWidgets('custom session drill details preserve logs and draft inputs on return', (tester) async {
+    phoneSize(tester);
+    final container = await mountApp(tester);
+    final custom = sampleDrills.first.copyWith(id: 'routine-custom-power', title: 'Custom power drill', formCues: ['Keep your weight balanced.']);
+    container.read(trainingSessionProvider.notifier).start([custom]);
+    container.read(appRouterProvider).go('/train/session');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Log set'));
+    await tester.pumpAndSettle();
+    final loggedSession = container.read(trainingSessionProvider);
+    await revealWorkoutDrill(tester);
+    await tester.ensureVisible(find.text('10'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('10'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), '7');
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+    returnWorkoutSheetToTop(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(ValueKey('workout-preview-${custom.id}')));
+    await tester.pumpAndSettle();
+    expect(find.text('Custom power drill'), findsOneWidget);
+    expect(find.text('1. Keep your weight balanced.'), findsOneWidget);
+    expect(find.text('Try this drill'), findsNothing);
+    for (final navigator in tester.widgetList<Navigator>(find.byType(Navigator, skipOffstage: false))) {
+      final keys = navigator.pages.map((page) => page.key).toList();
+      expect(keys.toSet().length, keys.length);
+    }
+    container.read(appRouterProvider).pop();
+    await tester.pumpAndSettle();
+    expect(container.read(trainingSessionProvider).logs, loggedSession.logs);
+    expect(container.read(trainingSessionProvider).startedAt, loggedSession.startedAt);
+    await revealWorkoutDrill(tester);
+    expect(find.text('7'), findsOneWidget);
+    await tester.tap(find.text('Log set'));
+    await tester.pumpAndSettle();
+    expect(container.read(trainingSessionProvider).logs.last.log.reps, 7);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('viewing session drill details pauses its running timer', (tester) async {
+    phoneSize(tester);
+    final container = await mountApp(tester);
+    final timed = sampleDrills.firstWhere((drill) => drill.trackingType == TrackingType.duration);
+    container.read(trainingSessionProvider.notifier).start([timed.copyWith(defaultPrescription: timed.defaultPrescription.copyWith(seconds: 120))]);
+    container.read(appRouterProvider).go('/train/session');
+    await tester.pumpAndSettle();
+    await revealWorkoutDrill(tester);
+    await tester.ensureVisible(find.text('Start timer'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Start timer'));
+    await tester.pump(const Duration(seconds: 1));
+    returnWorkoutSheetToTop(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(ValueKey('workout-preview-${timed.id}')));
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 5));
+    await tester.tap(find.text('Back to workout'));
+    await tester.pumpAndSettle();
+    await revealWorkoutDrill(tester);
+    await tester.ensureVisible(find.text('Start timer'));
+    await tester.pumpAndSettle();
+    expect(find.text('1:59'), findsOneWidget);
+    expect(find.text('Start timer'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('drill drafts survive swiping and overview, with out-of-order progress', (tester) async {
     phoneSize(tester);
     final container = await mountApp(tester);
@@ -259,7 +383,10 @@ void main() {
     expect(find.text('Workout overview'), findsOneWidget);
     expect(find.text('0 / 2 sets · Reps'), findsOneWidget);
     expect(find.bySemanticsLabel(RegExp('Accuracy: Pick your corner, 1 of 2 sets')), findsOneWidget);
-    await tester.tap(find.bySemanticsLabel(RegExp('Power: Quick-release wrist shots')));
+    await revealWorkoutDrill(tester);
+    await tester.ensureVisible(find.text('Quick-release wrist shots').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Quick-release wrist shots').last);
     await tester.pumpAndSettle();
     expect(find.text('7'), findsOneWidget);
     await tester.tap(find.text('Log set'));
@@ -272,11 +399,14 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('active workout opens in a draggable sheet with selectable drill previews', (tester) async {
+  testWidgets('workout previews open details while swipes highlight the active drill and diagonal drags collapse safely', (tester) async {
     phoneSize(tester);
     final container = await mountApp(tester);
     container.read(trainingSessionProvider.notifier).start([sampleDrills.first, sampleDrills[1]]);
-    container.read(appRouterProvider).go('/session');
+    final router = container.read(appRouterProvider);
+    router.go('/routine');
+    await tester.pumpAndSettle();
+    router.go('/train/session');
     await tester.pumpAndSettle();
 
     expect(find.byType(DraggableScrollableSheet), findsOneWidget);
@@ -289,7 +419,30 @@ void main() {
     await tester.tap(find.bySemanticsLabel(RegExp('Hands: Quiet hands, quick feet')));
     await tester.pumpAndSettle();
 
+    expect(find.text('Coach’s cues'), findsOneWidget);
+    expect(find.text('Back to workout'), findsOneWidget);
+    expect(find.text('Try this drill'), findsNothing);
+    expect(container.read(trainingSessionProvider).drillIndex, 0);
+    await tester.tap(find.text('Back to workout'));
+    await tester.pumpAndSettle();
+    expect(find.text('Coach’s cues'), findsNothing);
+    expect(find.text('Remember'), findsNothing);
+    await revealWorkoutDrill(tester);
+    await tester.ensureVisible(find.byType(PageView));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(PageView), const Offset(-300, 0));
+    await tester.pumpAndSettle();
     expect(container.read(trainingSessionProvider).drillIndex, 1);
+    returnWorkoutSheetToTop(tester);
+    await tester.pumpAndSettle();
+    final activePreview = tester.widget<Semantics>(find.byKey(ValueKey('workout-preview-${sampleDrills[1].id}')));
+    expect(activePreview.properties.selected, isTrue);
+    final activeMaterial = tester.widget<Material>(find.descendant(of: find.byKey(ValueKey('workout-preview-${sampleDrills[1].id}')), matching: find.byType(Material)));
+    expect((activeMaterial.shape as RoundedRectangleBorder).side.width, 2);
+    final previousPreview = tester.widget<Semantics>(find.byKey(ValueKey('workout-preview-${sampleDrills.first.id}')));
+    expect(previousPreview.properties.selected, isFalse);
+    final previousMaterial = tester.widget<Material>(find.descendant(of: find.byKey(ValueKey('workout-preview-${sampleDrills.first.id}')), matching: find.byType(Material)));
+    expect((previousMaterial.shape as RoundedRectangleBorder).side.width, 1);
     expect(find.text('Quiet hands, quick feet'), findsWidgets);
     final handle = find.byKey(const ValueKey('workout-sheet-handle'));
     final previewTopBeforeScroll = tester.getTopLeft(find.byKey(const ValueKey('workout-drill-previews'))).dy;
@@ -302,13 +455,25 @@ void main() {
     expect(find.text('Log set').hitTestable(), findsOneWidget);
     returnWorkoutSheetToTop(tester);
     await tester.pumpAndSettle();
-    await tester.drag(handle, const Offset(0, 450));
+    final expandedHeaderTop = tester.getTopLeft(find.byKey(const ValueKey('workout-status-header'))).dy;
+    await tester.drag(handle, const Offset(40, 900));
     await tester.pumpAndSettle();
     expect(find.text('Your session').hitTestable(), findsNothing);
     expect(find.text('ACTIVE'), findsOneWidget);
-    await tester.drag(handle, const Offset(0, -180));
+    expect(tester.getTopLeft(find.byKey(const ValueKey('workout-status-header'))).dy, greaterThan(expandedHeaderTop));
+    final navigationMotion = tester.widget<Transform>(find.byKey(const ValueKey('player-navigation-motion')));
+    expect(navigationMotion.transform.getTranslation().y, 0);
+    await tester.drag(handle, const Offset(-30, -300));
     await tester.pumpAndSettle();
-    await tester.drag(handle, const Offset(0, 180));
+    expect(container.read(workoutSheetProgressProvider), greaterThan(0));
+    expect(tester.widget<Transform>(find.byKey(const ValueKey('player-navigation-motion'))).transform.getTranslation().y, greaterThan(0));
+    final canceledDrag = await tester.startGesture(tester.getCenter(handle));
+    await canceledDrag.moveBy(const Offset(20, 400));
+    await canceledDrag.cancel();
+    await tester.pumpAndSettle();
+    expect(container.read(workoutSheetProgressProvider), closeTo(0, .001));
+    expect(tester.takeException(), isNull);
+    await tester.drag(handle, const Offset(0, 900));
     await tester.pumpAndSettle();
     await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Me')));
     await tester.pumpAndSettle();

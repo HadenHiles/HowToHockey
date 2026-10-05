@@ -8,18 +8,22 @@ import 'player_pages.dart';
 import 'app_page.dart';
 import 'session_pages.dart';
 import 'training_pages.dart';
+import 'training_state.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     initialLocation: '/train',
     routes: [
       StatefulShellRoute.indexedStack(
-        builder: (context, state, shell) => _PlayerShell(shell: shell),
+        builder: (context, state, shell) => _PlayerShell(shell: shell, sessionActive: state.matchedLocation == '/train/session'),
         branches: [
           StatefulShellBranch(
             routes: [
-              GoRoute(path: '/train', builder: (_, _) => const TrainPage()),
-              GoRoute(path: '/session', builder: (_, _) => const SessionPage()),
+              GoRoute(
+                path: '/train',
+                builder: (_, _) => const TrainPage(),
+                routes: [GoRoute(path: 'session', builder: (_, _) => const SessionPage())],
+              ),
             ],
           ),
           StatefulShellBranch(
@@ -38,13 +42,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/routine', builder: (_, _) => const RoutinePage()),
       GoRoute(path: '/routines', builder: (_, _) => const RoutineLibraryPage()),
       GoRoute(path: '/routines/new', builder: (_, _) => const RoutineBuilderPage()),
-      GoRoute(path: '/routines/:id/edit', builder: (_, state) => RoutineBuilderPage(routineId: state.pathParameters['id'])),
+      GoRoute(
+        path: '/routines/:id/edit',
+        builder: (_, state) => RoutineBuilderPage(routineId: state.pathParameters['id']),
+      ),
       GoRoute(path: '/library', builder: (_, _) => const LibraryPage()),
       GoRoute(
         path: '/drills/:id',
         builder: (_, state) => DrillDetailPage(drillId: state.pathParameters['id']!),
       ),
-      GoRoute(path: '/rest', redirect: (_, _) => '/session'),
+      GoRoute(
+        path: '/session-drills/:id',
+        builder: (_, state) => DrillDetailPage(drillId: state.pathParameters['id']!, fromSession: true),
+      ),
+      GoRoute(path: '/rest', redirect: (_, _) => '/train/session'),
+      GoRoute(path: '/session', redirect: (_, _) => '/train/session'),
       GoRoute(path: '/summary', builder: (_, _) => const SummaryPage()),
     ],
     errorBuilder: (context, state) => AppPage(
@@ -64,28 +76,53 @@ class HockeyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) => MaterialApp.router(title: 'How To Hockey', debugShowCheckedModeBanner: false, theme: HockeyTheme.light, darkTheme: HockeyTheme.dark, themeMode: ref.watch(appearanceProvider).themeMode, routerConfig: ref.watch(appRouterProvider));
 }
 
-class _PlayerShell extends StatelessWidget {
-  const _PlayerShell({required this.shell});
+class _PlayerShell extends ConsumerWidget {
+  const _PlayerShell({required this.shell, required this.sessionActive});
 
   final StatefulNavigationShell shell;
+  final bool sessionActive;
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    body: shell,
-    bottomNavigationBar: NavigationBar(
-      selectedIndex: shell.currentIndex,
-      onDestinationSelected: (index) {
-        Feedback.forTap(context);
-        shell.goBranch(index, initialLocation: index == shell.currentIndex);
-      },
-      destinations: [
-        NavigationDestination(icon: const Icon(Icons.sports_hockey_outlined), selectedIcon: _NavSelectionIcon(icon: Icons.sports_hockey, selected: shell.currentIndex == 0), label: 'Train'),
-        NavigationDestination(icon: const Icon(Icons.insights_outlined), selectedIcon: _NavSelectionIcon(icon: Icons.insights, selected: shell.currentIndex == 1), label: 'Progress'),
-        NavigationDestination(icon: const Icon(Icons.groups_outlined), selectedIcon: _NavSelectionIcon(icon: Icons.groups, selected: shell.currentIndex == 2), label: 'Team'),
-        NavigationDestination(icon: const Icon(Icons.person_outline), selectedIcon: _NavSelectionIcon(icon: Icons.person, selected: shell.currentIndex == 3), label: 'Me'),
-      ],
-    ),
-  );
+  Widget build(BuildContext context, WidgetRef ref) {
+    final sheetProgress = sessionActive ? ref.watch(workoutSheetProgressProvider) : 0.0;
+    final navigationHeight = 80 + MediaQuery.paddingOf(context).bottom;
+    return Scaffold(
+      body: shell,
+      bottomNavigationBar: Transform.translate(
+        key: const ValueKey('player-navigation-motion'),
+        offset: Offset(0, navigationHeight * sheetProgress),
+        child: NavigationBar(
+          selectedIndex: shell.currentIndex,
+          onDestinationSelected: (index) {
+            Feedback.forTap(context);
+            shell.goBranch(index, initialLocation: index == shell.currentIndex);
+          },
+          destinations: [
+            NavigationDestination(
+              icon: const Icon(Icons.sports_hockey_outlined),
+              selectedIcon: _NavSelectionIcon(icon: Icons.sports_hockey, selected: shell.currentIndex == 0),
+              label: 'Train',
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.insights_outlined),
+              selectedIcon: _NavSelectionIcon(icon: Icons.insights, selected: shell.currentIndex == 1),
+              label: 'Progress',
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.groups_outlined),
+              selectedIcon: _NavSelectionIcon(icon: Icons.groups, selected: shell.currentIndex == 2),
+              label: 'Team',
+            ),
+            NavigationDestination(
+              icon: const Icon(Icons.person_outline),
+              selectedIcon: _NavSelectionIcon(icon: Icons.person, selected: shell.currentIndex == 3),
+              label: 'Me',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _NavSelectionIcon extends StatelessWidget {
@@ -104,10 +141,7 @@ class _NavSelectionIcon extends StatelessWidget {
       child: AnimatedContainer(
         duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 280),
         curve: Curves.easeOutCubic,
-        decoration: BoxDecoration(
-          color: selected ? Theme.of(context).colorScheme.primary.withValues(alpha: .14) : Colors.transparent,
-          borderRadius: BorderRadius.circular(16),
-        ),
+        decoration: BoxDecoration(color: selected ? Theme.of(context).colorScheme.primary.withValues(alpha: .14) : Colors.transparent, borderRadius: BorderRadius.circular(16)),
         padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 4),
         child: Icon(icon),
       ),
