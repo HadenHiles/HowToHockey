@@ -3,17 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:how_to_hockey/features/drills/models/drill.dart';
 import 'package:how_to_hockey/features/settings/appearance_settings_controller.dart';
-import 'package:how_to_hockey/preview/preview_data.dart';
-import 'package:how_to_hockey/preview/preview_state.dart';
-import 'package:how_to_hockey/preview/ux_preview_app.dart';
+import 'package:how_to_hockey/app/sample_data.dart';
+import 'package:how_to_hockey/app/training_state.dart';
+import 'package:how_to_hockey/app/hockey_app.dart';
+import 'package:how_to_hockey/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-Future<ProviderContainer> mountPreview(WidgetTester tester, {String appearance = 'light'}) async {
+Future<ProviderContainer> mountApp(WidgetTester tester, {String appearance = 'light'}) async {
   SharedPreferences.setMockInitialValues({'appearance': appearance});
   final preferences = await SharedPreferences.getInstance();
   final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences)]);
   addTearDown(container.dispose);
-  await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const UxPreviewApp()));
+  await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));
   await tester.pumpAndSettle();
   return container;
 }
@@ -31,11 +32,11 @@ void main() {
   test('focus sliders rebalance to exactly 100 including all-zero remainder', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
-    final controller = container.read(previewFocusProvider.notifier);
+    final controller = container.read(trainingFocusProvider.notifier);
     for (final pillar in SkillPillar.values) {
       for (final value in [100, 0, 33, 74, 1]) {
         controller.select(pillar, value);
-        final focus = container.read(previewFocusProvider);
+        final focus = container.read(trainingFocusProvider);
         expect(focus[pillar], value);
         expect(focus.values.fold(0, (sum, points) => sum + points), 100);
         expect(focus.values.every((points) => points >= 0 && points <= 100), isTrue);
@@ -46,17 +47,17 @@ void main() {
 
   testWidgets('setup, focus, routine and local theme controls are navigable without Firebase', (tester) async {
     phoneSize(tester);
-    final container = await mountPreview(tester);
-    final router = container.read(previewRouterProvider);
+    final container = await mountApp(tester);
+    final router = container.read(appRouterProvider);
     router.go('/setup');
     await tester.pumpAndSettle();
     await tester.tap(find.text('Basement'));
     await tester.pumpAndSettle();
-    expect(container.read(previewSetupProvider).location, LocationOption.basement);
+    expect(container.read(trainingSetupProvider).location, LocationOption.basement);
     await tester.tap(find.text('Next: choose your focus'));
     await tester.pumpAndSettle();
     expect(find.byType(Slider), findsNWidgets(5));
-    await tester.tap(find.text('Preview my workout'));
+    await tester.tap(find.text('View my workout'));
     await tester.pumpAndSettle();
     expect(find.text('Start workout'), findsOneWidget);
     router.go('/me');
@@ -74,18 +75,19 @@ void main() {
 
   testWidgets('all six input types log local sets through rest and summary', (tester) async {
     phoneSize(tester);
-    final container = await mountPreview(tester);
-    final router = container.read(previewRouterProvider);
-    final fixtures = previewDrills.map((drill) => drill.copyWith(defaultPrescription: drill.defaultPrescription.copyWith(sets: 1))).toList();
-    container.read(previewSessionProvider.notifier).start(fixtures);
+    final container = await mountApp(tester);
+    final router = container.read(appRouterProvider);
+    final fixtures = sampleDrills.map((drill) => drill.copyWith(defaultPrescription: drill.defaultPrescription.copyWith(sets: 1))).toList();
+    container.read(trainingSessionProvider.notifier).start(fixtures);
     router.go('/session');
     await tester.pumpAndSettle();
     for (final drill in fixtures) {
       if (drill.trackingType == TrackingType.duration || drill.trackingType == TrackingType.density) {
-        final fastForward = find.text('Preview: fast-forward timer');
-        await tester.ensureVisible(fastForward);
+        final startTimer = find.text('Start timer');
+        await tester.ensureVisible(startTimer);
         await tester.pumpAndSettle();
-        await tester.tap(fastForward);
+        await tester.tap(startTimer);
+        await tester.pump(Duration(seconds: drill.defaultPrescription.seconds!));
         await tester.pumpAndSettle();
       }
       if (drill.trackingType == TrackingType.binary) {
@@ -101,7 +103,7 @@ void main() {
         await tester.pumpAndSettle();
       }
     }
-    final session = container.read(previewSessionProvider);
+    final session = container.read(trainingSessionProvider);
     expect(session.finished, isTrue);
     expect(session.logs.length, 6);
     expect(session.logs[0].log.reps, 10);
@@ -118,10 +120,10 @@ void main() {
 
   for (final appearance in ['light', 'dark']) {
     for (final scale in [1.0, 2.0]) {
-      testWidgets('preview routes fit a small phone in $appearance at ${scale}x', (tester) async {
+      testWidgets('app routes fit a small phone in $appearance at ${scale}x', (tester) async {
         phoneSize(tester, scale: scale);
-        final container = await mountPreview(tester, appearance: appearance);
-        final router = container.read(previewRouterProvider);
+        final container = await mountApp(tester, appearance: appearance);
+        final router = container.read(appRouterProvider);
         for (final route in ['/train', '/setup', '/focus', '/routine', '/library', '/drills/quick-release', '/session', '/rest', '/progress', '/team', '/me', '/summary', '/drills/not-a-drill']) {
           router.go(route);
           await tester.pumpAndSettle();
@@ -133,8 +135,8 @@ void main() {
 
   testWidgets('library filtering exposes a deliberate empty state', (tester) async {
     phoneSize(tester);
-    final container = await mountPreview(tester);
-    container.read(previewRouterProvider).go('/library');
+    final container = await mountApp(tester);
+    container.read(appRouterProvider).go('/library');
     await tester.pumpAndSettle();
     await tester.tap(find.text('Hockey IQ'));
     await tester.pumpAndSettle();
@@ -146,10 +148,10 @@ void main() {
 
   testWidgets('direct accuracy input rejects hits above total and logs valid hits', (tester) async {
     phoneSize(tester);
-    final container = await mountPreview(tester);
-    final drill = previewDrills[3].copyWith(defaultPrescription: previewDrills[3].defaultPrescription.copyWith(sets: 1));
-    container.read(previewSessionProvider.notifier).start([drill]);
-    container.read(previewRouterProvider).go('/session');
+    final container = await mountApp(tester);
+    final drill = sampleDrills[3].copyWith(defaultPrescription: sampleDrills[3].defaultPrescription.copyWith(sets: 1));
+    container.read(trainingSessionProvider.notifier).start([drill]);
+    container.read(appRouterProvider).go('/session');
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('0'));
     await tester.pumpAndSettle();
@@ -165,13 +167,13 @@ void main() {
     expect(find.text('80% accuracy'), findsOneWidget);
     await tester.tap(find.text('Log set'));
     await tester.pumpAndSettle();
-    expect(container.read(previewSessionProvider).logs.single.log.hits, 8);
+    expect(container.read(trainingSessionProvider).logs.single.log.hits, 8);
   });
 
   testWidgets('rest resumes counting after reaching zero and adding time', (tester) async {
     phoneSize(tester);
-    final container = await mountPreview(tester);
-    container.read(previewRouterProvider).go('/rest', extra: 1);
+    final container = await mountApp(tester);
+    container.read(appRouterProvider).go('/rest', extra: 1);
     await tester.pumpAndSettle();
     await tester.pump(const Duration(seconds: 2));
     expect(find.text('Next set'), findsOneWidget);
@@ -186,7 +188,7 @@ void main() {
 
   testWidgets('Player tabs preserve Train scroll position', (tester) async {
     phoneSize(tester);
-    await mountPreview(tester);
+    await mountApp(tester);
     await tester.drag(find.byType(CustomScrollView).first, const Offset(0, -400));
     await tester.pumpAndSettle();
     final trainPosition = tester.state<ScrollableState>(find.byType(Scrollable).first).position.pixels;

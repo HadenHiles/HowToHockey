@@ -14,16 +14,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'design/theme/app_theme.dart';
+import 'app/hockey_app.dart';
 import 'features/settings/appearance_settings_controller.dart';
-import 'features/settings/appearance_settings_page.dart';
 import 'firebase_options.dart';
-import 'preview/ux_preview_app.dart';
 
 const _useFirebaseEmulators = bool.fromEnvironment('USE_EMULATORS');
 const _configuredEmulatorHost = String.fromEnvironment('FIREBASE_EMULATOR_HOST');
 const _verifyAppCheck = bool.fromEnvironment('VERIFY_APP_CHECK');
-const _uxPreview = bool.fromEnvironment('UX_PREVIEW');
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -33,17 +30,6 @@ Future<void> main() async {
     yield LicenseEntryWithLineBreaks(['Inter'], interLicense);
   });
   final preferences = await SharedPreferences.getInstance();
-
-  if (_uxPreview) {
-    if (_verifyAppCheck || _useFirebaseEmulators) {
-      throw StateError('UX_PREVIEW cannot be combined with Firebase emulators or App Check verification.');
-    }
-    runApp(ProviderScope(
-      overrides: [sharedPreferencesProvider.overrideWithValue(preferences)],
-      child: const UxPreviewApp(),
-    ));
-    return;
-  }
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   final useDebugProviders = _useFirebaseEmulators || kDebugMode;
@@ -102,8 +88,6 @@ class MyApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final appearance = ref.watch(appearanceProvider);
-
-    return MaterialApp(title: 'How To Hockey', theme: HockeyTheme.light, darkTheme: HockeyTheme.dark, themeMode: appearance.themeMode, home: const AppearanceSettingsPage());
+    return const HockeyApp();
   }
 }

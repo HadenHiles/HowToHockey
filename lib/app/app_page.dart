@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_spacing.dart';
 
-class PreviewPage extends StatelessWidget {
-  const PreviewPage({
+class AppPage extends StatelessWidget {
+  const AppPage({
     required this.title,
     required this.children,
     super.key,
@@ -35,7 +34,6 @@ class PreviewPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const PreviewNotice(),
                       if (subtitle != null) ...[
                         const SizedBox(height: AppSpacing.md),
                         Text(subtitle!, style: theme.textTheme.bodyLarge),
@@ -61,29 +59,6 @@ class PreviewPage extends StatelessWidget {
   }
 }
 
-class PreviewNotice extends StatelessWidget {
-  const PreviewNotice({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Icon(Icons.science_outlined, size: 16, color: theme.extension<AppColors>()!.textSecondary),
-        const SizedBox(width: AppSpacing.xs),
-        Expanded(
-          child: Text(
-            'UX PREVIEW · SAMPLE DATA · NOTHING IS SAVED',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: theme.extension<AppColors>()!.textSecondary,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-void showPreviewMessage(BuildContext context, String message) {
+void showFeatureMessage(BuildContext context, String message) {
   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
 }

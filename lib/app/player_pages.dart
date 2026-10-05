@@ -8,18 +8,18 @@ import '../design/components/training_components.dart';
 import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/settings/appearance_settings_controller.dart';
-import 'preview_data.dart';
-import 'preview_page.dart';
-import 'preview_state.dart';
+import 'sample_data.dart';
+import 'app_page.dart';
+import 'training_state.dart';
 
-class TrainPreviewPage extends ConsumerWidget {
-  const TrainPreviewPage({super.key});
+class TrainPage extends ConsumerWidget {
+  const TrainPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final setup = ref.watch(previewSetupProvider);
-    return PreviewPage(
+    final setup = ref.watch(trainingSetupProvider);
+    return AppPage(
       title: 'Train',
       actions: const [
         Padding(padding: EdgeInsets.only(right: AppSpacing.screen), child: BrandWordmark()),
@@ -90,7 +90,7 @@ class TrainPreviewPage extends ConsumerWidget {
         const SizedBox(height: AppSpacing.xl),
         SectionHeading(title: 'Explore drills', action: 'See all', onAction: () => context.push('/library')),
         const SizedBox(height: AppSpacing.md),
-        for (final drill in previewDrills.take(2)) ...[
+        for (final drill in sampleDrills.take(2)) ...[
           DrillListCard(drillId: drill.id),
           const SizedBox(height: AppSpacing.sm),
         ],
@@ -103,7 +103,7 @@ class TrainPreviewPage extends ConsumerWidget {
           children: [
             OutlinedButton.icon(
               onPressed: () {
-                ref.read(previewSessionProvider.notifier).start([previewDrills.first]);
+                ref.read(trainingSessionProvider.notifier).start([sampleDrills.first]);
                 context.push('/session');
               },
               icon: const Icon(Icons.add_circle_outline),
@@ -111,7 +111,7 @@ class TrainPreviewPage extends ConsumerWidget {
             ),
             OutlinedButton.icon(
               onPressed: () {
-                ref.read(previewSessionProvider.notifier).start([previewDrills[1]]);
+                ref.read(trainingSessionProvider.notifier).start([sampleDrills[1]]);
                 context.push('/session');
               },
               icon: const Icon(Icons.timer_outlined),
@@ -132,7 +132,7 @@ class DrillListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final drill = previewDrills.firstWhere((drill) => drill.id == drillId);
+    final drill = sampleDrills.firstWhere((drill) => drill.id == drillId);
     final theme = Theme.of(context);
     final pillars = theme.extension<PillarColors>()!;
     return TrainingCard(
@@ -159,11 +159,11 @@ class DrillListCard extends StatelessWidget {
   }
 }
 
-class ProgressPreviewPage extends StatelessWidget {
-  const ProgressPreviewPage({super.key});
+class ProgressPage extends StatelessWidget {
+  const ProgressPage({super.key});
 
   @override
-  Widget build(BuildContext context) => PreviewPage(
+  Widget build(BuildContext context) => AppPage(
     title: 'Progress',
     subtitle: 'Small sessions. Lasting progress.',
     children: [
@@ -195,13 +195,13 @@ class ProgressPreviewPage extends StatelessWidget {
   );
 }
 
-class TeamPreviewPage extends StatelessWidget {
-  const TeamPreviewPage({super.key});
+class TeamPage extends StatelessWidget {
+  const TeamPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return PreviewPage(
+    return AppPage(
       title: 'Team',
       subtitle: 'North Stars · U15',
       children: [
@@ -241,14 +241,14 @@ class TeamPreviewPage extends StatelessWidget {
   }
 }
 
-class MePreviewPage extends ConsumerWidget {
-  const MePreviewPage({super.key});
+class MePage extends ConsumerWidget {
+  const MePage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final appearance = ref.watch(appearanceProvider);
-    return PreviewPage(
+    return AppPage(
       title: 'Me',
       children: [
         TrainingCard(
@@ -282,7 +282,7 @@ class MePreviewPage extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.xl),
         const TrainingCard(
-          child: Text('Preview only\nTraining data resets when the app restarts. Appearance is the only setting saved to this device. No Firebase or purchase services are connected.'),
+          child: Text('Data and services\nScreens currently use sample content. Workout results stay on this device until restart; history, team updates, and purchases are not connected yet. Appearance is saved to this device.'),
         ),
       ],
     );

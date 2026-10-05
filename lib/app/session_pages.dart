@@ -9,18 +9,18 @@ import '../design/components/training_components.dart';
 import '../design/theme/app_theme.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/drills/models/drill.dart';
-import 'preview_data.dart';
-import 'preview_page.dart';
-import 'preview_state.dart';
+import 'sample_data.dart';
+import 'app_page.dart';
+import 'training_state.dart';
 
-class SessionPreviewPage extends ConsumerWidget {
-  const SessionPreviewPage({super.key});
+class SessionPage extends ConsumerWidget {
+  const SessionPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(previewSessionProvider);
+    final session = ref.watch(trainingSessionProvider);
     if (session.finished) {
-      return const SummaryPreviewPage();
+      return const SummaryPage();
     }
     return Theme(
       data: HockeyTheme.dark,
@@ -35,7 +35,7 @@ class SessionPreviewPage extends ConsumerWidget {
 class _ActiveDrill extends ConsumerStatefulWidget {
   const _ActiveDrill({required this.session, super.key});
 
-  final PreviewSession session;
+  final TrainingSession session;
 
   @override
   ConsumerState<_ActiveDrill> createState() => _ActiveDrillState();
@@ -85,7 +85,7 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> {
 
   void _log() {
     final type = drill.trackingType;
-    ref.read(previewSessionProvider.notifier).logSet(
+    ref.read(trainingSessionProvider.notifier).logSet(
       reps: switch (type) {
         TrackingType.volume || TrackingType.density => _count,
         TrackingType.accuracy => drill.defaultPrescription.reps,
@@ -96,7 +96,7 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> {
       streak: type == TrackingType.streak ? _count : null,
       completed: type == TrackingType.binary ? _completed : null,
     );
-    final finished = ref.read(previewSessionProvider).finished;
+    final finished = ref.read(trainingSessionProvider).finished;
     context.pushReplacement(finished ? '/summary' : '/rest', extra: drill.defaultPrescription.restSeconds);
   }
 
@@ -112,7 +112,7 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final type = drill.trackingType;
-    return PreviewPage(
+    return AppPage(
       title: 'Drill ${widget.session.drillIndex + 1} of ${widget.session.drills.length}',
       action: FilledButton.icon(
         onPressed: _canLog ? _log : null,
@@ -146,18 +146,6 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> {
               icon: Icon(_running ? Icons.pause : Icons.play_arrow),
               label: Text(_running ? 'Pause timer' : 'Start timer'),
             ),
-          TextButton(
-            onPressed: _remaining == 0
-                ? null
-                : () {
-                    _timer?.cancel();
-                    setState(() {
-                      _running = false;
-                      _remaining = 0;
-                    });
-                  },
-            child: const Text('Preview: fast-forward timer'),
-          ),
           if (type == TrackingType.density && _remaining == 0) ...[
             const SizedBox(height: AppSpacing.md),
             _counter('Shots in this window', 999),
@@ -288,16 +276,16 @@ class _CountDialogState extends State<_CountDialog> {
   );
 }
 
-class RestPreviewPage extends StatefulWidget {
-  const RestPreviewPage({super.key, this.seconds = 45});
+class RestPage extends StatefulWidget {
+  const RestPage({super.key, this.seconds = 45});
 
   final int seconds;
 
   @override
-  State<RestPreviewPage> createState() => _RestPreviewPageState();
+  State<RestPage> createState() => _RestPageState();
 }
 
-class _RestPreviewPageState extends State<RestPreviewPage> {
+class _RestPageState extends State<RestPage> {
   Timer? _timer;
   late int _remaining;
   late int _total;
@@ -322,7 +310,7 @@ class _RestPreviewPageState extends State<RestPreviewPage> {
   @override
   Widget build(BuildContext context) => Theme(
     data: HockeyTheme.dark,
-    child: PreviewPage(
+    child: AppPage(
       title: 'Breathe. Reset.',
       subtitle: 'Great work. Give yourself a moment.',
       action: FilledButton(
@@ -363,24 +351,24 @@ class _RestPreviewPageState extends State<RestPreviewPage> {
   );
 }
 
-class SummaryPreviewPage extends ConsumerWidget {
-  const SummaryPreviewPage({super.key});
+class SummaryPage extends ConsumerWidget {
+  const SummaryPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(previewSessionProvider);
+    final session = ref.watch(trainingSessionProvider);
     final theme = Theme.of(context);
     if (!session.finished) {
-      return PreviewPage(
+      return AppPage(
         title: 'No completed workout',
         action: FilledButton(onPressed: () => context.go('/train'), child: const Text('Back to Train')),
-        children: const [Text('Complete the sample workout to review its summary.')],
+        children: const [Text('Complete a workout to see its summary.')],
       );
     }
     final shots = session.logs.where((entry) =>
       session.drills.firstWhere((drill) => drill.id == entry.drillId).pillar == SkillPillar.shooting,
     ).fold(0, (total, entry) => total + (entry.log.reps ?? 0));
-    return PreviewPage(
+    return AppPage(
       title: 'You showed up.',
       subtitle: 'That’s how better happens.',
       action: FilledButton(onPressed: () => context.go('/train'), child: const Text('Back to Train')),
@@ -414,7 +402,7 @@ class SummaryPreviewPage extends ConsumerWidget {
           const SizedBox(height: AppSpacing.sm),
         ],
         const SizedBox(height: AppSpacing.md),
-        const Text('Preview results only. Timers can be fast-forwarded; no stats, streaks, team posts, or workout history were saved.'),
+        const Text('Results are held in memory only. Workout history, lifetime stats, and team updates are not connected yet.'),
       ],
     );
   }

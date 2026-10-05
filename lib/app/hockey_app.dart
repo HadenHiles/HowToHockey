@@ -5,11 +5,11 @@ import 'package:go_router/go_router.dart';
 import '../design/theme/app_theme.dart';
 import '../features/settings/appearance_settings_controller.dart';
 import 'player_pages.dart';
-import 'preview_page.dart';
+import 'app_page.dart';
 import 'session_pages.dart';
 import 'training_pages.dart';
 
-final previewRouterProvider = Provider<GoRouter>((ref) {
+final appRouterProvider = Provider<GoRouter>((ref) {
   final router = GoRouter(
     initialLocation: '/train',
     routes: [
@@ -17,49 +17,49 @@ final previewRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state, shell) => _PlayerShell(shell: shell),
         branches: [
           StatefulShellBranch(
-            routes: [GoRoute(path: '/train', builder: (_, _) => const TrainPreviewPage())],
+            routes: [GoRoute(path: '/train', builder: (_, _) => const TrainPage())],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/progress', builder: (_, _) => const ProgressPreviewPage())],
+            routes: [GoRoute(path: '/progress', builder: (_, _) => const ProgressPage())],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/team', builder: (_, _) => const TeamPreviewPage())],
+            routes: [GoRoute(path: '/team', builder: (_, _) => const TeamPage())],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/me', builder: (_, _) => const MePreviewPage())],
+            routes: [GoRoute(path: '/me', builder: (_, _) => const MePage())],
           ),
         ],
       ),
-      GoRoute(path: '/setup', builder: (_, _) => const SetupPreviewPage()),
-      GoRoute(path: '/focus', builder: (_, _) => const FocusPreviewPage()),
-      GoRoute(path: '/routine', builder: (_, _) => const RoutinePreviewPage()),
-      GoRoute(path: '/library', builder: (_, _) => const LibraryPreviewPage()),
+      GoRoute(path: '/setup', builder: (_, _) => const SetupPage()),
+      GoRoute(path: '/focus', builder: (_, _) => const FocusPage()),
+      GoRoute(path: '/routine', builder: (_, _) => const RoutinePage()),
+      GoRoute(path: '/library', builder: (_, _) => const LibraryPage()),
       GoRoute(
         path: '/drills/:id',
-        builder: (_, state) => DrillDetailPreviewPage(drillId: state.pathParameters['id']!),
+        builder: (_, state) => DrillDetailPage(drillId: state.pathParameters['id']!),
       ),
-      GoRoute(path: '/session', builder: (_, _) => const SessionPreviewPage()),
+      GoRoute(path: '/session', builder: (_, _) => const SessionPage()),
       GoRoute(
         path: '/rest',
-        builder: (_, state) => RestPreviewPage(seconds: state.extra is int ? state.extra! as int : 45),
+        builder: (_, state) => RestPage(seconds: state.extra is int ? state.extra! as int : 45),
       ),
-      GoRoute(path: '/summary', builder: (_, _) => const SummaryPreviewPage()),
+      GoRoute(path: '/summary', builder: (_, _) => const SummaryPage()),
     ],
-    errorBuilder: (context, state) => PreviewPage(
+    errorBuilder: (context, state) => AppPage(
       title: 'Screen not found',
       action: FilledButton(onPressed: () => context.go('/train'), child: const Text('Back to Train')),
-      children: [Text('The requested preview screen is unavailable: ${state.uri.path}')],
+      children: [Text('The requested screen is unavailable: ${state.uri.path}')],
     ),
   );
   ref.onDispose(router.dispose);
   return router;
 });
 
-class UxPreviewApp extends ConsumerWidget {
-  const UxPreviewApp({super.key});
+class HockeyApp extends ConsumerWidget {
+  const HockeyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => MaterialApp.router(title: 'How To Hockey · UX Preview', debugShowCheckedModeBanner: false, theme: HockeyTheme.light, darkTheme: HockeyTheme.dark, themeMode: ref.watch(appearanceProvider).themeMode, routerConfig: ref.watch(previewRouterProvider));
+  Widget build(BuildContext context, WidgetRef ref) => MaterialApp.router(title: 'How To Hockey', debugShowCheckedModeBanner: false, theme: HockeyTheme.light, darkTheme: HockeyTheme.dark, themeMode: ref.watch(appearanceProvider).themeMode, routerConfig: ref.watch(appRouterProvider));
 }
 
 class _PlayerShell extends StatelessWidget {

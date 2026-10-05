@@ -1,19 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/drills/models/drill.dart';
-import 'preview_data.dart';
+import 'sample_data.dart';
 
-// Local-only notifiers keep preview interactions separate from production data.
-typedef PreviewSetupState = ({
+// Back these providers with persistence when the session-engine milestone resumes.
+typedef TrainingSetupState = ({
   LocationOption location,
   PuckInventory inventory,
   BallType? ball,
   PasserType? passer,
 });
 
-class PreviewSetup extends Notifier<PreviewSetupState> {
+class TrainingSetup extends Notifier<TrainingSetupState> {
   @override
-  PreviewSetupState build() => (
+  TrainingSetupState build() => (
     location: LocationOption.drivewayGarage,
     inventory: PuckInventory.low,
     ball: null,
@@ -37,9 +37,9 @@ class PreviewSetup extends Notifier<PreviewSetupState> {
   );
 }
 
-final previewSetupProvider = NotifierProvider<PreviewSetup, PreviewSetupState>(PreviewSetup.new);
+final trainingSetupProvider = NotifierProvider<TrainingSetup, TrainingSetupState>(TrainingSetup.new);
 
-class PreviewFocus extends Notifier<Map<SkillPillar, int>> {
+class TrainingFocus extends Notifier<Map<SkillPillar, int>> {
   @override
   Map<SkillPillar, int> build() => const {
     SkillPillar.shooting: 40,
@@ -72,10 +72,10 @@ class PreviewFocus extends Notifier<Map<SkillPillar, int>> {
   }
 }
 
-final previewFocusProvider = NotifierProvider<PreviewFocus, Map<SkillPillar, int>>(PreviewFocus.new);
+final trainingFocusProvider = NotifierProvider<TrainingFocus, Map<SkillPillar, int>>(TrainingFocus.new);
 
-class PreviewSession {
-  const PreviewSession({
+class TrainingSession {
+  const TrainingSession({
     required this.drills,
     this.drillIndex = 0,
     this.setIndex = 0,
@@ -91,17 +91,17 @@ class PreviewSession {
   Drill get drill => drills[drillIndex];
 }
 
-class PreviewSessionNotifier extends Notifier<PreviewSession> {
+class TrainingSessionNotifier extends Notifier<TrainingSession> {
   @override
-  PreviewSession build() => PreviewSession(drills: previewDrills);
+  TrainingSession build() => TrainingSession(drills: sampleDrills);
 
   void start(List<Drill> drills) {
-    if (drills.isEmpty) throw ArgumentError('A preview session needs at least one drill.');
-    state = PreviewSession(drills: List.unmodifiable(drills));
+    if (drills.isEmpty) throw ArgumentError('A session needs at least one drill.');
+    state = TrainingSession(drills: List.unmodifiable(drills));
   }
 
   void logSet({int? reps, int? hits, int? seconds, int? streak, bool? completed}) {
-    if (state.finished) throw StateError('This preview session is already complete.');
+    if (state.finished) throw StateError('This session is already complete.');
     final drill = state.drill;
     final log = SetLog(
       setIndex: state.setIndex,
@@ -113,7 +113,7 @@ class PreviewSessionNotifier extends Notifier<PreviewSession> {
       loggedAt: DateTime.now().toUtc(),
     );
     final lastSet = state.setIndex + 1 >= drill.defaultPrescription.sets;
-    state = PreviewSession(
+    state = TrainingSession(
       drills: state.drills,
       drillIndex: state.drillIndex + (lastSet ? 1 : 0),
       setIndex: lastSet ? 0 : state.setIndex + 1,
@@ -122,4 +122,4 @@ class PreviewSessionNotifier extends Notifier<PreviewSession> {
   }
 }
 
-final previewSessionProvider = NotifierProvider<PreviewSessionNotifier, PreviewSession>(PreviewSessionNotifier.new);
+final trainingSessionProvider = NotifierProvider<TrainingSessionNotifier, TrainingSession>(TrainingSessionNotifier.new);

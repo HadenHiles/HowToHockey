@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../design/tokens/app_colors.dart';
 import '../features/drills/models/drill.dart';
 
-extension PreviewPillar on SkillPillar {
+extension PillarPresentation on SkillPillar {
   String get label => switch (this) {
     SkillPillar.shooting => 'Shooting',
     SkillPillar.stickhandling => 'Stickhandling',
@@ -21,7 +21,7 @@ extension PreviewPillar on SkillPillar {
   };
 }
 
-extension PreviewTracking on TrackingType {
+extension TrackingPresentation on TrackingType {
   String get label => switch (this) {
     TrackingType.volume => 'Reps',
     TrackingType.duration => 'Duration',
@@ -32,7 +32,7 @@ extension PreviewTracking on TrackingType {
   };
 }
 
-extension PreviewLocation on LocationOption {
+extension LocationPresentation on LocationOption {
   String get label => switch (this) {
     LocationOption.ice => 'Ice',
     LocationOption.roller => 'Roller',
@@ -42,7 +42,7 @@ extension PreviewLocation on LocationOption {
   };
 }
 
-extension PreviewInventory on PuckInventory {
+extension InventoryPresentation on PuckInventory {
   String get label => switch (this) {
     PuckInventory.low => '1–10 pucks',
     PuckInventory.medium => '10–25 pucks',
@@ -50,7 +50,7 @@ extension PreviewInventory on PuckInventory {
   };
 }
 
-extension PreviewBall on BallType {
+extension BallPresentation on BallType {
   String get label => switch (this) {
     BallType.golfBall => 'Golf ball',
     BallType.trainingBall => 'Training ball',
@@ -58,14 +58,14 @@ extension PreviewBall on BallType {
   };
 }
 
-extension PreviewPasser on PasserType {
+extension PasserPresentation on PasserType {
   String get label => switch (this) {
     PasserType.rebounder => 'Rebounder',
     PasserType.partner => 'Partner',
   };
 }
 
-extension PreviewDrill on Drill {
+extension DrillPresentation on Drill {
   SkillPillar get pillar => skillWeights.keys.first;
   String get prescriptionLabel {
     final prescription = defaultPrescription;
@@ -80,7 +80,7 @@ extension PreviewDrill on Drill {
   }
 }
 
-final previewDrills = List<Drill>.unmodifiable([
+final sampleDrills = List<Drill>.unmodifiable([
   _drill('quick-release', 'Quick-release wrist shots', TrackingType.volume, SkillPillar.shooting, reps: 10,
     cues: ['Start with the puck close to your feet.', 'Load your stick, then snap your wrists.', 'Point your blade at the target.']),
   _drill('quiet-hands', 'Quiet hands, quick feet', TrackingType.duration, SkillPillar.stickhandling, seconds: 30,
@@ -106,7 +106,7 @@ Drill _drill(
 }) => Drill(
   id: id,
   title: title,
-  mediaAssetPath: 'preview/$id',
+  mediaAssetPath: 'placeholder/$id',
   formCues: cues,
   trackingType: type,
   allowedLocations: const [LocationOption.drivewayGarage, LocationOption.basement],

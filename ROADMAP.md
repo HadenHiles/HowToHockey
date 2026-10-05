@@ -1,13 +1,13 @@
 # How To Hockey — Build Roadmap (Flutter + Firebase, iOS & Android)
 
-This roadmap turns the product spec into ordered, checkable milestones. Each phase ends in a shippable or testable state. Work top to bottom; do not start a phase until the previous phase's **Exit Criteria** are met. The approved UX Preview milestone below temporarily takes priority over Phases 2–14.
+This roadmap turns the product spec into ordered, checkable milestones. Each phase ends in a shippable or testable state. Work top to bottom; do not start a phase until the previous phase's **Exit Criteria** are met. The UX-first app-screen milestone below temporarily takes priority over Phases 2–14.
 
 ## 📍 Current Status
 > Update this block at the end of every work session.
 
-- **Current phase:** UX Preview — Flutter-first design review (in progress); Phase 2 backend/content work paused
-- **Next task:** Review the first Player training slice with the user, then build the full Progress screens (radar, PR Vault, history/detail, share-card preview) before Team, Me, Parent/Coach, and account/commerce/program flows.
-- **Blockers:** None for the UX preview: local sample data and illustrated media replace live content. Real drill media remains necessary when Phase 2 resumes. Production release setup remains deferred.
+- **Current phase:** UX-first — actual app screens (in progress); Phase 2 backend/content work paused
+- **Next task:** Continue building the actual Progress screens (radar, PR Vault, history/detail, share-card layouts), then Team, Me, Parent/Coach, and account/commerce/program flows; incorporate visual feedback as screens develop.
+- **Blockers:** None for screen development: local sample data and illustrated media replace live content. Real drill media remains necessary when Phase 2 resumes. Production release setup remains deferred.
 - **Last updated:** 2026-10-05
 
 ### Session Log
@@ -33,7 +33,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | 2026-10-05 | Added a VS Code live-Firebase debug launch configuration targeting the plugged-in iPhone | — |
 | 2026-10-05 | Excluded generated Firebase CLI Dart templates under rules-test dependencies from app analysis; Flutter analysis and VS Code problems now report no issues | — |
 | 2026-10-05 | Verified emulator-backed app launch on Android API 36 and iOS Simulator; enabled cleartext only in Android debug builds; added Freezed drill models, Firestore timestamp conversion, catalog schema, and guarded Firebase seeder; local emulator upload smoke test passed | — |
-| 2026-10-05 | Approved Flutter-first UX Preview and paused backend/content milestones; added offline preview launches, branded Player navigation, Train/setup/focus/routine/library/detail, six logging styles with numeric entry, rest and summary; Progress/Team are starter overviews; analysis, 20 unit/widget tests, and offline iOS entrypoint/flow integration test pass; reviewed Train in light/dark | — |
+| 2026-10-05 | Initially implemented the UX-first request as a separate preview (later corrected below); added Player navigation, Train/setup/focus/routine/library/detail, six logging styles, rest and summary; analysis, 20 unit/widget tests, and offline iOS integration test passed | `bf65929` |
+| 2026-10-05 | Corrected UX-first scope to actual app screens: normal Firebase-backed launches now open the Player shell, moved UI/state into the app layer, removed separate preview flag/profiles/banners and timer fast-forward control; hot-restarted the connected iPhone Live app and confirmed Train renders with no runtime errors; analysis and all 20 unit/widget tests pass | — |
 
 ### How to Resume a Session
 1. Read **Current Status**, then the current phase's unchecked items.
@@ -300,7 +301,7 @@ Provided in `assets/`: maple-leaf "HTH" monogram (≈square, viewBox 1307×1251)
 - [x] Font: Inter (variable)
 - [x] Primary color confirmed: `#CC3333`
 - [ ] Nice-to-have: wordmark as SVG
-- [ ] Optional Figma companion: Flutter is the approved design-review source of truth during UX Preview; a Figma file is no longer a prerequisite for UI work
+- [ ] Optional Figma companion: the actual Flutter screens are the design-review source of truth during UX-first work; a Figma file is no longer a prerequisite for UI work
 - [x] Design tokens mirrored in `lib/design/` (single source; no hard-coded colors/sizes in features)
 - [ ] `widgetbook` catalog of design-system components with a light/dark toggle
 - [ ] Golden tests per component in light and dark, plus large text scale
@@ -352,14 +353,14 @@ Provided in `assets/`: maple-leaf "HTH" monogram (≈square, viewBox 1307×1251)
 
 ---
 
-## UX Preview — Design Before Backend (Current Priority)
-Approved 2026-10-05: pause scheduled backend/content work and review the complete intended UX directly in Flutter with local placeholder data and media. Existing architecture, design tokens, tier rules, separate role shells, and no-UGC constraints stay locked.
+## UX-first — Actual App Screens (Current Priority)
+Clarified by the user 2026-10-05: pause scheduled backend/content work and build the complete intended UX as the actual app screens, with local placeholder data and media until functionality is implemented. Do not create a separate prototype, preview app, or opt-in screen flag. Existing architecture, design tokens, tier rules, separate role shells, and no-UGC constraints stay locked.
 
-Preview mode is explicitly opt-in, does not initialize Firebase, and does not perform real authentication, purchases, uploads, or server writes. Interactive local state is for reviewing UX, not a substitute for the production session engine or backend acceptance criteria. Use bundled/illustrated placeholders, not remote image services. Keep existing Live/Emulators launches working.
+The normal Live and Emulators launches show these screens with the existing Firebase initialization and anonymous sign-in intact. Local Riverpod data/state providers are temporary sources for the real UI, to be replaced or extended as production functionality is implemented. They do not pretend to persist history, update stats/feed, or perform purchases. Use bundled/illustrated media placeholders, not remote image services. Backend acceptance criteria remain independent of UI completeness.
 
 Work these slices in order, reviewing the visual direction between slices:
-- [x] Isolated preview launch, local fixtures, shared branded components, and preserved Player tab navigation
-- [x] Player training: Train home → setup/focus → routine preview → all six set-input types → rest → summary; drill library/detail and manual logger entry points
+- [x] Normal app launch opens real Player routes, local fixtures, shared branded components, and preserved Player tab navigation
+- [x] Player training: Train home → setup/focus → routine detail → all six set-input types → rest → summary; drill library/detail and manual logger entry points
 - [ ] Player progress: radar, PR Vault, lifetime totals, session history/detail, share-card preview
 - [ ] Player team: locker room, stick taps, leaderboards, homework, invite/join/discovery, member-only/empty/locked states
 - [ ] Player Me: appearance, profile switching, role switcher, account/subscription entry points
@@ -369,7 +370,7 @@ Work these slices in order, reviewing the visual direction between slices:
 - [ ] Review every screen in light/dark, 200% text scale, small phone sizes, and Reduce Motion; include loading/empty/error/locked states where applicable
 - [ ] User approval of screen inventory, navigation, visual design, and core flows before resuming backend/content milestones
 
-**Exit Criteria:** All planned screens are navigable with representative local fixtures and clearly labeled simulated actions; user approves the UX direction. Production roadmap checkboxes stay unchecked unless their original functional criteria are independently met.
+**Exit Criteria:** All planned screens are navigable in the normal app using representative placeholder data/media; user approves the UX direction. Unimplemented operations disclose their status instead of reporting success. Production roadmap checkboxes stay unchecked unless their original functional criteria are independently met.
 
 ---
 
@@ -612,7 +613,7 @@ Phases **1–7** deliver the full free tier + solo core loop. Phase 8 (monetizat
 ---
 
 ## Resolved Decisions
-- **UX-first preview:** Pause Phases 2–14 to design all planned screens in an opt-in, local-only Flutter preview with placeholder data/media. Flutter replaces the Figma-before-UI prerequisite, as approved by the user. Review Player training first, then the remaining Player, Parent/Coach, and account/commerce/program flows; resume production implementation after UX approval. *(UX Preview, 2026-10-05)*
+- **UX-first actual screens:** Pause Phases 2–14 backend/content work to build all planned screens in the normal Flutter app with placeholder data/media, then connect functionality to those same screens. The earlier separate opt-in preview was a misunderstanding and is superseded by the user's clarification. Flutter replaces the Figma-before-UI prerequisite. Work Player training first, then remaining Player, Parent/Coach, and account/commerce/program flows. *(UX-first, 2026-10-05)*
 - **Local testing priority:** Use the Samsung S24 debug launch against live Firebase with its registered App Check debug token; defer remaining production signing, Play Console, DeviceCheck, and enforcement work until release preparation. This deferred Phase 1 item does not block local development or the remaining foundation work. *(Phase 1)*
 - **iOS SwiftPM Git policy:** Use an approved process-scoped `safe.bareRepository=all` exception for trusted iOS dependency builds when the machine requires explicit bare repositories; do not weaken the global Git policy or replace SwiftPM. See the build command in `README.md`. *(Phase 1)*
 - **Free-tier routines:** Free users can generate custom routines but may keep only **3 saved** at a time. *(Phase 5)*

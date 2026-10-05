@@ -2,21 +2,6 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "UX Preview (Local)",
-      "request": "launch",
-      "type": "dart",
-      "program": "lib/main.dart",
-      "toolArgs": ["--dart-define=UX_PREVIEW=true"]
-    },
-    {
-      "name": "iPhone (UX Preview)",
-      "request": "launch",
-      "type": "dart",
-      "program": "lib/main.dart",
-      "deviceId": "00008140-001824D63C53001C",
-      "toolArgs": ["--dart-define=UX_PREVIEW=true"]
-    },
-    {
       "name": "Emulators",
       "request": "launch",
       "type": "dart",

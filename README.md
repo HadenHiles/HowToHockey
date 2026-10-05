@@ -4,38 +4,37 @@ A new Flutter project.
 
 ## Getting Started
 
-### UX-first design preview
+### UX-first app development
 
-Select **UX Preview (Local)** in VS Code and choose an iOS/Android device, or
-**iPhone (UX Preview)** for the connected iPhone. Run from the command line with:
+The normal app now opens the Player shell (Train, Progress, Team, Me), not the
+old standalone Appearance screen. Use the existing **Live**, **Emulators**,
+**iPhone (Live)**, or **Samsung S24 (Live)** launch configuration. There is no
+separate preview app or `UX_PREVIEW` flag.
 
-```sh
-flutter run --dart-define=UX_PREVIEW=true -d <mobile-device-id>
-```
+These are the app's actual screens and routes in [lib/app/](lib/app/).
+Firebase startup, anonymous sign-in, App Check, and telemetry configuration
+retain their existing behavior. Local Riverpod providers currently supply
+sample content and in-memory training state; persistence and server features
+will be connected to these same screens as the roadmap resumes. Appearance
+already persists on the device. Workouts are not yet saved to history or
+published to teams, and purchases remain unimplemented.
 
-This is a separate, explicitly labeled design preview. It skips Firebase
-initialization, authentication, telemetry setup, purchases, and server writes.
-Use it without Firebase emulators or real drill videos. Training interactions
-are held in local Riverpod state and reset on restart; only Appearance is
-persisted. Do not combine `UX_PREVIEW` with `USE_EMULATORS` or `VERIFY_APP_CHECK`.
-Existing Live and Emulators launches retain their original behavior.
+The first slice includes Train home, setup/focus, routine detail, drill
+library/detail, all six logging styles, real countdown controls, rest, and
+summary. Setup/focus choices do not yet generate/filter the sample routine.
+Media illustrations remain labeled placeholders. Progress/Team are starter
+screens; Parent/Coach, account, commerce, and programs follow in the ordered
+[UX-first milestone](ROADMAP.md#ux-first--actual-app-screens-current-priority).
+Building a screen does not mark its unimplemented backend criteria complete.
 
-The first review slice includes Player navigation, Train home, equipment setup,
-100-point focus controls, a fixed routine, drill library/detail, all six set
-logging styles, rest, and summary. Illustrated rink media is deliberately
-marked **DEMO MEDIA**. Timed sets have a preview-only fast-forward action.
-Setup/focus choices are interactive but do not generate/filter the sample
-workout. Progress/Team are initial sample overviews, not completed designs;
-Parent/Coach, onboarding, commerce, and programs follow in the ordered
-[UX Preview milestone](ROADMAP.md#ux-preview--design-before-backend-current-priority).
-Preview screens do not satisfy production roadmap acceptance criteria.
-
-Check the real offline startup path on a mobile simulator/device:
+Test the normal Firebase-backed entrypoint and Player flow on a mobile device:
 
 ```sh
-flutter test integration_test/ux_preview_test.dart \
-  -d <mobile-device-id> --dart-define=UX_PREVIEW=true
+flutter test integration_test/player_flow_test.dart -d <mobile-device-id>
 ```
+
+Add `--dart-define=USE_EMULATORS=true` when running against the local Firebase
+suite.
 
 ### Local testing on the Samsung S24
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:how_to_hockey/features/settings/appearance_settings_controller.dart';
 import 'package:how_to_hockey/main.dart';
+import 'package:how_to_hockey/app/hockey_app.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -15,9 +16,16 @@ void main() {
     final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences)]);
     addTearDown(container.dispose);
     await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));
+    await tester.pumpAndSettle();
 
     expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode, ThemeMode.system);
-    expect(find.text('Train with purpose.'), findsOneWidget);
+    expect(find.text('View workout'), findsOneWidget);
+    expect(find.byType(NavigationBar), findsOneWidget);
+    expect(find.textContaining('UX PREVIEW'), findsNothing);
+    container.read(appRouterProvider).go('/me');
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Dark'));
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Dark'));
     await tester.pumpAndSettle();
@@ -41,6 +49,8 @@ void main() {
     await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));
     await tester.pumpAndSettle();
 
+    container.read(appRouterProvider).go('/me');
+    await tester.pumpAndSettle();
     expect(find.text('Appearance'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
