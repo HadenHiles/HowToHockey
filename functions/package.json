@@ -8,7 +8,8 @@
   "scripts": {
     "build": "tsc",
     "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\"",
-    "test": "vitest run"
+    "test": "vitest run && node --test ../tool/seed/upload-drills.test.mjs",
+    "seed:drills": "node ../tool/seed/upload-drills.mjs"
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",

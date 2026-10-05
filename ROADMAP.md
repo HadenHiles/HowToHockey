@@ -5,9 +5,9 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 ## 📍 Current Status
 > Update this block at the end of every work session.
 
-- **Current phase:** Phase 1 — Foundations (in progress)
-- **Next task:** Confirm the normal app boots on both mobile platforms to finish the Phase 1 boot exit check, then begin Phase 2 drill models; keep production release setup deferred.
-- **Blockers:** None for local Android development. Production signing, Play Integrity/DeviceCheck setup, and enforcement are explicitly deferred until release preparation; App Attest is already verified on a signed physical iPhone.
+- **Current phase:** Phase 2 — Drill Catalog & Content Pipeline (in progress)
+- **Next task:** Finalize the drill media spec and prepare matching MP4/poster assets; the catalog and uploader are ready, but no drill media is in the repository yet.
+- **Blockers:** Drill media is needed before validating media constraints and seeding the 20 free starter drills. Production signing, Play Integrity/DeviceCheck setup, and enforcement remain deferred until release preparation; App Attest is already verified on a signed physical iPhone.
 - **Last updated:** 2026-10-05
 
 ### Session Log
@@ -32,6 +32,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 | 2026-10-02 | Added SHA-pinned CI for Flutter analysis/tests/Android debug build, Functions lint/tests/build, and isolated demo-project rules tests; all local checks and 13 rules tests pass; all three jobs passed in [GitHub CI run 37056693374](https://github.com/HadenHiles/HowToHockey/actions/runs/37056693374); rules tooling retains three moderate upstream telemetry audit entries | `3dcbcc4` |
 | 2026-10-05 | Added a VS Code live-Firebase debug launch configuration targeting the plugged-in iPhone | — |
 | 2026-10-05 | Excluded generated Firebase CLI Dart templates under rules-test dependencies from app analysis; Flutter analysis and VS Code problems now report no issues | — |
+| 2026-10-05 | Verified emulator-backed app launch on Android API 36 and iOS Simulator; enabled cleartext only in Android debug builds; added Freezed drill models, Firestore timestamp conversion, catalog schema, and guarded Firebase seeder; local emulator upload smoke test passed | — |
 
 ### How to Resume a Session
 1. Read **Current Status**, then the current phase's unchecked items.
@@ -333,13 +334,13 @@ Provided in `assets/`: maple-leaf "HTH" monogram (≈square, viewBox 1307×1251)
 - [x] CI: `flutter analyze`, `flutter test`, functions tests, rules tests on every PR
   - [x] Verify a green GitHub Actions run before advancing to Phase 2
 
-**Exit Criteria:** App boots on both platforms against emulators; CI green.
+**Exit Criteria:** [x] App boots on both platforms against emulators; CI green.
 
 ---
 
 ## Phase 2 — Drill Catalog & Content Pipeline
-- [ ] Implement models in §2 with freezed + converters
-- [ ] Define drill spreadsheet/JSON schema; write `tool/seed/` script to upload drills to Firestore and media to Storage
+- [x] Implement models in §2 with freezed + converters
+- [x] Define drill spreadsheet/JSON schema; write `tool/seed/` script to upload drills to Firestore and media to Storage
 - [ ] Media spec: 3–5s MP4, 720p, muted, ≤1.5 MB, plus poster JPG
 - [ ] Seed the **20 free starter drills** covering all 5 pillars and all 6 tracking types
 - [ ] Drill Library screen: list, detail, looping media card, form cues
