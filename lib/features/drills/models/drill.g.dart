@@ -22,9 +22,8 @@ _Drill _$DrillFromJson(Map<String, dynamic> json) => _Drill(
     json['minPuckInventory'],
   ),
   requiresPasser: json['requiresPasser'] as bool,
-  skillWeights: (json['skillWeights'] as Map<String, dynamic>).map(
-    (k, e) =>
-        MapEntry($enumDecode(_$SkillPillarEnumMap, k), (e as num).toDouble()),
+  skillWeights: const SkillWeightsConverter().fromJson(
+    json['skillWeights'] as Map<String, dynamic>,
   ),
   tier: $enumDecode(_$AccessTierEnumMap, json['tier']),
   supportedBalls: (json['supportedBalls'] as List<dynamic>)
@@ -53,9 +52,7 @@ Map<String, dynamic> _$DrillToJson(_Drill instance) => <String, dynamic>{
       .toList(),
   'minPuckInventory': _$PuckInventoryEnumMap[instance.minPuckInventory]!,
   'requiresPasser': instance.requiresPasser,
-  'skillWeights': instance.skillWeights.map(
-    (k, e) => MapEntry(_$SkillPillarEnumMap[k]!, e),
-  ),
+  'skillWeights': const SkillWeightsConverter().toJson(instance.skillWeights),
   'tier': _$AccessTierEnumMap[instance.tier]!,
   'supportedBalls': instance.supportedBalls
       .map((e) => _$BallTypeEnumMap[e]!)
@@ -93,14 +90,6 @@ const _$PuckInventoryEnumMap = {
   PuckInventory.low: 'low',
   PuckInventory.medium: 'medium',
   PuckInventory.high: 'high',
-};
-
-const _$SkillPillarEnumMap = {
-  SkillPillar.shooting: 'shooting',
-  SkillPillar.stickhandling: 'stickhandling',
-  SkillPillar.skating: 'skating',
-  SkillPillar.passing: 'passing',
-  SkillPillar.iqConditioning: 'iqConditioning',
 };
 
 const _$AccessTierEnumMap = {AccessTier.free: 'free', AccessTier.pro: 'pro'};

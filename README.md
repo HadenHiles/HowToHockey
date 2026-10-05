@@ -19,14 +19,17 @@ Functions written in TypeScript.
 1. Install the Flutter SDK and Android development tools. For iOS, use macOS
    with Xcode.
 2. Install Node.js 24 and the Firebase CLI for backend development.
-3. Fetch dependencies:
+3. During monetization work, configure RevenueCat for store products, offerings,
+   entitlements, and webhook delivery to Firebase Cloud Functions. This is
+   planned integration work; the current app does not require RevenueCat yet.
+4. Fetch dependencies:
 
    ```sh
    flutter pub get
    npm ci --prefix functions
    ```
 
-4. Configure access to the development Firebase project or start the local
+5. Configure access to the development Firebase project or start the local
    Firebase Emulator Suite, then run on an iOS or Android device:
 
    ```sh

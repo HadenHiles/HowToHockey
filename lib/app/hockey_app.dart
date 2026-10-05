@@ -33,6 +33,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/setup', builder: (_, _) => const SetupPage()),
       GoRoute(path: '/focus', builder: (_, _) => const FocusPage()),
       GoRoute(path: '/routine', builder: (_, _) => const RoutinePage()),
+      GoRoute(path: '/routines', builder: (_, _) => const RoutineLibraryPage()),
+      GoRoute(path: '/routines/new', builder: (_, _) => const RoutineBuilderPage()),
+      GoRoute(path: '/routines/:id/edit', builder: (_, state) => RoutineBuilderPage(routineId: state.pathParameters['id'])),
       GoRoute(path: '/library', builder: (_, _) => const LibraryPage()),
       GoRoute(
         path: '/drills/:id',
@@ -69,13 +72,43 @@ class _PlayerShell extends StatelessWidget {
     body: shell,
     bottomNavigationBar: NavigationBar(
       selectedIndex: shell.currentIndex,
-      onDestinationSelected: (index) => shell.goBranch(index, initialLocation: index == shell.currentIndex),
-      destinations: const [
-        NavigationDestination(icon: Icon(Icons.sports_hockey_outlined), selectedIcon: Icon(Icons.sports_hockey), label: 'Train'),
-        NavigationDestination(icon: Icon(Icons.insights_outlined), selectedIcon: Icon(Icons.insights), label: 'Progress'),
-        NavigationDestination(icon: Icon(Icons.groups_outlined), selectedIcon: Icon(Icons.groups), label: 'Team'),
-        NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Me'),
+      onDestinationSelected: (index) {
+        Feedback.forTap(context);
+        shell.goBranch(index, initialLocation: index == shell.currentIndex);
+      },
+      destinations: [
+        NavigationDestination(icon: const Icon(Icons.sports_hockey_outlined), selectedIcon: _NavSelectionIcon(icon: Icons.sports_hockey, selected: shell.currentIndex == 0), label: 'Train'),
+        NavigationDestination(icon: const Icon(Icons.insights_outlined), selectedIcon: _NavSelectionIcon(icon: Icons.insights, selected: shell.currentIndex == 1), label: 'Progress'),
+        NavigationDestination(icon: const Icon(Icons.groups_outlined), selectedIcon: _NavSelectionIcon(icon: Icons.groups, selected: shell.currentIndex == 2), label: 'Team'),
+        NavigationDestination(icon: const Icon(Icons.person_outline), selectedIcon: _NavSelectionIcon(icon: Icons.person, selected: shell.currentIndex == 3), label: 'Me'),
       ],
     ),
   );
+}
+
+class _NavSelectionIcon extends StatelessWidget {
+  const _NavSelectionIcon({required this.icon, required this.selected});
+
+  final IconData icon;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    return AnimatedScale(
+      scale: selected || reduceMotion ? 1 : .78,
+      duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 280),
+      curve: Curves.easeOutBack,
+      child: AnimatedContainer(
+        duration: reduceMotion ? Duration.zero : const Duration(milliseconds: 280),
+        curve: Curves.easeOutCubic,
+        decoration: BoxDecoration(
+          color: selected ? Theme.of(context).colorScheme.primary.withValues(alpha: .14) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 4),
+        child: Icon(icon),
+      ),
+    );
+  }
 }

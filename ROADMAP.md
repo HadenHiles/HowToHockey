@@ -5,9 +5,9 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 ## 📍 Current Status
 > Update this block at the end of every work session.
 
-- **Current phase:** UX-first — actual app screens (in progress); swipeable training workflow and optional per-drill rest implemented; dual-device CLI launches verified, VS Code compound startup under validation; Phase 2 backend/content work paused
-- **Next task:** Review the revised training workflow, then continue actual Progress screens (radar, PR Vault, history/detail, share-card layouts), followed by Team, Me, Parent/Coach, and account/commerce/program flows.
-- **Blockers:** None for screen development: local sample data and illustrated media replace live content. Real drill media remains necessary when Phase 2 resumes. Production release setup remains deferred.
+- **Current phase:** UX-first — actual app screens (in progress); the Player UI now has the bolder MacroFactor-inspired sports dashboard, a draggable workout sheet with a status-only minimized state and scroll-away drill previews, fluid bottom navigation, and the six requested skills (Accuracy, Hands, Power, Passing, Speed/Strength, Endurance). Routine library/builder workflows combine sample drills and skill templates, persisting locally; RevenueCat and cloud entitlements remain planned. The center faceoff circle now aligns with the red center line. Previous five-skill catalog keys are migrated during decode; Flutter analysis and all 34 unit/widget tests pass.
+- **Next task:** Review the active-workout sheet and navigation on device, refine individual Team and Me flows, then audit all screens in light/dark, 200% text scale, small phone sizes, and Reduce Motion before requesting UX approval.
+- **Blockers:** None for screen development: local sample data and illustrated media replace live content. The remaining VS Code diagnostics refer only to deleted files and require closing obsolete tabs/restarting the Dart analysis server. Real drill media remains necessary when Phase 2 resumes. Production release setup remains deferred.
 - **Last updated:** 2026-10-05
 
 Detailed Copilot development notes live in [.github/COPILOT_REFERENCE.md](.github/COPILOT_REFERENCE.md); keep the public README focused on the app's purpose and high-level setup.
@@ -15,6 +15,11 @@ Detailed Copilot development notes live in [.github/COPILOT_REFERENCE.md](.githu
 ### Session Log
 | Date | Summary | Commit |
 |---|---|---|
+| 2026-10-05 | Refined the workout sheet so its minimized state keeps only the drag handle and training status while the title/actions, drill previews, rest controls, and drill pages scroll in the sheet; fixed narrow/high-text-scale layout and verified logging, overview, timer, and rest flows. Added local routine library/build/edit flows with sample and skill-template drills, documented the future RevenueCat cap/entitlement hook, aligned the rink’s red center line with its center faceoff circle, and passed Flutter analysis plus all 34 tests | — |
+| 2026-10-05 | Replaced active session's full-screen layout with a draggable workout sheet over Train, added selectable swipeable drill previews, and motion-forward accessible bottom navigation; replaced the five legacy categories with Accuracy, Hands, Power, Passing, Speed/Strength, and Endurance, including legacy catalog-key migration and six-skill sample coverage; Flutter analysis and all 33 unit/widget tests pass, including light/dark and 200% text-scale coverage | — |
+| 2026-10-05 | Reworked the visual treatment after user feedback that the first pass was too subtle: ice-tinted light canvas, dark navigation rail and arena panels, illustrated rink hero cards, colorful drill tiles, and weekly training bars. Kept the established brand red/cream, Inter, and functional behavior; verified Train and Progress on-device plus focused, high-text-scale, and Player-flow tests | — |
+| 2026-10-05 | Refreshed the Player screens with a MacroFactor-inspired high-contrast, data-forward treatment translated to locked How To Hockey tokens; added sample skill radar, PR Vault, lifetime totals, session detail, and share-card preview. Added responsive layout and preview widget coverage; analyze and focused tests pass | — |
+| 2026-10-05 | Rechecked the remaining VS Code Problems: all reported imports and cascaded errors are from three deleted preview files; no Dart sources retain preview references and `flutter analyze` passes. No source changes needed; refresh the stale editor tabs/analysis server | — |
 | 2026-10-05 | Simplified the public README to the app purpose, development status, high-level setup, and checks; preserved detailed development/release notes in .github/COPILOT_REFERENCE.md and linked them from agent instructions | — |
 | 2026-10-05 | Revised compound startup to prepare both virtual devices sequentially before starting either debugger, rather than relying only on each debug profile's boot task; individual profile boot checks remain available. CLI launch success does not verify the VS Code compound launch itself | — |
 | 2026-10-05 | Restarted VS Code Dart analysis after user enabled macOS automation permission; full Problems panel now reports no errors, Flutter analysis passes, and committed compound preparation plus troubleshooting documentation | — |
@@ -218,10 +223,11 @@ parentLinks/{uid}                 childProfileIds[] (max 3)
 ## 3. Design System & Brand
 
 ### 3A. Look & Feel
-Modern, calm, data-forward, in the style of **MacroFactor Workouts** but with How To Hockey branding:
-- **Content first, low chrome:** mostly neutral surfaces with a **single brand accent (red)** reserved for primary actions, active state, and progress. No gradients, heavy shadows, or decorative clutter.
-- **Big, confident numbers:** stats, timers, and set inputs are the hero of each screen (large tabular numerals, small muted labels).
-- **Card-based layouts** with generous spacing; information density increases only in analytics/coach views.
+Modern, athletic, and data-forward, in the style of **MacroFactor Workouts** but with How To Hockey branding:
+- **Expressive arena surfaces:** ice-tinted light canvas, charcoal feature panels with subtle rink-line artwork, and dark navigation that anchors both themes. Use restrained gradients only to give the feature panels depth; avoid ornamental clutter.
+- **Brand and skill color:** How To Hockey red remains the primary action/accent; use the existing pillar colors to distinguish hockey skills in charts, drill tiles, and progress views.
+- **Big, confident numbers:** stats, timers, and set inputs are the hero of each screen (large tabular numerals, small uppercase labels).
+- **Card-based layouts** with generous spacing; use dark data panels, illustrated workout heroes, and colored skill indicators to make the training surfaces feel unmistakably sporty.
 - **One-handed, glove-friendly:** primary actions in the bottom thumb zone; minimum 48dp touch targets, 56–64dp for in-session controls.
 - **Hockey identity through details**, not ornament: How To Hockey logo/wordmark, subtle ice/rink line motifs on empty states and share cards, Coach Jeremy media front and center.
 
@@ -234,10 +240,10 @@ Modern, calm, data-forward, in the style of **MacroFactor Workouts** but with Ho
 | `brand/primaryOnDark` | — | `#E05555` | Red text/icons on dark surfaces (≈5.1:1); `#CC3333` on near-black is only ≈3.7:1 and fails AA for small text |
 | `brand/primaryContainer` | `#FAE6E6` | `#3A1616` | Selected chips, highlights |
 | `brand/cream` | — | `#F7F4E7` | From the white logo; logo on red/dark, share-card text, splash on dark |
-| `bg` | `#FFFFFF` | `#0E0E10` | Not pure black, to avoid OLED smearing on scroll |
-| `surface` | `#F5F5F7` | `#1A1A1D` | Cards |
+| `bg` | `#F1F4F8` | `#0E0E10` | Ice-tinted light canvas; not pure black in dark mode |
+| `surface` | `#E6EBF1` | `#1A1A1D` | Soft contrast surfaces |
 | `surfaceElevated` | `#FFFFFF` + hairline border | `#232327` | Sheets/dialogs; dark mode uses lighter surfaces instead of shadows |
-| `textPrimary` / `textSecondary` | `#111114` / `#6B6B73` | `#F5F5F7` / `#9A9AA3` | |
+| `textPrimary` / `textSecondary` | `#111114` / `#626D7B` | `#F5F5F7` / `#9A9AA3` | |
 | `success` | `#1E9E5A` | `#3CCB7F` | Completed sets, PRs |
 | `warning` | `#D98E04` | `#F2B233` | |
 | `error` | `#B3261E` + icon | `#FF6B6B` + icon | Always paired with an icon/label so it's never confused with the brand red |
@@ -260,7 +266,7 @@ Modern, calm, data-forward, in the style of **MacroFactor Workouts** but with Ho
 - Flat by default; elevation expressed by surface tone, plus a hairline border in light mode.
 
 ### 3E. Motion & Navigation
-- **Navigation structure:** bottom nav per role shell with preserved tab state (`StatefulShellRoute`), large collapsing titles (`SliverAppBar.large`), modal bottom sheets for quick inputs/filters, full-screen immersive mode for active sessions.
+- **Navigation structure:** dark bottom navigation rail per role shell with a brand-red active indicator and preserved tab state (`StatefulShellRoute`), large collapsing titles (`SliverAppBar.large`), modal bottom sheets for quick inputs/filters, full-screen immersive mode for active sessions.
 - **Transitions:** fade-through between tabs; shared-axis (horizontal) for drill-to-drill in a session; container transform from a routine/drill card into its detail; Hero for drill media.
 - **Durations/curves:** 150ms micro, 250–300ms standard, 400ms large; Material 3 emphasized easing. Token-driven via a `MotionTokens` ThemeExtension.
 - **Micro-interactions:** animated number counters on stat changes, progress ring fills, spring-y stepper taps, confetti-lite PR celebration (brief, skippable).
@@ -275,10 +281,10 @@ Modern, calm, data-forward, in the style of **MacroFactor Workouts** but with Ho
 - Status bar/navigation bar icon brightness follows the active theme (`SystemUiOverlayStyle`).
 
 ### 3G. Key Screen Patterns
-- **Train home:** today's suggestion card (large), quick-start setup chips (location/pucks), saved routines carousel, streak + weekly time ring.
+- **Train home:** illustrated dark rink hero for today's suggestion, quick-start setup chips (location/pucks), saved routines carousel, streak + weekly time ring.
 - **Active session:** dark-leaning immersive layout in both themes, swipeable drill pages, media card top, huge input/timer center, sticky action bar bottom; workout overview with completion status, drill jumping, elapsed and training time.
 - **Rest timer:** optional inline countdown, off by default and configured per drill; `−15s` / `+15s` / `Skip` controls do not block drill navigation or logging. *(User-approved workflow revision, 2026-10-05)*
-- **Progress:** radar hero, PR Vault as a clean list of metric cards, lifetime totals as big-number tiles.
+- **Progress:** dark weekly-load chart, skill radar on an arena panel, colorful PR tiles, lifetime totals as big-number tiles.
 - **Locker Room:** compact system-post cards with stick-tap button and verified badge; no input fields.
 - **Coach/Parent:** table-like dense lists with filter chips; same tokens, higher density.
 
@@ -370,7 +376,8 @@ Work these slices in order, reviewing the visual direction between slices:
 - [x] Normal app launch opens real Player routes, local fixtures, shared branded components, and preserved Player tab navigation
 - [x] Player training: Train home → setup/focus → routine detail → all six set-input types → optional inline rest → summary; drill library/detail and manual logger entry points
 - [x] Training workflow refinement: swipe between drills, workout overview/jump/status, retained draft inputs, independent set completion, elapsed/estimated active time, and device-persisted per-drill rest settings (off by default)
-- [ ] Player progress: radar, PR Vault, lifetime totals, session history/detail, share-card preview
+- [x] Routine management UX: routine library and builder/edit flows combine sample-library drills with preset skill-template drills and save locally; RevenueCat limits/entitlements and cloud sync remain future integrations
+- [x] Player progress: radar, PR Vault, lifetime totals, session history/detail, share-card preview (representative sample data; history and sharing remain unconnected)
 - [ ] Player team: locker room, stick taps, leaderboards, homework, invite/join/discovery, member-only/empty/locked states
 - [ ] Player Me: appearance, profile switching, role switcher, account/subscription entry points
 - [ ] Parent shell: Kids, child detail/controls, Verify, Account, kid-device pairing, join approvals, Train Together
@@ -622,7 +629,9 @@ Phases **1–7** deliver the full free tier + solo core loop. Phase 8 (monetizat
 ---
 
 ## Resolved Decisions
+- **Bolder visual direction:** After the initial visual refresh did not meet the user's request, the user reiterated that the app should feel more visibly inspired by MacroFactor Workouts. This approves a more expressive sports-dashboard treatment: ice-tinted light backgrounds, charcoal arena panels, rink-line illustration, and coordinated skill-color accents. Preserve the How To Hockey logo, brand red/cream, Inter typeface, accessible contrast, and both light/dark appearance modes. *(UX-first, 2026-10-05)*
 - **Training workflow:** User requested a Macrofactor-style workout flow: swipe between drills or open an overview with workout status/info/time, rather than forced sequential rest screens. Rest is optional, off by default (user-confirmed), with per-drill enable/duration settings saved on this device for now. Timed drill inputs pause when leaving their page; rest does not block swiping/logging. Local active-time estimates are disclosed and are not production leaderboard accounting. Backend resume/history/audio/background notification requirements remain outstanding. *(UX-first, 2026-10-05)*
+- **Player skills and active workout presentation:** Use Accuracy, Hands, Power, Passing, Speed/Strength, and Endurance as the six training skills. Accuracy and Power are shot-focused categories. Keep the active workout in a draggable bottom sheet over Train, with selectable horizontal drill previews linked to the existing swipeable drill pages. Preserve older catalog skill keys by migrating them at decode. *(UX-first, 2026-10-05)*
 - **UX-first actual screens:** Pause Phases 2–14 backend/content work to build all planned screens in the normal Flutter app with placeholder data/media, then connect functionality to those same screens. The earlier separate opt-in preview was a misunderstanding and is superseded by the user's clarification. Flutter replaces the Figma-before-UI prerequisite. Work Player training first, then remaining Player, Parent/Coach, and account/commerce/program flows. *(UX-first, 2026-10-05)*
 - **Local testing priority:** Use the Samsung S24 debug launch against live Firebase with its registered App Check debug token; defer remaining production signing, Play Console, DeviceCheck, and enforcement work until release preparation. This deferred Phase 1 item does not block local development or the remaining foundation work. *(Phase 1)*
 - **iOS SwiftPM Git policy:** Use an approved process-scoped `safe.bareRepository=all` exception for trusted iOS dependency builds when the machine requires explicit bare repositories; do not weaken the global Git policy or replace SwiftPM. See the build command in [.github/COPILOT_REFERENCE.md](.github/COPILOT_REFERENCE.md#ios-builds-with-restricted-bare-git-repositories). *(Phase 1)*

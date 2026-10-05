@@ -14,7 +14,7 @@ void main() {
         allowedLocations: const [LocationOption.drivewayGarage],
         minPuckInventory: PuckInventory.medium,
         requiresPasser: true,
-        skillWeights: const {SkillPillar.shooting: 0.75, SkillPillar.iqConditioning: 0.25},
+        skillWeights: const {SkillPillar.shotAccuracy: 0.75, SkillPillar.endurance: 0.25},
         tier: AccessTier.free,
         supportedBalls: const [BallType.greenBiscuit],
         passerTypes: const [PasserType.partner],
@@ -29,7 +29,7 @@ void main() {
 
       expect(json['trackingType'], 'accuracy');
       expect(json['allowedLocations'], ['drivewayGarage']);
-      expect(json['skillWeights'], {'shooting': 0.75, 'iqConditioning': 0.25});
+      expect(json['skillWeights'], {'shotAccuracy': 0.75, 'endurance': 0.25});
       expect(Drill.fromJson(json), drill);
     });
 
@@ -40,6 +40,29 @@ void main() {
       expect(prescription.restSeconds, 45);
       expect(prescription.reps, isNull);
       expect(prescription.seconds, isNull);
+    });
+
+    test('migrates the previous five-skill keys when decoding catalog data', () {
+      final drill = Drill.fromJson({
+        'id': 'legacy',
+        'title': 'Legacy drill',
+        'mediaAssetPath': 'legacy',
+        'formCues': <String>[],
+        'trackingType': 'volume',
+        'allowedLocations': ['ice'],
+        'minPuckInventory': 'low',
+        'requiresPasser': false,
+        'skillWeights': {'shooting': 0.5, 'stickhandling': 0.25, 'iqConditioning': 0.25},
+        'tier': 'free',
+        'supportedBalls': <String>[],
+        'passerTypes': <String>[],
+        'defaultPrescription': {'sets': 1},
+        'estimatedSecondsPerSet': 30,
+        'difficulty': 1,
+        'tags': <String>[],
+      });
+
+      expect(drill.skillWeights, {SkillPillar.shotPower: 0.5, SkillPillar.hands: 0.25, SkillPillar.endurance: 0.25});
     });
   });
 

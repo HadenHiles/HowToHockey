@@ -23,7 +23,7 @@ abstract final class HockeyTheme {
       onSecondary: colors.elevatedSurface,
       secondaryContainer: colors.surface,
       onSecondaryContainer: colors.textPrimary,
-      tertiary: pillars.stickhandling,
+      tertiary: pillars.hands,
       onTertiary: Colors.white,
       tertiaryContainer: colors.surface,
       onTertiaryContainer: colors.textPrimary,
@@ -107,24 +107,20 @@ abstract final class HockeyTheme {
       ),
       dividerTheme: DividerThemeData(color: colors.border, thickness: 1),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: colors.surface,
-        indicatorColor: colors.primaryContainer,
+        backgroundColor: AppColors.dark.background,
+        indicatorColor: colors.brandPrimary,
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
             color: states.contains(WidgetState.selected)
-                ? dark
-                      ? colors.brandPrimaryOnDark
-                      : colors.brandPrimary
-                : colors.textSecondary,
+                ? AppColors.dark.brandCream
+                : AppColors.dark.textSecondary,
           ),
         ),
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => textTheme.labelMedium?.copyWith(
             color: states.contains(WidgetState.selected)
-                ? dark
-                      ? colors.brandPrimaryOnDark
-                      : colors.brandPrimary
-                : colors.textSecondary,
+                ? AppColors.dark.brandCream
+                : AppColors.dark.textSecondary,
           ),
         ),
       ),

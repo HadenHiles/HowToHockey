@@ -25,16 +25,43 @@ saved to history or published to teams, and purchases remain unimplemented.
 The first slice includes Train home, setup/focus, routine detail, drill
 library/detail, all six logging styles, real countdown controls, optional rest,
 and summary. Setup/focus choices do not yet generate/filter the sample routine.
-Media illustrations remain labeled placeholders. Progress/Team are starter
-screens; Parent/Coach, account, commerce, and programs follow in the ordered
+Media illustrations remain labeled placeholders. Progress now includes a sample
+skill radar, personal-best cards, lifetime totals, session detail, and a
+share-card preview; these are representative fixtures, not saved workout
+history or a working share flow. Team remains a starter screen. Parent/Coach,
+account, commerce, and programs follow in the ordered
 [UX-first milestone](../ROADMAP.md#ux-first--actual-app-screens-current-priority).
 Building a screen does not mark its unimplemented backend criteria complete.
 
-During a workout, swipe between drills or open **Workout overview** to inspect
-set completion and jump to any drill. Logging a set stays on that drill; sets
+The revised visual direction uses an ice-tinted light canvas, a dark navigation
+rail, charcoal rink-illustrated hero cards, and skill-colored data marks. Player
+skills are Accuracy, Hands, Power, Passing, Speed/Strength, and Endurance;
+Accuracy and Power are shot-focused. Keep the locked How To Hockey logo, brand
+red/cream, Inter type, accessible contrast, and light/dark appearance setting
+intact when extending the screens.
+
+The active workout is a draggable bottom sheet over Train. Its horizontal drill
+preview strip selects the same drills as swiping the drill pages; the sheet can
+be expanded for the active drill and **Workout overview**, or minimized to
+expose Train. The minimized header keeps only the drag handle and elapsed,
+training-time, and set-count status; vertical sheet scrolling moves the workout
+title/actions, drill previews, rest controls, and active drill content out of
+view without displacing that status. Logging a set stays on that drill; sets
 can be completed out of order. Draft inputs survive swiping and opening the
 overview; timed drill inputs pause when leaving the drill. Finish the workout
-once all sets are logged to open the summary.
+once all sets are logged to open the summary. The bottom navigation uses
+animated selection and tap feedback; respect **Reduce Motion**.
+
+**Routine management** is available from Train through **Manage routines**.
+The local routine library supports creating/editing routines from preset styles,
+adding catalog drills, and adding preset skill-template drills with adjustable
+sets/reps. Names and drill titles are selected templates, not player free-text
+inputs. Routines and custom template drills are currently device-local via
+SharedPreferences; cloud sync and entitlement checks are not implemented.
+Keep the `TODO(RevenueCat)` at routine save as the future Phase 5 integration
+point for the three-saved-routine free-tier cap and Player Pro entitlement.
+RevenueCat setup belongs to the monetization process in the public README;
+do not add paywall UI until that roadmap work is approved.
 
 **Drill settings** is available in the session and drill detail. Rest is off
 by default. Enable it per drill and select 15–600 seconds; this preference is

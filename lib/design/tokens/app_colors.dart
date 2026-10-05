@@ -40,15 +40,15 @@ class AppColors extends ThemeExtension<AppColors> {
     primaryContainer: Color(0xFFFAE6E6),
     onPrimaryContainer: Color(0xFF5C1717),
     brandCream: Color(0xFFF7F4E7),
-    background: Color(0xFFFFFFFF),
-    surface: Color(0xFFF5F5F7),
+    background: Color(0xFFF1F4F8),
+    surface: Color(0xFFE6EBF1),
     elevatedSurface: Color(0xFFFFFFFF),
     textPrimary: Color(0xFF111114),
-    textSecondary: Color(0xFF6B6B73),
+    textSecondary: Color(0xFF626D7B),
     success: Color(0xFF1E9E5A),
     warning: Color(0xFFD98E04),
     error: Color(0xFFB3261E),
-    border: Color(0xFFE5E5EA),
+    border: Color(0xFFD7DEE7),
   );
 
   static const dark = AppColors(
@@ -131,49 +131,55 @@ class AppColors extends ThemeExtension<AppColors> {
 @immutable
 class PillarColors extends ThemeExtension<PillarColors> {
   const PillarColors({
-    required this.shooting,
-    required this.stickhandling,
-    required this.skating,
+    required this.shotAccuracy,
+    required this.hands,
+    required this.shotPower,
     required this.passing,
-    required this.iqConditioning,
+    required this.speedStrength,
+    required this.endurance,
   });
 
-  final Color shooting;
-  final Color stickhandling;
-  final Color skating;
+  final Color shotAccuracy;
+  final Color hands;
+  final Color shotPower;
   final Color passing;
-  final Color iqConditioning;
+  final Color speedStrength;
+  final Color endurance;
 
   static const light = PillarColors(
-    shooting: Color(0xFFCC3333),
-    stickhandling: Color(0xFF2878B8),
-    skating: Color(0xFF148A83),
+    shotAccuracy: Color(0xFFCC3333),
+    hands: Color(0xFF2878B8),
+    shotPower: Color(0xFFB44B30),
     passing: Color(0xFFA66A00),
-    iqConditioning: Color(0xFF7856A5),
+    speedStrength: Color(0xFF148A83),
+    endurance: Color(0xFF7856A5),
   );
 
   static const dark = PillarColors(
-    shooting: Color(0xFFE05555),
-    stickhandling: Color(0xFF6CB8F0),
-    skating: Color(0xFF5ACFC4),
+    shotAccuracy: Color(0xFFE05555),
+    hands: Color(0xFF6CB8F0),
+    shotPower: Color(0xFFFF896B),
     passing: Color(0xFFF2B233),
-    iqConditioning: Color(0xFFBA9BE4),
+    speedStrength: Color(0xFF5ACFC4),
+    endurance: Color(0xFFBA9BE4),
   );
 
   @override
   PillarColors copyWith({
-    Color? shooting,
-    Color? stickhandling,
-    Color? skating,
+    Color? shotAccuracy,
+    Color? hands,
+    Color? shotPower,
     Color? passing,
-    Color? iqConditioning,
+    Color? speedStrength,
+    Color? endurance,
   }) {
     return PillarColors(
-      shooting: shooting ?? this.shooting,
-      stickhandling: stickhandling ?? this.stickhandling,
-      skating: skating ?? this.skating,
+      shotAccuracy: shotAccuracy ?? this.shotAccuracy,
+      hands: hands ?? this.hands,
+      shotPower: shotPower ?? this.shotPower,
       passing: passing ?? this.passing,
-      iqConditioning: iqConditioning ?? this.iqConditioning,
+      speedStrength: speedStrength ?? this.speedStrength,
+      endurance: endurance ?? this.endurance,
     );
   }
 
@@ -182,11 +188,12 @@ class PillarColors extends ThemeExtension<PillarColors> {
     if (other is! PillarColors) return this;
 
     return PillarColors(
-      shooting: Color.lerp(shooting, other.shooting, t)!,
-      stickhandling: Color.lerp(stickhandling, other.stickhandling, t)!,
-      skating: Color.lerp(skating, other.skating, t)!,
+      shotAccuracy: Color.lerp(shotAccuracy, other.shotAccuracy, t)!,
+      hands: Color.lerp(hands, other.hands, t)!,
+      shotPower: Color.lerp(shotPower, other.shotPower, t)!,
       passing: Color.lerp(passing, other.passing, t)!,
-      iqConditioning: Color.lerp(iqConditioning, other.iqConditioning, t)!,
+      speedStrength: Color.lerp(speedStrength, other.speedStrength, t)!,
+      endurance: Color.lerp(endurance, other.endurance, t)!,
     );
   }
 }

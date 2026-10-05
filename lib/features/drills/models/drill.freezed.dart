@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$Drill {
 
- String get id; String get title; String get mediaAssetPath; List<String> get formCues; TrackingType get trackingType; List<LocationOption> get allowedLocations; PuckInventory get minPuckInventory; bool get requiresPasser; Map<SkillPillar, double> get skillWeights; AccessTier get tier; List<BallType> get supportedBalls; List<PasserType> get passerTypes;@JsonKey(toJson: _serializeDrillPrescription) DrillPrescription get defaultPrescription; int get estimatedSecondsPerSet; int get difficulty; List<String> get tags; String? get swapGroup;
+ String get id; String get title; String get mediaAssetPath; List<String> get formCues; TrackingType get trackingType; List<LocationOption> get allowedLocations; PuckInventory get minPuckInventory; bool get requiresPasser;@SkillWeightsConverter() Map<SkillPillar, double> get skillWeights; AccessTier get tier; List<BallType> get supportedBalls; List<PasserType> get passerTypes;@JsonKey(toJson: _serializeDrillPrescription) DrillPrescription get defaultPrescription; int get estimatedSecondsPerSet; int get difficulty; List<String> get tags; String? get swapGroup;
 /// Create a copy of Drill
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -54,7 +54,7 @@ abstract mixin class $DrillCopyWith<$Res>  {
   factory $DrillCopyWith(Drill value, $Res Function(Drill) _then) = _$DrillCopyWithImpl;
 @useResult
 $Res call({
- String id, String title, String mediaAssetPath, List<String> formCues, TrackingType trackingType, List<LocationOption> allowedLocations, PuckInventory minPuckInventory, bool requiresPasser, Map<SkillPillar, double> skillWeights, AccessTier tier, List<BallType> supportedBalls, List<PasserType> passerTypes,@JsonKey(toJson: _serializeDrillPrescription) DrillPrescription defaultPrescription, int estimatedSecondsPerSet, int difficulty, List<String> tags, String? swapGroup
+ String id, String title, String mediaAssetPath, List<String> formCues, TrackingType trackingType, List<LocationOption> allowedLocations, PuckInventory minPuckInventory, bool requiresPasser,@SkillWeightsConverter() Map<SkillPillar, double> skillWeights, AccessTier tier, List<BallType> supportedBalls, List<PasserType> passerTypes,@JsonKey(toJson: _serializeDrillPrescription) DrillPrescription defaultPrescription, int estimatedSecondsPerSet, int difficulty, List<String> tags, String? swapGroup
 });
 
 
@@ -184,7 +184,7 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String mediaAssetPath,  List<String> formCues,  TrackingType trackingType,  List<LocationOption> allowedLocations,  PuckInventory minPuckInventory,  bool requiresPasser,  Map<SkillPillar, double> skillWeights,  AccessTier tier,  List<BallType> supportedBalls,  List<PasserType> passerTypes, @JsonKey(toJson: _serializeDrillPrescription)  DrillPrescription defaultPrescription,  int estimatedSecondsPerSet,  int difficulty,  List<String> tags,  String? swapGroup)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String title,  String mediaAssetPath,  List<String> formCues,  TrackingType trackingType,  List<LocationOption> allowedLocations,  PuckInventory minPuckInventory,  bool requiresPasser, @SkillWeightsConverter()  Map<SkillPillar, double> skillWeights,  AccessTier tier,  List<BallType> supportedBalls,  List<PasserType> passerTypes, @JsonKey(toJson: _serializeDrillPrescription)  DrillPrescription defaultPrescription,  int estimatedSecondsPerSet,  int difficulty,  List<String> tags,  String? swapGroup)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _Drill() when $default != null:
 return $default(_that.id,_that.title,_that.mediaAssetPath,_that.formCues,_that.trackingType,_that.allowedLocations,_that.minPuckInventory,_that.requiresPasser,_that.skillWeights,_that.tier,_that.supportedBalls,_that.passerTypes,_that.defaultPrescription,_that.estimatedSecondsPerSet,_that.difficulty,_that.tags,_that.swapGroup);case _:
@@ -205,7 +205,7 @@ return $default(_that.id,_that.title,_that.mediaAssetPath,_that.formCues,_that.t
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String mediaAssetPath,  List<String> formCues,  TrackingType trackingType,  List<LocationOption> allowedLocations,  PuckInventory minPuckInventory,  bool requiresPasser,  Map<SkillPillar, double> skillWeights,  AccessTier tier,  List<BallType> supportedBalls,  List<PasserType> passerTypes, @JsonKey(toJson: _serializeDrillPrescription)  DrillPrescription defaultPrescription,  int estimatedSecondsPerSet,  int difficulty,  List<String> tags,  String? swapGroup)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String title,  String mediaAssetPath,  List<String> formCues,  TrackingType trackingType,  List<LocationOption> allowedLocations,  PuckInventory minPuckInventory,  bool requiresPasser, @SkillWeightsConverter()  Map<SkillPillar, double> skillWeights,  AccessTier tier,  List<BallType> supportedBalls,  List<PasserType> passerTypes, @JsonKey(toJson: _serializeDrillPrescription)  DrillPrescription defaultPrescription,  int estimatedSecondsPerSet,  int difficulty,  List<String> tags,  String? swapGroup)  $default,) {final _that = this;
 switch (_that) {
 case _Drill():
 return $default(_that.id,_that.title,_that.mediaAssetPath,_that.formCues,_that.trackingType,_that.allowedLocations,_that.minPuckInventory,_that.requiresPasser,_that.skillWeights,_that.tier,_that.supportedBalls,_that.passerTypes,_that.defaultPrescription,_that.estimatedSecondsPerSet,_that.difficulty,_that.tags,_that.swapGroup);case _:
@@ -225,7 +225,7 @@ return $default(_that.id,_that.title,_that.mediaAssetPath,_that.formCues,_that.t
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String mediaAssetPath,  List<String> formCues,  TrackingType trackingType,  List<LocationOption> allowedLocations,  PuckInventory minPuckInventory,  bool requiresPasser,  Map<SkillPillar, double> skillWeights,  AccessTier tier,  List<BallType> supportedBalls,  List<PasserType> passerTypes, @JsonKey(toJson: _serializeDrillPrescription)  DrillPrescription defaultPrescription,  int estimatedSecondsPerSet,  int difficulty,  List<String> tags,  String? swapGroup)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String title,  String mediaAssetPath,  List<String> formCues,  TrackingType trackingType,  List<LocationOption> allowedLocations,  PuckInventory minPuckInventory,  bool requiresPasser, @SkillWeightsConverter()  Map<SkillPillar, double> skillWeights,  AccessTier tier,  List<BallType> supportedBalls,  List<PasserType> passerTypes, @JsonKey(toJson: _serializeDrillPrescription)  DrillPrescription defaultPrescription,  int estimatedSecondsPerSet,  int difficulty,  List<String> tags,  String? swapGroup)?  $default,) {final _that = this;
 switch (_that) {
 case _Drill() when $default != null:
 return $default(_that.id,_that.title,_that.mediaAssetPath,_that.formCues,_that.trackingType,_that.allowedLocations,_that.minPuckInventory,_that.requiresPasser,_that.skillWeights,_that.tier,_that.supportedBalls,_that.passerTypes,_that.defaultPrescription,_that.estimatedSecondsPerSet,_that.difficulty,_that.tags,_that.swapGroup);case _:
@@ -240,7 +240,7 @@ return $default(_that.id,_that.title,_that.mediaAssetPath,_that.formCues,_that.t
 @JsonSerializable()
 
 class _Drill implements Drill {
-  const _Drill({required this.id, required this.title, required this.mediaAssetPath, required  List<String> formCues, required this.trackingType, required  List<LocationOption> allowedLocations, required this.minPuckInventory, required this.requiresPasser, required  Map<SkillPillar, double> skillWeights, required this.tier, required  List<BallType> supportedBalls, required  List<PasserType> passerTypes, @JsonKey(toJson: _serializeDrillPrescription) required this.defaultPrescription, required this.estimatedSecondsPerSet, required this.difficulty, required  List<String> tags, this.swapGroup}): _formCues = formCues,_allowedLocations = allowedLocations,_skillWeights = skillWeights,_supportedBalls = supportedBalls,_passerTypes = passerTypes,_tags = tags;
+  const _Drill({required this.id, required this.title, required this.mediaAssetPath, required  List<String> formCues, required this.trackingType, required  List<LocationOption> allowedLocations, required this.minPuckInventory, required this.requiresPasser, @SkillWeightsConverter() required  Map<SkillPillar, double> skillWeights, required this.tier, required  List<BallType> supportedBalls, required  List<PasserType> passerTypes, @JsonKey(toJson: _serializeDrillPrescription) required this.defaultPrescription, required this.estimatedSecondsPerSet, required this.difficulty, required  List<String> tags, this.swapGroup}): _formCues = formCues,_allowedLocations = allowedLocations,_skillWeights = skillWeights,_supportedBalls = supportedBalls,_passerTypes = passerTypes,_tags = tags;
   factory _Drill.fromJson(Map<String, dynamic> json) => _$DrillFromJson(json);
 
 @override final  String id;
@@ -264,7 +264,7 @@ class _Drill implements Drill {
 @override final  PuckInventory minPuckInventory;
 @override final  bool requiresPasser;
  final  Map<SkillPillar, double> _skillWeights;
-@override Map<SkillPillar, double> get skillWeights {
+@override@SkillWeightsConverter() Map<SkillPillar, double> get skillWeights {
   if (_skillWeights is EqualUnmodifiableMapView) return _skillWeights;
   // ignore: implicit_dynamic_type
   return EqualUnmodifiableMapView(_skillWeights);
@@ -332,7 +332,7 @@ abstract mixin class _$DrillCopyWith<$Res> implements $DrillCopyWith<$Res> {
   factory _$DrillCopyWith(_Drill value, $Res Function(_Drill) _then) = __$DrillCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String title, String mediaAssetPath, List<String> formCues, TrackingType trackingType, List<LocationOption> allowedLocations, PuckInventory minPuckInventory, bool requiresPasser, Map<SkillPillar, double> skillWeights, AccessTier tier, List<BallType> supportedBalls, List<PasserType> passerTypes,@JsonKey(toJson: _serializeDrillPrescription) DrillPrescription defaultPrescription, int estimatedSecondsPerSet, int difficulty, List<String> tags, String? swapGroup
+ String id, String title, String mediaAssetPath, List<String> formCues, TrackingType trackingType, List<LocationOption> allowedLocations, PuckInventory minPuckInventory, bool requiresPasser,@SkillWeightsConverter() Map<SkillPillar, double> skillWeights, AccessTier tier, List<BallType> supportedBalls, List<PasserType> passerTypes,@JsonKey(toJson: _serializeDrillPrescription) DrillPrescription defaultPrescription, int estimatedSecondsPerSet, int difficulty, List<String> tags, String? swapGroup
 });
 
 

@@ -55,7 +55,7 @@ final trainingSetupProvider = NotifierProvider<TrainingSetup, TrainingSetupState
 
 class TrainingFocus extends Notifier<Map<SkillPillar, int>> {
   @override
-  Map<SkillPillar, int> build() => const {SkillPillar.shooting: 40, SkillPillar.stickhandling: 25, SkillPillar.skating: 15, SkillPillar.passing: 10, SkillPillar.iqConditioning: 10};
+  Map<SkillPillar, int> build() => const {SkillPillar.shotAccuracy: 25, SkillPillar.hands: 20, SkillPillar.shotPower: 20, SkillPillar.passing: 15, SkillPillar.speedStrength: 10, SkillPillar.endurance: 10};
 
   void select(SkillPillar pillar, int value) {
     if (value < 0 || value > 100) {

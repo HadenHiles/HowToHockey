@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:how_to_hockey/features/drills/models/drill.dart';
 import 'package:how_to_hockey/features/settings/appearance_settings_controller.dart';
 import 'package:how_to_hockey/app/sample_data.dart';
+import 'package:how_to_hockey/app/routine_state.dart';
 import 'package:how_to_hockey/app/training_state.dart';
 import 'package:how_to_hockey/app/hockey_app.dart';
 import 'package:how_to_hockey/main.dart';
@@ -29,6 +30,11 @@ void phoneSize(WidgetTester tester, {double scale = 1}) {
 }
 
 void main() {
+  test('the six requested skills are labeled and represented in sample drills', () {
+    expect(SkillPillar.values.map((pillar) => pillar.label), ['Accuracy', 'Hands', 'Power', 'Passing', 'Speed/Strength', 'Endurance']);
+    expect(sampleDrills.map((drill) => drill.pillar).toSet(), SkillPillar.values.toSet());
+  });
+
   test('focus sliders rebalance to exactly 100 including all-zero remainder', () {
     final container = ProviderContainer();
     addTearDown(container.dispose);
@@ -42,7 +48,7 @@ void main() {
         expect(focus.values.every((points) => points >= 0 && points <= 100), isTrue);
       }
     }
-    expect(() => controller.select(SkillPillar.shooting, 101), throwsRangeError);
+    expect(() => controller.select(SkillPillar.shotAccuracy, 101), throwsRangeError);
   });
 
   testWidgets('setup, focus, routine and local theme controls are navigable without Firebase', (tester) async {
@@ -56,7 +62,7 @@ void main() {
     expect(container.read(trainingSetupProvider).location, LocationOption.basement);
     await tester.tap(find.text('Next: choose your focus'));
     await tester.pumpAndSettle();
-    expect(find.byType(Slider), findsNWidgets(5));
+    expect(find.byType(Slider), findsNWidgets(6));
     await tester.tap(find.text('View my workout'));
     await tester.pumpAndSettle();
     expect(find.text('Start workout'), findsOneWidget);
@@ -135,14 +141,15 @@ void main() {
     }
   }
 
-  testWidgets('library filtering exposes a deliberate empty state', (tester) async {
+  testWidgets('library filters drills by the six-skill taxonomy', (tester) async {
     phoneSize(tester);
     final container = await mountApp(tester);
     container.read(appRouterProvider).go('/library');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Hockey IQ'));
+    await tester.tap(find.text('Endurance'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('No sample drills'), findsOneWidget);
+    expect(find.text('30-second shot burst'), findsOneWidget);
+    expect(find.text('Quick-release wrist shots'), findsNothing);
     await tester.tap(find.text('All drills'));
     await tester.pumpAndSettle();
     expect(find.text('Quick-release wrist shots'), findsOneWidget);
@@ -227,12 +234,14 @@ void main() {
     await tester.pumpAndSettle();
     expect(container.read(trainingSessionProvider).setsLogged(1), 1);
     expect(find.text('Skip rest'), findsNothing);
+    await tester.ensureVisible(find.text('Your session'));
+    await tester.ensureVisible(find.byTooltip('Workout overview'));
     await tester.tap(find.byTooltip('Workout overview'));
     await tester.pumpAndSettle();
     expect(find.text('Workout overview'), findsOneWidget);
     expect(find.text('0 / 2 sets · Reps'), findsOneWidget);
-    expect(find.text('1 / 2 sets · Accuracy'), findsOneWidget);
-    await tester.tap(find.text('Quick-release wrist shots'));
+    expect(find.bySemanticsLabel(RegExp('Accuracy: Pick your corner, 1 of 2 sets')), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel(RegExp('Power: Quick-release wrist shots')));
     await tester.pumpAndSettle();
     expect(find.text('7'), findsOneWidget);
     await tester.tap(find.text('Log set'));
@@ -242,6 +251,74 @@ void main() {
     expect(session.logs.last.log.reps, 7);
     expect(session.finished, isFalse);
     expect(session.activeSeconds, sampleDrills.first.estimatedSecondsPerSet + sampleDrills[3].estimatedSecondsPerSet);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('active workout opens in a draggable sheet with selectable drill previews', (tester) async {
+    phoneSize(tester);
+    final container = await mountApp(tester);
+    container.read(trainingSessionProvider.notifier).start([sampleDrills.first, sampleDrills[1]]);
+    container.read(appRouterProvider).go('/session');
+    await tester.pumpAndSettle();
+
+    expect(find.byType(DraggableScrollableSheet), findsOneWidget);
+    expect(find.text('WORKOUT IN PROGRESS'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('Hands: Quiet hands, quick feet')), findsOneWidget);
+    await tester.tap(find.bySemanticsLabel(RegExp('Hands: Quiet hands, quick feet')));
+    await tester.pumpAndSettle();
+
+    expect(container.read(trainingSessionProvider).drillIndex, 1);
+    expect(find.text('Quiet hands, quick feet'), findsWidgets);
+    final handle = find.byKey(const ValueKey('workout-sheet-handle'));
+    final previewTopBeforeScroll = tester.getTopLeft(find.byKey(const ValueKey('workout-drill-previews'))).dy;
+    await tester.drag(find.byKey(const ValueKey('workout-drill-previews')), const Offset(0, -140));
+    await tester.pumpAndSettle();
+    expect(tester.getTopLeft(find.byKey(const ValueKey('workout-drill-previews'))).dy, lessThan(previewTopBeforeScroll));
+    await tester.drag(handle, const Offset(0, 450));
+    await tester.pumpAndSettle();
+    expect(find.text('Your session').hitTestable(), findsNothing);
+    expect(find.textContaining('Training '), findsOneWidget);
+    await tester.drag(handle, const Offset(0, -180));
+    await tester.pumpAndSettle();
+    await tester.drag(handle, const Offset(0, 180));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('routine builder combines library drills and custom skill templates', (tester) async {
+    phoneSize(tester);
+    final container = await mountApp(tester);
+    container.read(appRouterProvider).go('/routines');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create routine'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Create a drill from a template'));
+    await tester.pumpAndSettle();
+    expect(find.text('Create a drill'), findsOneWidget);
+    expect(find.byType(TextFormField), findsNothing);
+    await tester.ensureVisible(find.text('Add drill'));
+    await tester.tap(find.text('Add drill'));
+    await tester.pumpAndSettle();
+    expect(find.text('Create a drill'), findsNothing);
+    expect(find.textContaining('Custom puck control'), findsOneWidget);
+
+    final libraryDrill = find.widgetWithText(CheckboxListTile, 'Pick your corner');
+    await tester.ensureVisible(libraryDrill);
+    await tester.pumpAndSettle();
+    await tester.tap(libraryDrill);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Save routine'));
+    await tester.pumpAndSettle();
+
+    final saved = container.read(routineLibraryProvider).last;
+    expect(saved.drills.map((drill) => drill.title), ['Custom puck control', 'Pick your corner']);
+    final restored = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(container.read(sharedPreferencesProvider))]);
+    addTearDown(restored.dispose);
+    final restoredRoutine = restored.read(routineLibraryProvider).last;
+    expect(restoredRoutine.id, saved.id);
+    expect(restoredRoutine.name, saved.name);
+    expect(restoredRoutine.drills.map((drill) => drill.title), saved.drills.map((drill) => drill.title));
     expect(tester.takeException(), isNull);
   });
 
@@ -283,10 +360,12 @@ void main() {
     await tester.tap(find.text('Start timer'));
     await tester.pump(const Duration(seconds: 1));
     expect(find.text('0:02'), findsOneWidget);
+    await tester.ensureVisible(find.text('Your session'));
+    await tester.ensureVisible(find.byTooltip('Workout overview'));
     await tester.tap(find.byTooltip('Workout overview'));
     await tester.pumpAndSettle();
     await tester.pump(const Duration(seconds: 5));
-    await tester.tap(find.text('Quiet hands, quick feet'));
+    await tester.tap(find.text('Quiet hands, quick feet').last);
     await tester.pumpAndSettle();
     expect(find.text('0:02'), findsOneWidget);
     await tester.ensureVisible(find.text('Start timer'));
@@ -302,8 +381,7 @@ void main() {
     phoneSize(tester);
     final container = await mountApp(tester);
     container.read(trainingSessionProvider.notifier).start([
-      for (final drill in [sampleDrills.first, sampleDrills[3]])
-        drill.copyWith(defaultPrescription: drill.defaultPrescription.copyWith(sets: 1)),
+      for (final drill in [sampleDrills.first, sampleDrills[3]]) drill.copyWith(defaultPrescription: drill.defaultPrescription.copyWith(sets: 1)),
     ]);
     container.read(appRouterProvider).go('/session');
     await tester.pumpAndSettle();

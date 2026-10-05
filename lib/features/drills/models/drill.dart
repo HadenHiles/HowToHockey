@@ -14,7 +14,14 @@ enum BallType { golfBall, trainingBall, greenBiscuit }
 
 enum PasserType { rebounder, partner }
 
-enum SkillPillar { shooting, stickhandling, skating, passing, iqConditioning }
+enum SkillPillar {
+  shotAccuracy,
+  hands,
+  shotPower,
+  passing,
+  speedStrength,
+  endurance,
+}
 
 enum AccessTier { free, pro }
 
@@ -29,7 +36,7 @@ abstract class Drill with _$Drill {
     required List<LocationOption> allowedLocations,
     required PuckInventory minPuckInventory,
     required bool requiresPasser,
-    required Map<SkillPillar, double> skillWeights,
+    @SkillWeightsConverter() required Map<SkillPillar, double> skillWeights,
     required AccessTier tier,
     required List<BallType> supportedBalls,
     required List<PasserType> passerTypes,
@@ -44,6 +51,34 @@ abstract class Drill with _$Drill {
 }
 
 Map<String, dynamic> _serializeDrillPrescription(DrillPrescription prescription) => prescription.toJson();
+
+class SkillWeightsConverter extends JsonConverter<Map<SkillPillar, double>, Map<String, dynamic>> {
+  const SkillWeightsConverter();
+
+  @override
+  Map<SkillPillar, double> fromJson(Map<String, dynamic> json) {
+    final result = <SkillPillar, double>{};
+    for (final entry in json.entries) {
+      final pillar = switch (entry.key) {
+        'shotAccuracy' => SkillPillar.shotAccuracy,
+        'hands' || 'stickhandling' => SkillPillar.hands,
+        'shotPower' || 'shooting' => SkillPillar.shotPower,
+        'passing' => SkillPillar.passing,
+        'speedStrength' || 'skating' => SkillPillar.speedStrength,
+        'endurance' || 'iqConditioning' => SkillPillar.endurance,
+        _ => throw FormatException('Unknown skill pillar "${entry.key}".'),
+      };
+      final weight = (entry.value as num).toDouble();
+      result[pillar] = (result[pillar] ?? 0) + weight;
+    }
+    return result;
+  }
+
+  @override
+  Map<String, dynamic> toJson(Map<SkillPillar, double> object) => {
+    for (final entry in object.entries) entry.key.name: entry.value,
+  };
+}
 
 @freezed
 abstract class DrillPrescription with _$DrillPrescription {

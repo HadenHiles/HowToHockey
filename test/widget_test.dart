@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:how_to_hockey/design/components/training_components.dart';
 import 'package:how_to_hockey/features/settings/appearance_settings_controller.dart';
 import 'package:how_to_hockey/main.dart';
 import 'package:how_to_hockey/app/hockey_app.dart';
@@ -48,10 +49,46 @@ void main() {
     addTearDown(container.dispose);
     await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));
     await tester.pumpAndSettle();
+    expect(find.byType(TrainingHeroCard), findsOneWidget);
+    expect(tester.takeException(), isNull);
 
     container.read(appRouterProvider).go('/me');
     await tester.pumpAndSettle();
     expect(find.text('Appearance'), findsOneWidget);
+
+    container.read(appRouterProvider).go('/progress');
+    await tester.pumpAndSettle();
+    expect(find.byType(SkillRadar), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Share your progress'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Share your progress'));
+    await tester.pumpAndSettle();
+    expect(find.text('Progress card preview'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('progress shows its sample skill profile and share-card preview', (WidgetTester tester) async {
+    final preferences = await SharedPreferences.getInstance();
+    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences)]);
+    addTearDown(container.dispose);
+    await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));
+    await tester.pumpAndSettle();
+
+    container.read(appRouterProvider).go('/progress');
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SkillRadar), findsOneWidget);
+    expect(find.text('Personal bests'), findsOneWidget);
+    expect(find.text('Lifetime totals'), findsOneWidget);
+
+    await tester.ensureVisible(find.text('Share your progress'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Share your progress'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Progress card preview'), findsOneWidget);
+    expect(find.textContaining('Preview only'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
