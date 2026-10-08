@@ -28,8 +28,15 @@ and summary. Setup/focus choices do not yet generate/filter the sample routine.
 Media illustrations remain labeled placeholders. Progress now includes a sample
 skill radar, personal-best cards, lifetime totals, session detail, and a
 share-card preview; these are representative fixtures, not saved workout
-history or a working share flow. Team remains a starter screen. Parent/Coach,
-account, commerce, and programs follow in the ordered
+history or a working share flow. Team now includes member/no-team/locked
+states, sample homework, locker-room posts with local stick taps, weekly
+standings, discovery, and join/invite entry points. Joining, invite sharing,
+and real team activity remain unconnected. Me includes device-persisted
+appearance, local sample-profile switching, and role/account/subscription
+sheets. Profile selection only changes the Me sample header; it does not
+switch account-wide data. Parent/Coach selection, account linking/deletion,
+and purchases/restore explicitly disclose that they are unavailable.
+Parent is the next slice, followed by Coach, account, commerce, and programs in the ordered
 [UX-first milestone](../ROADMAP.md#ux-first--actual-app-screens-current-priority).
 Building a screen does not mark its unimplemented backend criteria complete.
 
@@ -46,13 +53,19 @@ surface so the sheet can always collapse even while its body is scrolled.
 Move the app navigation in sync with the sheet extent: it slides down while
 the sheet expands and returns as the sheet collapses. Keep the shared sheet
 scroll controller on the vertical content—do not add a competing drag
-recognizer inside the scroll body. Keep the red status header (handle and
-elapsed/active/set metrics) and bottom Log action pinned;
-the workout title, horizontal drill preview strip, optional rest controls, and
-active drill or **Workout overview** scroll together in the sheet body.
-Swiping the logging pages changes the active drill, highlights its preview,
-and scrolls the horizontal strip to keep it visible. Tapping a preview opens
-a separate instruction/media screen at `/session-drills/:id`, backed by the
+recognizer inside the scroll body. Only the red status header (handle and
+elapsed/active/set metrics) stays pinned; the workout title, the portrait
+drill preview grid, optional rest controls, the active drill or **Workout
+overview**, and the Log action all scroll together in the sheet body, with the
+Log action as the last item in that scroll. Size the sheet from a
+`LayoutBuilder` inside the shell body—`minChildSize` is exactly the status
+header height, so collapsing parks the red header directly on top of the app
+navigation, and `maxChildSize` stops below the status bar.
+The preview grid shows three portrait cards per row so a six-drill workout
+fits on one screen. Swiping the logging pages changes the active drill and
+highlights its preview; tapping a preview card switches to that drill.
+Instruction/media stays on the separate `/session-drills/:id` screen, reached
+from the **Drill details** action inside the active drill, backed by the
 current session's drills (including custom routine templates), without changing
 the active drill or starting a new workout. Keep media and coach's cues out of
 the logging body. Logging a set stays on that drill; sets can be completed out
@@ -95,10 +108,16 @@ training totals use the logged timer duration for timed sets and the catalog's
 estimate for untimed sets, explicitly labeled as estimated when applicable.
 These local UX totals are not production history or leaderboard metrics.
 
-Test the normal Firebase-backed entrypoint and Player flow on a mobile device:
+Run host-only unit/widget validation with `flutter test test`. Do not use an
+unscoped test runner that also discovers `integration_test/`, as it may select
+a connected physical phone.
+
+Test the normal Firebase-backed entrypoint and Player flow on an explicitly
+selected emulator/simulator. Do not use physical devices unless the user
+explicitly requests one:
 
 ```sh
-flutter test integration_test/player_flow_test.dart -d <mobile-device-id>
+flutter test integration_test/player_flow_test.dart -d <emulator-or-simulator-id>
 ```
 
 Add `--dart-define=USE_EMULATORS=true` when running against the local Firebase

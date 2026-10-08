@@ -337,89 +337,402 @@ class _HistoryStat extends StatelessWidget {
   );
 }
 
-class TeamPage extends StatelessWidget {
+enum _TeamPreviewState { member, noTeam, locked }
+
+class TeamPage extends StatefulWidget {
   const TeamPage({super.key});
+
+  @override
+  State<TeamPage> createState() => _TeamPageState();
+}
+
+class _TeamPageState extends State<TeamPage> {
+  var _previewState = _TeamPreviewState.member;
+  final Set<String> _sampleTaps = {};
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return AppPage(
       title: 'Team',
-      subtitle: 'North Stars · U15',
+      subtitle: _previewState == _TeamPreviewState.member ? 'North Stars · U15' : 'Find your locker room.',
       children: [
-        TrainingHeroCard(eyebrow: 'Coach Jeremy  ·  Due Friday', title: 'Team\nhomework', detail: 'Build your foundation', metrics: const [('20', 'minutes'), ('06', 'drills')], actionLabel: 'View assignment', onTap: () => context.push('/routine')),
-        const SizedBox(height: AppSpacing.xl),
-        const SectionHeading(title: 'Locker room'),
-        const SizedBox(height: AppSpacing.md),
-        ArenaPanel(
+        TrainingCard(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(backgroundColor: theme.colorScheme.primary, foregroundColor: Colors.white, child: const Text('AR')),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Alex R.', style: theme.textTheme.titleMedium),
-                    const SizedBox(height: AppSpacing.xxs),
-                    Text('Finished a workout', style: theme.textTheme.bodyMedium),
-                    const SizedBox(height: AppSpacing.md),
-                    const Wrap(
-                      spacing: AppSpacing.md,
-                      runSpacing: AppSpacing.xs,
-                      children: [
-                        _HistoryStat(value: '24', label: 'active min'),
-                        _HistoryStat(value: '80', label: 'shots'),
-                        _HistoryStat(value: '5', label: 'day streak'),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    Text('SAMPLE TEAM UPDATE', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                  ],
-                ),
-              ),
+              Icon(Icons.info_outline, color: theme.colorScheme.primary),
+              const SizedBox(width: AppSpacing.sm),
+              const Expanded(child: Text('Team content and actions are representative. Joining, invites, leaderboards, and stick taps are not connected yet.')),
             ],
           ),
         ),
+        const SizedBox(height: AppSpacing.md),
+        Text('PREVIEW TEAM STATE', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant, letterSpacing: .8)),
+        const SizedBox(height: AppSpacing.xs),
+        Wrap(
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
+          children: [
+            for (final state in _TeamPreviewState.values)
+              ChoiceChip(
+                label: Text(switch (state) {
+                  _TeamPreviewState.member => 'Member',
+                  _TeamPreviewState.noTeam => 'No team',
+                  _TeamPreviewState.locked => 'Locked',
+                }),
+                selected: state == _previewState,
+                onSelected: (_) => setState(() => _previewState = state),
+              ),
+          ],
+        ),
         const SizedBox(height: AppSpacing.xl),
-        const Text('Team discovery, leaderboards, invites, and stick-tap interactions are scheduled for a later UX slice.'),
+        ...switch (_previewState) {
+          _TeamPreviewState.member => _memberContent(context),
+          _TeamPreviewState.noTeam => _noTeamContent(context),
+          _TeamPreviewState.locked => _lockedContent(context),
+        },
       ],
+    );
+  }
+
+  List<Widget> _memberContent(BuildContext context) {
+    final theme = Theme.of(context);
+    return [
+      TrainingHeroCard(eyebrow: 'Coach Jeremy  ·  Due Friday', title: 'Team\nhomework', detail: 'Build your foundation', metrics: const [('20', 'minutes'), ('06', 'drills')], actionLabel: 'View assignment', onTap: () => context.push('/routine')),
+      const SizedBox(height: AppSpacing.xl),
+      const SectionHeading(title: 'Locker room'),
+      const SizedBox(height: AppSpacing.md),
+      _TeamPostCard(initials: 'AR', name: 'Alex R.', update: 'Finished Build your foundation', detail: '24 active min  ·  80 shots  ·  5 day streak', tapCount: 8, tapped: _sampleTaps.contains('alex'), onTap: () => _toggleSampleTap(context, 'alex')),
+      const SizedBox(height: AppSpacing.sm),
+      _TeamPostCard(initials: 'MS', name: 'Morgan S.', update: 'Set a new accuracy best', detail: '84% accuracy  ·  Pick your corner', tapCount: 12, tapped: _sampleTaps.contains('morgan'), onTap: () => _toggleSampleTap(context, 'morgan')),
+      const SizedBox(height: AppSpacing.xl),
+      const SectionHeading(title: 'Weekly leaderboard'),
+      const SizedBox(height: AppSpacing.md),
+      ArenaPanel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Text('ACTIVE TRAINING TIME', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary, letterSpacing: .8)),
+                ),
+                Text('THIS WEEK', style: theme.textTheme.labelSmall),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.md),
+            const _LeaderboardRow(rank: 1, name: 'Morgan S.', minutes: 92),
+            const _LeaderboardRow(rank: 2, name: 'Jamie H.', minutes: 76, isCurrentPlayer: true),
+            const _LeaderboardRow(rank: 3, name: 'Alex R.', minutes: 64),
+            const SizedBox(height: AppSpacing.sm),
+            Text('Only verified active training time counts. Sample standings.', style: theme.textTheme.bodySmall),
+          ],
+        ),
+      ),
+      const SizedBox(height: AppSpacing.xl),
+      SectionHeading(title: 'Team access', action: 'Find teams', onAction: () => _showTeamDiscovery(context)),
+      const SizedBox(height: AppSpacing.md),
+      TrainingCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('North Stars invite', style: theme.textTheme.titleMedium),
+            const SizedBox(height: AppSpacing.xs),
+            Text('Share the coach-managed join code with a parent or teammate.', style: theme.textTheme.bodySmall),
+            const SizedBox(height: AppSpacing.md),
+            Wrap(
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
+              children: [
+                OutlinedButton.icon(onPressed: () => showFeatureMessage(context, 'Invite sharing is a sample action and is not connected yet.'), icon: const Icon(Icons.ios_share_outlined), label: const Text('Share invite')),
+                TextButton.icon(onPressed: () => _showJoinInvite(context), icon: const Icon(Icons.key_outlined), label: const Text('Join with code')),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _noTeamContent(BuildContext context) {
+    final theme = Theme.of(context);
+    return [
+      ArenaPanel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Icon(Icons.groups_outlined, size: 44, color: theme.colorScheme.primary),
+            const SizedBox(height: AppSpacing.md),
+            Text('Your next team starts here', style: theme.textTheme.headlineSmall),
+            const SizedBox(height: AppSpacing.xs),
+            const Text('Discover a public team or review an invite from your coach. Team membership is managed per player profile.'),
+            const SizedBox(height: AppSpacing.xl),
+            FilledButton.icon(onPressed: () => _showTeamDiscovery(context), icon: const Icon(Icons.search), label: const Text('Find a team')),
+            const SizedBox(height: AppSpacing.sm),
+            OutlinedButton.icon(onPressed: () => _showJoinInvite(context), icon: const Icon(Icons.key_outlined), label: const Text('Join with code')),
+          ],
+        ),
+      ),
+      const SizedBox(height: AppSpacing.xl),
+      const SectionHeading(title: 'Pending invite'),
+      const SizedBox(height: AppSpacing.md),
+      TrainingCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Westside Wolves · U15', style: theme.textTheme.titleMedium),
+            const SizedBox(height: AppSpacing.xs),
+            const Text('Invited by Coach Taylor. A parent approval is required for child profiles.'),
+            const SizedBox(height: AppSpacing.md),
+            OutlinedButton(onPressed: () => showFeatureMessage(context, 'Invite review is not connected yet.'), child: const Text('Review invite')),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _lockedContent(BuildContext context) {
+    final theme = Theme.of(context);
+    return [
+      ArenaPanel(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Icon(Icons.lock_outline, size: 44, color: theme.colorScheme.primary),
+            const SizedBox(height: AppSpacing.md),
+            Text('Members only', style: theme.textTheme.headlineSmall),
+            const SizedBox(height: AppSpacing.xs),
+            const Text('Locker room posts, homework, and team standings unlock after this player profile joins the team.'),
+            const SizedBox(height: AppSpacing.xl),
+            FilledButton(onPressed: () => setState(() => _previewState = _TeamPreviewState.noTeam), child: const Text('View joining options')),
+          ],
+        ),
+      ),
+      const SizedBox(height: AppSpacing.xl),
+      TrainingCard(
+        child: Row(
+          children: [
+            Icon(Icons.shield_outlined, color: theme.colorScheme.primary),
+            const SizedBox(width: AppSpacing.md),
+            const Expanded(child: Text('Team activity is visible only to rostered members. Public discovery shows generic team details, not player activity.')),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  void _toggleSampleTap(BuildContext context, String postId) {
+    setState(() {
+      if (!_sampleTaps.add(postId)) _sampleTaps.remove(postId);
+    });
+    showFeatureMessage(context, 'Sample preview only. Stick taps are not sent.');
+  }
+
+  Future<void> _showTeamDiscovery(BuildContext context) => showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (sheetContext) => SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, AppSpacing.screen),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Discover teams', style: Theme.of(sheetContext).textTheme.headlineSmall),
+            const SizedBox(height: AppSpacing.xs),
+            const Text('Public team results use representative content. Player activity stays member-only.'),
+            const SizedBox(height: AppSpacing.xl),
+            _DiscoveryTeamCard(name: 'Westside Wolves', detail: 'U15 · Coach Taylor · 18 players', onRequest: () => _showUnavailableAction(sheetContext, 'Join requests are not connected yet.')),
+            const SizedBox(height: AppSpacing.sm),
+            _DiscoveryTeamCard(name: 'River City Rockets', detail: 'U14 · Coach Lee · 16 players', onRequest: () => _showUnavailableAction(sheetContext, 'Join requests are not connected yet.')),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  Future<void> _showJoinInvite(BuildContext context) => showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (sheetContext) => SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, AppSpacing.screen),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Join with a team code', style: Theme.of(sheetContext).textTheme.headlineSmall),
+            const SizedBox(height: AppSpacing.xs),
+            const Text('A constrained team-code entry will be connected with account and parent approval flows.'),
+            const SizedBox(height: AppSpacing.xl),
+            OutlinedButton.icon(onPressed: () => _showUnavailableAction(sheetContext, 'Team-code lookup is not connected yet.'), icon: const Icon(Icons.key_outlined), label: const Text('Preview code lookup')),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  void _showUnavailableAction(BuildContext sheetContext, String message) {
+    Navigator.of(sheetContext).pop();
+    showFeatureMessage(context, message);
+  }
+}
+
+class _TeamPostCard extends StatelessWidget {
+  const _TeamPostCard({required this.initials, required this.name, required this.update, required this.detail, required this.tapCount, required this.tapped, required this.onTap});
+
+  final String initials;
+  final String name;
+  final String update;
+  final String detail;
+  final int tapCount;
+  final bool tapped;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return TrainingCard(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(backgroundColor: theme.colorScheme.primary, foregroundColor: theme.colorScheme.onPrimary, child: Text(initials)),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Flexible(child: Text(name, style: theme.textTheme.titleMedium)),
+                    const SizedBox(width: AppSpacing.xs),
+                    Icon(Icons.verified, size: 16, color: theme.colorScheme.primary),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xxs),
+                Text(update),
+                const SizedBox(height: AppSpacing.xs),
+                Text(detail, style: theme.textTheme.bodySmall),
+                const SizedBox(height: AppSpacing.md),
+                OutlinedButton.icon(onPressed: onTap, icon: Icon(tapped ? Icons.sports_hockey : Icons.sports_hockey_outlined), label: Text('${tapCount + (tapped ? 1 : 0)} stick taps')),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class MePage extends ConsumerWidget {
+class _LeaderboardRow extends StatelessWidget {
+  const _LeaderboardRow({required this.rank, required this.name, required this.minutes, this.isCurrentPlayer = false});
+
+  final int rank;
+  final String name;
+  final int minutes;
+  final bool isCurrentPlayer;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: AppSpacing.xs),
+      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
+      decoration: BoxDecoration(color: isCurrentPlayer ? theme.colorScheme.primary.withValues(alpha: .18) : theme.colorScheme.surface.withValues(alpha: .08), borderRadius: BorderRadius.circular(AppRadii.control)),
+      child: Row(
+        children: [
+          SizedBox(width: 28, child: Text('$rank', style: theme.textTheme.titleMedium)),
+          Expanded(child: Text(name, style: theme.textTheme.titleMedium)),
+          Text('$minutes min', style: theme.textTheme.labelLarge),
+        ],
+      ),
+    );
+  }
+}
+
+class _DiscoveryTeamCard extends StatelessWidget {
+  const _DiscoveryTeamCard({required this.name, required this.detail, required this.onRequest});
+
+  final String name;
+  final String detail;
+  final VoidCallback onRequest;
+
+  @override
+  Widget build(BuildContext context) => TrainingCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(name, style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: AppSpacing.xs),
+        Text(detail),
+        const SizedBox(height: AppSpacing.md),
+        OutlinedButton(onPressed: onRequest, child: const Text('Request to join')),
+      ],
+    ),
+  );
+}
+
+class MePage extends ConsumerStatefulWidget {
   const MePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MePage> createState() => _MePageState();
+}
+
+class _MePageState extends ConsumerState<MePage> {
+  static const _profiles = [(initials: 'JH', name: 'Jamie H.', detail: 'Player profile'), (initials: 'AH', name: 'Avery H.', detail: 'Child profile · sample')];
+
+  var _activeProfile = 0;
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final appearance = ref.watch(appearanceProvider);
+    final profile = _profiles[_activeProfile];
     return AppPage(
       title: 'Me',
       children: [
-        ArenaPanel(
+        Semantics(
+          button: true,
+          label: 'Switch player profile. Current profile ${profile.name}',
+          child: InkWell(
+            borderRadius: BorderRadius.circular(AppRadii.card),
+            onTap: _showProfileSwitcher,
+            child: ArenaPanel(
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 32,
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    child: Text(profile.initials, style: theme.textTheme.titleLarge),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(profile.name, style: theme.textTheme.headlineSmall),
+                        const SizedBox(height: AppSpacing.xs),
+                        Text('PLAYER  ·  SAMPLE PROFILE', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.swap_horiz, color: theme.colorScheme.onSurfaceVariant),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        TrainingCard(
           child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 32,
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: Colors.white,
-                child: Text('JH', style: theme.textTheme.titleLarge),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Jamie H.', style: theme.textTheme.headlineSmall),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text('PLAYER  ·  SAMPLE PROFILE', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                  ],
-                ),
-              ),
-              Icon(Icons.chevron_right, color: AppColors.dark.textSecondary),
+              Icon(Icons.info_outline, color: theme.colorScheme.primary),
+              const SizedBox(width: AppSpacing.sm),
+              const Expanded(child: Text('Profiles, roles, accounts, and subscriptions use representative local screens. They are not connected yet.')),
             ],
           ),
         ),
@@ -452,7 +765,157 @@ class MePage extends ConsumerWidget {
             ],
           ),
         ),
+        const SizedBox(height: AppSpacing.xl),
+        const SectionHeading(title: 'Profile & access'),
+        const SizedBox(height: AppSpacing.md),
+        _MeEntryCard(icon: Icons.people_outline, title: 'Switch player', detail: 'Active: ${profile.name}', onTap: _showProfileSwitcher),
+        const SizedBox(height: AppSpacing.sm),
+        _MeEntryCard(icon: Icons.switch_account_outlined, title: 'Switch role', detail: 'Player mode', onTap: _showRoleSwitcher),
+        const SizedBox(height: AppSpacing.sm),
+        _MeEntryCard(icon: Icons.person_outline, title: 'Account', detail: 'Anonymous sample session', onTap: _showAccount),
+        const SizedBox(height: AppSpacing.sm),
+        _MeEntryCard(icon: Icons.workspace_premium_outlined, title: 'Subscription', detail: 'Free plan', onTap: _showSubscription),
       ],
     );
   }
+
+  Future<void> _showProfileSwitcher() => showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (sheetContext) => SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, AppSpacing.screen),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Switch player', style: Theme.of(sheetContext).textTheme.headlineSmall),
+            const SizedBox(height: AppSpacing.xs),
+            const Text('The active profile is kept only for this preview session.'),
+            const SizedBox(height: AppSpacing.md),
+            RadioGroup<int>(
+              groupValue: _activeProfile,
+              onChanged: (value) {
+                if (value == null) return;
+                setState(() => _activeProfile = value);
+                Navigator.of(sheetContext).pop();
+              },
+              child: Column(
+                children: [for (final (index, profile) in _profiles.indexed) RadioListTile<int>(value: index, title: Text(profile.name), subtitle: Text(profile.detail))],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  Future<void> _showRoleSwitcher() => showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (sheetContext) => SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, AppSpacing.screen),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Switch role', style: Theme.of(sheetContext).textTheme.headlineSmall),
+            const SizedBox(height: AppSpacing.xs),
+            const Text('Separate Parent and Coach shells are the next UX slices.'),
+            const SizedBox(height: AppSpacing.md),
+            const ListTile(leading: Icon(Icons.sports_hockey), title: Text('Player'), subtitle: Text('Current role'), trailing: Icon(Icons.check)),
+            ListTile(leading: const Icon(Icons.family_restroom), title: const Text('Parent'), subtitle: const Text('Preview unavailable'), onTap: () => _closeWithMessage(sheetContext, 'The Parent shell is not connected yet.')),
+            ListTile(leading: const Icon(Icons.groups_outlined), title: const Text('Coach'), subtitle: const Text('Preview unavailable'), onTap: () => _closeWithMessage(sheetContext, 'The Coach shell is not connected yet.')),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  Future<void> _showAccount() => showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (sheetContext) => SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, AppSpacing.screen),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Account', style: Theme.of(sheetContext).textTheme.headlineSmall),
+            const SizedBox(height: AppSpacing.xs),
+            const Text('This preview is using an anonymous session. Account linking and deletion are not connected yet.'),
+            const SizedBox(height: AppSpacing.xl),
+            FilledButton.icon(onPressed: () => _closeWithMessage(sheetContext, 'Account sign-in is not connected yet.'), icon: const Icon(Icons.login), label: const Text('Connect an account')),
+            const SizedBox(height: AppSpacing.sm),
+            OutlinedButton.icon(onPressed: () => _closeWithMessage(sheetContext, 'Account deletion is not connected yet.'), icon: const Icon(Icons.delete_outline), label: const Text('Delete account')),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  Future<void> _showSubscription() => showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (sheetContext) => SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, AppSpacing.screen),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text('Player Free', style: Theme.of(sheetContext).textTheme.headlineSmall),
+            const SizedBox(height: AppSpacing.xs),
+            const Text('Player Pro purchase, restore, and subscription management will be connected through RevenueCat in the commerce slice.'),
+            const SizedBox(height: AppSpacing.xl),
+            FilledButton(onPressed: () => _closeWithMessage(sheetContext, 'Player Pro purchases are not connected yet.'), child: const Text('Explore Player Pro')),
+            const SizedBox(height: AppSpacing.sm),
+            OutlinedButton(onPressed: () => _closeWithMessage(sheetContext, 'Purchase restore is not connected yet.'), child: const Text('Restore purchases')),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  void _closeWithMessage(BuildContext sheetContext, String message) {
+    Navigator.of(sheetContext).pop();
+    showFeatureMessage(context, message);
+  }
+}
+
+class _MeEntryCard extends StatelessWidget {
+  const _MeEntryCard({required this.icon, required this.title, required this.detail, required this.onTap});
+
+  final IconData icon;
+  final String title;
+  final String detail;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => TrainingCard(
+    onTap: onTap,
+    child: Row(
+      children: [
+        Icon(icon, color: Theme.of(context).colorScheme.primary),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.xxs),
+              Text(detail, style: Theme.of(context).textTheme.bodySmall),
+            ],
+          ),
+        ),
+        const Icon(Icons.chevron_right),
+      ],
+    ),
+  );
 }

@@ -73,7 +73,14 @@ class HockeyApp extends ConsumerWidget {
   const HockeyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => MaterialApp.router(title: 'How To Hockey', debugShowCheckedModeBanner: false, theme: HockeyTheme.light, darkTheme: HockeyTheme.dark, themeMode: ref.watch(appearanceProvider).themeMode, routerConfig: ref.watch(appRouterProvider));
+  Widget build(BuildContext context, WidgetRef ref) => MaterialApp.router(
+    title: 'How To Hockey',
+    debugShowCheckedModeBanner: false,
+    theme: HockeyTheme.light,
+    darkTheme: HockeyTheme.dark,
+    themeMode: ref.watch(appearanceProvider).themeMode,
+    routerConfig: ref.watch(appRouterProvider),
+  );
 }
 
 class _PlayerShell extends ConsumerWidget {
@@ -87,6 +94,9 @@ class _PlayerShell extends ConsumerWidget {
     final sheetProgress = sessionActive ? ref.watch(workoutSheetProgressProvider) : 0.0;
     final navigationHeight = 80 + MediaQuery.paddingOf(context).bottom;
     return Scaffold(
+      // The navigation keeps its layout slot so the session sheet's viewport stays
+      // fixed; matching the sheet colour keeps the vacated strip from flashing.
+      backgroundColor: sessionActive ? HockeyTheme.dark.scaffoldBackgroundColor : null,
       body: shell,
       bottomNavigationBar: Transform.translate(
         key: const ValueKey('player-navigation-motion'),
