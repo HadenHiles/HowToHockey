@@ -874,7 +874,7 @@ class _MePageState extends ConsumerState<MePage> {
           children: [
             Text('Switch role', style: Theme.of(sheetContext).textTheme.headlineSmall),
             const SizedBox(height: AppSpacing.xs),
-            const Text('Parent mode is a sample preview. The Coach shell is the next UX slice.'),
+            const Text('Parent and Coach modes are sample previews.'),
             const SizedBox(height: AppSpacing.md),
             const ListTile(leading: Icon(Icons.sports_hockey), title: Text('Player'), subtitle: Text('Current role'), trailing: Icon(Icons.check)),
             ListTile(
@@ -889,8 +889,11 @@ class _MePageState extends ConsumerState<MePage> {
             ListTile(
               leading: const Icon(Icons.groups_outlined),
               title: const Text('Coach'),
-              subtitle: const Text('Preview unavailable'),
-              onTap: () => _closeWithMessage(sheetContext, 'The Coach shell is not connected yet.'),
+              subtitle: const Text('Sample preview'),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                context.go('/coach/roster');
+              },
             ),
           ],
         ),

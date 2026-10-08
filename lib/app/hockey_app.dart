@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../design/theme/app_theme.dart';
 import '../features/settings/appearance_settings_controller.dart';
+import 'coach_pages.dart';
 import 'parent_pages.dart';
 import 'player_pages.dart';
 import 'app_page.dart';
@@ -73,6 +74,35 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           StatefulShellBranch(
             routes: [GoRoute(path: '/parent/account', builder: (_, _) => const ParentAccountPage())],
+          ),
+        ],
+      ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, shell) => _CoachShell(shell: shell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/coach/roster',
+                builder: (_, _) => const CoachRosterPage(),
+                routes: [GoRoute(path: 'requests', builder: (_, _) => const CoachRequestsPage())],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/coach/homework',
+                builder: (_, _) => const CoachHomeworkPage(),
+                routes: [GoRoute(path: 'new', builder: (_, _) => const CoachAssignPage())],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [GoRoute(path: '/coach/compliance', builder: (_, _) => const CoachCompliancePage())],
+          ),
+          StatefulShellBranch(
+            routes: [GoRoute(path: '/coach/team', builder: (_, _) => const CoachTeamPage())],
           ),
         ],
       ),
@@ -236,6 +266,46 @@ class _ParentShell extends StatelessWidget {
           icon: const Icon(Icons.manage_accounts_outlined),
           selectedIcon: _NavSelectionIcon(icon: Icons.manage_accounts, selected: shell.currentIndex == 2),
           label: 'Account',
+        ),
+      ],
+    ),
+  );
+}
+
+class _CoachShell extends StatelessWidget {
+  const _CoachShell({required this.shell});
+
+  final StatefulNavigationShell shell;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: shell,
+    bottomNavigationBar: NavigationBar(
+      selectedIndex: shell.currentIndex,
+      onDestinationSelected: (index) {
+        Feedback.forTap(context);
+        shell.goBranch(index, initialLocation: index == shell.currentIndex);
+      },
+      destinations: [
+        NavigationDestination(
+          icon: const Icon(Icons.groups_outlined),
+          selectedIcon: _NavSelectionIcon(icon: Icons.groups, selected: shell.currentIndex == 0),
+          label: 'Roster',
+        ),
+        NavigationDestination(
+          icon: const Icon(Icons.assignment_outlined),
+          selectedIcon: _NavSelectionIcon(icon: Icons.assignment, selected: shell.currentIndex == 1),
+          label: 'Homework',
+        ),
+        NavigationDestination(
+          icon: const Icon(Icons.fact_check_outlined),
+          selectedIcon: _NavSelectionIcon(icon: Icons.fact_check, selected: shell.currentIndex == 2),
+          label: 'Compliance',
+        ),
+        NavigationDestination(
+          icon: const Icon(Icons.settings_outlined),
+          selectedIcon: _NavSelectionIcon(icon: Icons.settings, selected: shell.currentIndex == 3),
+          label: 'Team',
         ),
       ],
     ),

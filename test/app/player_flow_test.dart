@@ -494,9 +494,9 @@ void main() {
     await tester.tap(find.text('Switch role'));
     await tester.pumpAndSettle();
     expect(find.text('Parent'), findsOneWidget);
-    await tester.tap(find.text('Coach'));
+    expect(find.text('Coach'), findsOneWidget);
+    Navigator.of(tester.element(find.text('Coach'))).pop();
     await tester.pumpAndSettle();
-    expect(find.text('The Coach shell is not connected yet.'), findsOneWidget);
 
     await tester.ensureVisible(find.text('Account'));
     await tester.pumpAndSettle();
