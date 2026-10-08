@@ -49,9 +49,9 @@ Future<void> tapWorkoutAction(WidgetTester tester, String label) async {
 
 Future<void> openDrillDetails(WidgetTester tester) async {
   await revealWorkoutDrill(tester);
-  await tester.ensureVisible(find.text('Drill details'));
+  await tester.ensureVisible(find.byTooltip('Drill details'));
   await tester.pumpAndSettle();
-  await tester.tap(find.text('Drill details'));
+  await tester.tap(find.byTooltip('Drill details'));
   await tester.pumpAndSettle();
 }
 
@@ -76,7 +76,8 @@ void main() {
     }
     container.read(appRouterProvider).pop();
     await tester.pumpAndSettle();
-    expect(find.byType(DraggableScrollableSheet), findsNothing);
+    expect(find.byKey(const ValueKey('workout-status-header')).hitTestable(), findsOneWidget);
+    expect(find.textContaining('Your session').hitTestable(), findsNothing);
     expect(find.text('View workout'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
@@ -165,6 +166,132 @@ void main() {
     expect(find.text('Basement'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('collapsed workout follows every Player tab and hides behind sub-screens', (tester) async {
+    phoneSize(tester);
+    final container = await mountApp(tester);
+    final router = container.read(appRouterProvider);
+    container.read(trainingSessionProvider.notifier).start(sampleDrills);
+    router.go('/train/session');
+    await tester.pumpAndSettle();
+    await tapWorkoutAction(tester, 'Log set');
+    final logs = container.read(trainingSessionProvider).logs;
+    await tester.ensureVisible(find.text('10'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('10'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField), '7');
+    await tester.tap(find.text('Apply'));
+    await tester.pumpAndSettle();
+    final handle = find.byKey(const ValueKey('workout-sheet-handle'));
+    final header = find.byKey(const ValueKey('workout-status-header'));
+    await tester.drag(handle, const Offset(0, 900));
+    await tester.pumpAndSettle();
+
+    for (final tab in ['Progress', 'Team', 'Me', 'Train']) {
+      await tester.tap(find.text(tab).last);
+      await tester.pumpAndSettle();
+      expect(header.hitTestable(), findsOneWidget, reason: tab);
+      final navigation = find.byType(NavigationBar);
+      expect(tester.getBottomLeft(header).dy, closeTo(tester.getTopLeft(navigation).dy, .01), reason: tab);
+      expect(container.read(trainingSessionProvider).logs, logs);
+    }
+
+    router.push('/setup');
+    await tester.pumpAndSettle();
+    expect(header.hitTestable(), findsNothing);
+    router.pop();
+    await tester.pumpAndSettle();
+    expect(header.hitTestable(), findsOneWidget);
+
+    await tester.tap(find.text('Me').last);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Account'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Account'));
+    await tester.pumpAndSettle();
+    expect(header.hitTestable(), findsNothing);
+    Navigator.of(tester.element(find.text('Connect an account'))).pop();
+    await tester.pumpAndSettle();
+    expect(header.hitTestable(), findsOneWidget);
+    await tester.drag(handle, const Offset(0, -900));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Your session').hitTestable(), findsOneWidget);
+    await revealWorkoutDrill(tester);
+    expect(find.text('Set 2 of 2'), findsOneWidget);
+    expect(find.text('7'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('finishing a workout removes the shared panel without losing summary data', (tester) async {
+    phoneSize(tester);
+    final container = await mountApp(tester);
+    final notifier = container.read(trainingSessionProvider.notifier);
+    notifier.start([sampleDrills.first.copyWith(defaultPrescription: sampleDrills.first.defaultPrescription.copyWith(sets: 1))]);
+    final router = container.read(appRouterProvider);
+    router.go('/train/session');
+    await tester.pumpAndSettle();
+    await tapWorkoutAction(tester, 'Log set');
+    final logs = container.read(trainingSessionProvider).logs;
+    await tapWorkoutAction(tester, 'Finish workout');
+    expect(find.text('You showed up.'), findsWidgets);
+    expect(find.byType(DraggableScrollableSheet), findsNothing);
+    expect(container.read(trainingSessionProvider).logs, logs);
+    router.go('/me');
+    await tester.pumpAndSettle();
+    expect(find.byType(DraggableScrollableSheet), findsNothing);
+    notifier.start(sampleDrills);
+    router.go('/train/session');
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('workout-status-header')).hitTestable(), findsOneWidget);
+    expect(find.textContaining('Your session').hitTestable(), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  for (final scale in [1.0, 2.0]) {
+    testWidgets('workout carousel has one row of 9:16 cards and follows selection at ${scale}x', (tester) async {
+      phoneSize(tester, scale: scale);
+      final container = await mountApp(tester);
+      container.read(trainingSessionProvider.notifier).start(sampleDrills);
+      container.read(appRouterProvider).go('/train/session');
+      await tester.pumpAndSettle();
+      final carousel = find.byKey(const ValueKey('workout-drill-previews'));
+      final visiblePreviews = find
+          .byWidgetPredicate((widget) => widget is Semantics && widget.key is ValueKey<String> && (widget.key! as ValueKey<String>).value.startsWith('workout-preview-'))
+          .hitTestable();
+      expect(visiblePreviews.evaluate().length, inInclusiveRange(4, 6));
+      final top = tester.getTopLeft(visiblePreviews.first).dy;
+      for (final element in visiblePreviews.evaluate()) {
+        final card = find.byWidget(element.widget);
+        final size = tester.getSize(card);
+        expect(size.width / size.height, closeTo(9 / 16, .001));
+        expect(tester.getTopLeft(card).dy, closeTo(top, .001));
+      }
+      final scrollable = find.descendant(of: carousel, matching: find.byType(Scrollable));
+      final position = tester.state<ScrollableState>(scrollable).position;
+      expect(position.pixels, 0);
+      await revealWorkoutDrill(tester);
+      await tester.ensureVisible(find.byType(PageView));
+      await tester.pumpAndSettle();
+      for (var index = 1; index < sampleDrills.length; index++) {
+        await tester.drag(find.byType(PageView), const Offset(-300, 0));
+        await tester.pumpAndSettle();
+        expect(container.read(trainingSessionProvider).drillIndex, index);
+      }
+      returnWorkoutSheetToTop(tester);
+      await tester.pumpAndSettle();
+      expect(position.pixels, greaterThan(0));
+      final lastPreview = find.byKey(ValueKey('workout-preview-${sampleDrills.last.id}'));
+      expect(lastPreview.hitTestable(), findsOneWidget);
+      expect(tester.widget<Semantics>(lastPreview).properties.selected, isTrue);
+      final previous = find.byKey(ValueKey('workout-preview-${sampleDrills[4].id}'));
+      await tester.tap(previous);
+      await tester.pumpAndSettle();
+      expect(container.read(trainingSessionProvider).drillIndex, 4);
+      expect(tester.widget<Semantics>(previous).properties.selected, isTrue);
+      expect(tester.takeException(), isNull);
+    });
+  }
 
   testWidgets('all six input types log without forced rest and reach summary', (tester) async {
     phoneSize(tester);
@@ -505,7 +632,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.byType(DraggableScrollableSheet), findsOneWidget);
-    expect(find.text('WORKOUT IN PROGRESS'), findsOneWidget);
+    expect(find.textContaining('Your session'), findsOneWidget);
     final statusHeader = find.byKey(const ValueKey('workout-status-header'));
     final statusContainer = tester.widget<Container>(statusHeader);
     expect((statusContainer.decoration as BoxDecoration).color, Theme.of(tester.element(statusHeader)).colorScheme.primary);
@@ -542,10 +669,8 @@ void main() {
     expect(find.text('Coach’s cues'), findsNothing);
     expect(find.text('Quiet hands, quick feet'), findsWidgets);
     final handle = find.byKey(const ValueKey('workout-sheet-handle'));
-    final previewTopBeforeScroll = tester.getTopLeft(find.byKey(const ValueKey('workout-drill-previews'))).dy;
-    await tester.drag(find.byKey(const ValueKey('workout-drill-previews')), const Offset(0, -140));
-    await tester.pumpAndSettle();
-    expect(tester.getTopLeft(find.byKey(const ValueKey('workout-drill-previews'))).dy, lessThan(previewTopBeforeScroll));
+    expect(find.text('Log set').hitTestable(), findsOneWidget);
+    expect(tester.getBottomLeft(find.text('Log set')).dy, lessThanOrEqualTo(700));
     final sessionScroll = find.descendant(of: find.byKey(const ValueKey('workout-session-scroll')), matching: find.byType(Scrollable)).first;
     tester.state<ScrollableState>(sessionScroll).position.jumpTo(tester.state<ScrollableState>(sessionScroll).position.maxScrollExtent);
     await tester.pumpAndSettle();
@@ -555,7 +680,7 @@ void main() {
     final expandedHeaderTop = tester.getTopLeft(find.byKey(const ValueKey('workout-status-header'))).dy;
     await tester.drag(handle, const Offset(40, 900));
     await tester.pumpAndSettle();
-    expect(find.text('Your session').hitTestable(), findsNothing);
+    expect(find.textContaining('Your session').hitTestable(), findsNothing);
     expect(find.text('ACTIVE'), findsOneWidget);
     expect(tester.getTopLeft(find.byKey(const ValueKey('workout-status-header'))).dy, greaterThan(expandedHeaderTop));
     final navigationMotion = tester.widget<Transform>(find.byKey(const ValueKey('player-navigation-motion')));
@@ -623,7 +748,7 @@ void main() {
     final container = await mountApp(tester);
     container.read(appRouterProvider).go('/session');
     await tester.pumpAndSettle();
-    final settingsButton = find.text('Drill settings · Rest off');
+    final settingsButton = find.byTooltip('Drill settings · Rest off');
     await revealWorkoutDrill(tester);
     await tester.ensureVisible(settingsButton);
     await tester.pumpAndSettle();

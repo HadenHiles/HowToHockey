@@ -14,14 +14,7 @@ enum BallType { golfBall, trainingBall, greenBiscuit }
 
 enum PasserType { rebounder, partner }
 
-enum SkillPillar {
-  shotAccuracy,
-  hands,
-  shotPower,
-  passing,
-  speedStrength,
-  endurance,
-}
+enum SkillPillar { shotAccuracy, hands, shotPower, passing, speedStrength, endurance }
 
 enum AccessTier { free, pro }
 
@@ -75,9 +68,7 @@ class SkillWeightsConverter extends JsonConverter<Map<SkillPillar, double>, Map<
   }
 
   @override
-  Map<String, dynamic> toJson(Map<SkillPillar, double> object) => {
-    for (final entry in object.entries) entry.key.name: entry.value,
-  };
+  Map<String, dynamic> toJson(Map<SkillPillar, double> object) => {for (final entry in object.entries) entry.key.name: entry.value};
 }
 
 @freezed

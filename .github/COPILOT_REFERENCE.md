@@ -47,7 +47,16 @@ Accuracy and Power are shot-focused. Keep the locked How To Hockey logo, brand
 red/cream, Inter type, accessible contrast, and light/dark appearance setting
 intact when extending the screens.
 
-The active workout is a draggable bottom sheet over Train. Keep the sheet
+The active workout is a single draggable panel owned by the shared Player
+shell, not by the Train branch. After a workout starts, its collapsed header
+remains visible above navigation on Train, Progress, Team, and Me, with logs,
+draft inputs, and drill selection retained across tab changes. Reserve the
+header's height below the main screen content so it cannot cover the last
+controls. Pushed detail routes cover the shell; Player modal detail/settings
+sheets use `useRootNavigator: true` so the panel cannot cover those sheets.
+Finishing the workout dismisses the panel but preserves data for the summary;
+starting another workout creates a fresh panel.
+Keep the sheet
 bounded above the app navigation; its red status header is a dedicated drag
 surface so the sheet can always collapse even while its body is scrolled.
 Move the app navigation in sync with the sheet extent: it slides down while
@@ -55,15 +64,24 @@ the sheet expands and returns as the sheet collapses. Keep the shared sheet
 scroll controller on the vertical content—do not add a competing drag
 recognizer inside the scroll body. Only the red status header (handle and
 elapsed/active/set metrics) stays pinned; the workout title, the portrait
-drill preview grid, optional rest controls, the active drill or **Workout
+drill preview carousel, optional rest controls, the active drill or **Workout
 overview**, and the Log action all scroll together in the sheet body, with the
-Log action as the last item in that scroll. Size the sheet from a
-`LayoutBuilder` inside the shell body—`minChildSize` is exactly the status
-header height, so collapsing parks the red header directly on top of the app
-navigation, and `maxChildSize` stops below the status bar.
-The preview grid shows three portrait cards per row so a six-drill workout
-fits on one screen. Swiping the logging pages changes the active drill and
-highlights its preview; tapping a preview card switches to that drill.
+Log action as the last item in that scroll. The shell uses `extendBody` so the
+panel's viewport is the full screen (including the navigation slot):
+`minChildSize` is the status header plus navigation height, so collapsing
+parks the red header directly on top of the opaque navigation bar, and
+`maxChildSize` stops below the status bar, covering the vacated navigation
+slot. Do not overflow the panel past its parent with negative offsets—those
+areas are not hit-testable. The drill body height is computed so the title
+row, previews, drill controls, and Log action fit one screen without scrolling;
+keep that header/body compact (no redundant captions).
+The preview carousel is one horizontal row of exact 9:16 cards within the
+vertical content, with five visible at normal text size and four at large
+text size. Never wrap it into stacked rows. Swiping the logging pages changes
+the active drill, highlights its preview, and scrolls the carousel to keep
+that preview visible. Tapping a preview card switches to that drill.
+Carousel motion respects Reduce Motion. Timed drill inputs pause when the
+panel collapses, retaining the remaining time for explicit resume.
 Instruction/media stays on the separate `/session-drills/:id` screen, reached
 from the **Drill details** action inside the active drill, backed by the
 current session's drills (including custom routine templates), without changing
@@ -77,13 +95,17 @@ directly, not synthesized axis-constrained drag details; diagonal and canceled
 drags must settle safely.
 The Train app bar has a centered How To Hockey wordmark. The bottom navigation
 uses animated selection and tap feedback; respect **Reduce Motion**.
-The active workout route is nested under `/train` at `/train/session`;
+The workout-opening route is nested under `/train` at `/train/session`;
 `/session` redirects there for compatibility. All session-start actions use
 `context.go('/train/session')`, not `push`: pushing back into the Player shell
 from a root-level preview already pushed above it can duplicate the shell's
 page key. Starting a workout replaces the preview/setup stack with Train and
-its session, so Back returns to Train. The session draws its Train background
-within its page because the default session route is opaque.
+its transparent session-opening route. That route does not draw another
+Train page or own the panel. Back returns to Train and collapses the shared
+panel rather than removing the active workout. Returning to Train through
+tab navigation also leaves the panel collapsed. Observe the router delegate's
+canonical configuration for opening/collapsing, including `/session` and
+`/rest` redirects; cached shell-builder state can lag behind a route pop.
 
 **Routine management** is available from Train through **Manage routines**.
 The local routine library supports creating/editing routines from preset styles,

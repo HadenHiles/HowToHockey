@@ -116,7 +116,16 @@ class FocusPage extends ConsumerWidget {
                     Text('${focus[pillar]}', style: theme.textTheme.headlineSmall),
                   ],
                 ),
-                Slider(value: focus[pillar]!.toDouble(), min: 0, max: 100, divisions: 100, label: '${focus[pillar]}', activeColor: pillar.color(pillars), semanticFormatterCallback: (value) => '${pillar.label}, ${value.round()} of 100 focus points', onChanged: (value) => ref.read(trainingFocusProvider.notifier).select(pillar, value.round())),
+                Slider(
+                  value: focus[pillar]!.toDouble(),
+                  min: 0,
+                  max: 100,
+                  divisions: 100,
+                  label: '${focus[pillar]}',
+                  activeColor: pillar.color(pillars),
+                  semanticFormatterCallback: (value) => '${pillar.label}, ${value.round()} of 100 focus points',
+                  onChanged: (value) => ref.read(trainingFocusProvider.notifier).select(pillar, value.round()),
+                ),
               ],
             ),
           ),
@@ -149,7 +158,11 @@ class RoutinePage extends ConsumerWidget {
           },
         ),
         const SizedBox(height: AppSpacing.md),
-        OutlinedButton.icon(onPressed: () => showFeatureMessage(context, 'Saved workouts are not connected yet. No workout was saved.'), icon: const Icon(Icons.bookmark_border), label: const Text('Save workout')),
+        OutlinedButton.icon(
+          onPressed: () => showFeatureMessage(context, 'Saved workouts are not connected yet. No workout was saved.'),
+          icon: const Icon(Icons.bookmark_border),
+          label: const Text('Save workout'),
+        ),
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Workout plan'),
         const SizedBox(height: AppSpacing.md),
@@ -178,7 +191,9 @@ class RoutineLibraryPage extends ConsumerWidget {
               children: [
                 Text(routine.name, style: theme.textTheme.titleLarge),
                 const SizedBox(height: AppSpacing.xs),
-                Text('${routine.drills.length} drills · ${routine.drills.fold<int>(0, (seconds, drill) => seconds + drill.estimatedSecondsPerSet * drill.defaultPrescription.sets) ~/ 60} min estimated'),
+                Text(
+                  '${routine.drills.length} drills · ${routine.drills.fold<int>(0, (seconds, drill) => seconds + drill.estimatedSecondsPerSet * drill.defaultPrescription.sets) ~/ 60} min estimated',
+                ),
                 const SizedBox(height: AppSpacing.md),
                 Wrap(
                   spacing: AppSpacing.sm,
@@ -426,7 +441,8 @@ class _LibraryPageState extends State<LibraryPage> {
         ],
       ),
       const SizedBox(height: AppSpacing.xl),
-      if (sampleDrills.where((drill) => _pillar == null || drill.pillar == _pillar).isEmpty) const TrainingCard(child: Text('No sample drills for this focus yet.\nTry All drills to explore the current fixtures.')),
+      if (sampleDrills.where((drill) => _pillar == null || drill.pillar == _pillar).isEmpty)
+        const TrainingCard(child: Text('No sample drills for this focus yet.\nTry All drills to explore the current fixtures.')),
       for (final drill in sampleDrills.where((drill) => _pillar == null || drill.pillar == _pillar)) ...[DrillListCard(drillId: drill.id), const SizedBox(height: AppSpacing.sm)],
     ],
   );
@@ -445,10 +461,7 @@ class DrillDetailPage extends ConsumerWidget {
     if (matches.isEmpty) {
       return AppPage(
         title: 'Drill unavailable',
-        action: OutlinedButton(
-          onPressed: () => fromSession ? context.pop() : context.go('/library'),
-          child: Text(fromSession ? 'Back to workout' : 'Go to drill library'),
-        ),
+        action: OutlinedButton(onPressed: () => fromSession ? context.pop() : context.go('/library'), child: Text(fromSession ? 'Back to workout' : 'Go to drill library')),
         children: [Text(fromSession ? 'This drill is no longer in the workout.' : 'This drill is unavailable. Return to the library to choose a drill.')],
       );
     }
@@ -460,12 +473,12 @@ class DrillDetailPage extends ConsumerWidget {
       action: fromSession
           ? FilledButton(onPressed: () => context.pop(), child: const Text('Back to workout'))
           : FilledButton(
-        onPressed: () {
-          ref.read(trainingSessionProvider.notifier).start([drill]);
-          context.go('/train/session');
-        },
-        child: const Text('Try this drill'),
-      ),
+              onPressed: () {
+                ref.read(trainingSessionProvider.notifier).start([drill]);
+                context.go('/train/session');
+              },
+              child: const Text('Try this drill'),
+            ),
       children: [
         DrillMediaPlaceholder(title: drill.title),
         const SizedBox(height: AppSpacing.xl),

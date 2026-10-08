@@ -25,9 +25,7 @@ class AppearanceSettingsPage extends ConsumerWidget {
         statusBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
         statusBarBrightness: isDark ? Brightness.dark : Brightness.light,
         systemNavigationBarColor: colors.background,
-        systemNavigationBarIconBrightness: isDark
-            ? Brightness.light
-            : Brightness.dark,
+        systemNavigationBarIconBrightness: isDark ? Brightness.light : Brightness.dark,
         systemNavigationBarDividerColor: colors.border,
       ),
       child: Scaffold(
@@ -43,12 +41,7 @@ class AppearanceSettingsPage extends ConsumerWidget {
                   children: [
                     Text('Train with purpose.', style: textTheme.headlineLarge),
                     const SizedBox(height: AppSpacing.sm),
-                    Text(
-                      'Build your game with focused, measurable training.',
-                      style: textTheme.bodyLarge?.copyWith(
-                        color: colors.textSecondary,
-                      ),
-                    ),
+                    Text('Build your game with focused, measurable training.', style: textTheme.bodyLarge?.copyWith(color: colors.textSecondary)),
                     const SizedBox(height: AppSpacing.xxl),
                     Card(
                       child: Padding(
@@ -58,30 +51,14 @@ class AppearanceSettingsPage extends ConsumerWidget {
                           children: [
                             Text('Appearance', style: textTheme.titleLarge),
                             const SizedBox(height: AppSpacing.xs),
-                            Text(
-                              'Choose how How To Hockey looks on this device.',
-                              style: textTheme.bodyMedium?.copyWith(
-                                color: colors.textSecondary,
-                              ),
-                            ),
+                            Text('Choose how How To Hockey looks on this device.', style: textTheme.bodyMedium?.copyWith(color: colors.textSecondary)),
                             const SizedBox(height: AppSpacing.md),
                             SegmentedButton<AppAppearance>(
-                              segments: AppAppearance.values
-                                  .map(
-                                    (appearance) => ButtonSegment(
-                                      value: appearance,
-                                      label: Text(appearance.label),
-                                    ),
-                                  )
-                                  .toList(growable: false),
+                              segments: AppAppearance.values.map((appearance) => ButtonSegment(value: appearance, label: Text(appearance.label))).toList(growable: false),
                               selected: {appearance},
                               showSelectedIcon: false,
                               onSelectionChanged: (selection) {
-                                unawaited(
-                                  ref
-                                      .read(appearanceProvider.notifier)
-                                      .setAppearance(selection.single),
-                                );
+                                unawaited(ref.read(appearanceProvider.notifier).setAppearance(selection.single));
                               },
                             ),
                           ],
@@ -91,12 +68,7 @@ class AppearanceSettingsPage extends ConsumerWidget {
                     const SizedBox(height: AppSpacing.xxl),
                     Text('Train. Track. Improve.', style: textTheme.titleMedium),
                     const SizedBox(height: AppSpacing.xs),
-                    Text(
-                      'Your next shift starts here.',
-                      style: textTheme.bodyMedium?.copyWith(
-                        color: colors.textSecondary,
-                      ),
-                    ),
+                    Text('Your next shift starts here.', style: textTheme.bodyMedium?.copyWith(color: colors.textSecondary)),
                   ],
                 ),
               ),

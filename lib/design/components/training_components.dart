@@ -14,7 +14,12 @@ class BrandWordmark extends StatelessWidget {
     label: 'How To Hockey',
     image: true,
     child: ExcludeSemantics(
-      child: Image.asset('assets/brand/HTH_TEXT_ONLY.png', width: 180, color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).extension<AppColors>()!.brandCream : Theme.of(context).extension<AppColors>()!.textPrimary, colorBlendMode: BlendMode.srcIn),
+      child: Image.asset(
+        'assets/brand/HTH_TEXT_ONLY.png',
+        width: 180,
+        color: Theme.of(context).brightness == Brightness.dark ? Theme.of(context).extension<AppColors>()!.brandCream : Theme.of(context).extension<AppColors>()!.textPrimary,
+        colorBlendMode: BlendMode.srcIn,
+      ),
     ),
   );
 }
@@ -86,7 +91,9 @@ class TrainingHeroCard extends StatelessWidget {
                 Wrap(
                   spacing: AppSpacing.xl,
                   runSpacing: AppSpacing.md,
-                  children: [for (var index = 0; index < metrics.length; index++) _HeroMetric(value: metrics[index].$1, label: metrics[index].$2, color: index.isEven ? colors.brandCream : pillars.hands)],
+                  children: [
+                    for (var index = 0; index < metrics.length; index++) _HeroMetric(value: metrics[index].$1, label: metrics[index].$2, color: index.isEven ? colors.brandCream : pillars.hands),
+                  ],
                 ),
               ],
               const SizedBox(height: AppSpacing.xl),
@@ -140,7 +147,10 @@ class _ArenaPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    canvas.drawRect(Offset.zero & size, Paint()..shader = LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [colors.elevatedSurface, colors.background]).createShader(Offset.zero & size));
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()..shader = LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: [colors.elevatedSurface, colors.background]).createShader(Offset.zero & size),
+    );
 
     final line = Paint()
       ..color = colors.brandCream.withValues(alpha: .13)
@@ -206,7 +216,13 @@ class WeeklyTrainingChart extends StatelessWidget {
       child: SizedBox(
         height: 98,
         child: CustomPaint(
-          painter: _WeeklyTrainingPainter(values: _values, days: _days, active: Theme.of(context).extension<PillarColors>()!.hands, inactive: AppColors.dark.textSecondary, labelStyle: Theme.of(context).textTheme.labelSmall!),
+          painter: _WeeklyTrainingPainter(
+            values: _values,
+            days: _days,
+            active: Theme.of(context).extension<PillarColors>()!.hands,
+            inactive: AppColors.dark.textSecondary,
+            labelStyle: Theme.of(context).textTheme.labelSmall!,
+          ),
         ),
       ),
     ),
@@ -245,7 +261,8 @@ class _WeeklyTrainingPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_WeeklyTrainingPainter oldDelegate) => values != oldDelegate.values || days != oldDelegate.days || active != oldDelegate.active || inactive != oldDelegate.inactive || labelStyle != oldDelegate.labelStyle;
+  bool shouldRepaint(_WeeklyTrainingPainter oldDelegate) =>
+      values != oldDelegate.values || days != oldDelegate.days || active != oldDelegate.active || inactive != oldDelegate.inactive || labelStyle != oldDelegate.labelStyle;
 }
 
 class SectionHeading extends StatelessWidget {

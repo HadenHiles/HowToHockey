@@ -109,19 +109,9 @@ abstract final class HockeyTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.dark.background,
         indicatorColor: colors.brandPrimary,
-        iconTheme: WidgetStateProperty.resolveWith(
-          (states) => IconThemeData(
-            color: states.contains(WidgetState.selected)
-                ? AppColors.dark.brandCream
-                : AppColors.dark.textSecondary,
-          ),
-        ),
+        iconTheme: WidgetStateProperty.resolveWith((states) => IconThemeData(color: states.contains(WidgetState.selected) ? AppColors.dark.brandCream : AppColors.dark.textSecondary)),
         labelTextStyle: WidgetStateProperty.resolveWith(
-          (states) => textTheme.labelMedium?.copyWith(
-            color: states.contains(WidgetState.selected)
-                ? AppColors.dark.brandCream
-                : AppColors.dark.textSecondary,
-          ),
+          (states) => textTheme.labelMedium?.copyWith(color: states.contains(WidgetState.selected) ? AppColors.dark.brandCream : AppColors.dark.textSecondary),
         ),
       ),
       segmentedButtonTheme: SegmentedButtonThemeData(style: ButtonStyle(minimumSize: WidgetStateProperty.all(const Size(0, 48)))),

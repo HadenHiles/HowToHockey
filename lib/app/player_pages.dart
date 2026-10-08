@@ -25,7 +25,14 @@ class TrainPage extends ConsumerWidget {
       appBarTitle: const BrandWordmark(),
       centerAppBarTitle: true,
       children: [
-        TrainingHeroCard(eyebrow: 'Today on the ice', title: 'Build your\nfoundation', detail: 'A little better. Every day.', metrics: const [('20', 'minutes'), ('06', 'drills'), ('12', 'sets')], actionLabel: 'View workout', onTap: () => context.push('/routine')),
+        TrainingHeroCard(
+          eyebrow: 'Today on the ice',
+          title: 'Build your\nfoundation',
+          detail: 'A little better. Every day.',
+          metrics: const [('20', 'minutes'), ('06', 'drills'), ('12', 'sets')],
+          actionLabel: 'View workout',
+          onTap: () => context.push('/routine'),
+        ),
         const SizedBox(height: AppSpacing.xl),
         SectionHeading(title: 'Your setup', action: 'Edit', onAction: () => context.push('/setup')),
         const SizedBox(height: AppSpacing.sm),
@@ -211,6 +218,7 @@ class ProgressPage extends StatelessWidget {
         TrainingCard(
           onTap: () => showModalBottomSheet<void>(
             context: context,
+            useRootNavigator: true,
             isScrollControlled: true,
             showDragHandle: true,
             builder: (context) => SafeArea(
@@ -259,6 +267,7 @@ class ProgressPage extends StatelessWidget {
         TrainingCard(
           onTap: () => showModalBottomSheet<void>(
             context: context,
+            useRootNavigator: true,
             isScrollControlled: true,
             showDragHandle: true,
             builder: (context) {
@@ -399,13 +408,36 @@ class _TeamPageState extends State<TeamPage> {
   List<Widget> _memberContent(BuildContext context) {
     final theme = Theme.of(context);
     return [
-      TrainingHeroCard(eyebrow: 'Coach Jeremy  ·  Due Friday', title: 'Team\nhomework', detail: 'Build your foundation', metrics: const [('20', 'minutes'), ('06', 'drills')], actionLabel: 'View assignment', onTap: () => context.push('/routine')),
+      TrainingHeroCard(
+        eyebrow: 'Coach Jeremy  ·  Due Friday',
+        title: 'Team\nhomework',
+        detail: 'Build your foundation',
+        metrics: const [('20', 'minutes'), ('06', 'drills')],
+        actionLabel: 'View assignment',
+        onTap: () => context.push('/routine'),
+      ),
       const SizedBox(height: AppSpacing.xl),
       const SectionHeading(title: 'Locker room'),
       const SizedBox(height: AppSpacing.md),
-      _TeamPostCard(initials: 'AR', name: 'Alex R.', update: 'Finished Build your foundation', detail: '24 active min  ·  80 shots  ·  5 day streak', tapCount: 8, tapped: _sampleTaps.contains('alex'), onTap: () => _toggleSampleTap(context, 'alex')),
+      _TeamPostCard(
+        initials: 'AR',
+        name: 'Alex R.',
+        update: 'Finished Build your foundation',
+        detail: '24 active min  ·  80 shots  ·  5 day streak',
+        tapCount: 8,
+        tapped: _sampleTaps.contains('alex'),
+        onTap: () => _toggleSampleTap(context, 'alex'),
+      ),
       const SizedBox(height: AppSpacing.sm),
-      _TeamPostCard(initials: 'MS', name: 'Morgan S.', update: 'Set a new accuracy best', detail: '84% accuracy  ·  Pick your corner', tapCount: 12, tapped: _sampleTaps.contains('morgan'), onTap: () => _toggleSampleTap(context, 'morgan')),
+      _TeamPostCard(
+        initials: 'MS',
+        name: 'Morgan S.',
+        update: 'Set a new accuracy best',
+        detail: '84% accuracy  ·  Pick your corner',
+        tapCount: 12,
+        tapped: _sampleTaps.contains('morgan'),
+        onTap: () => _toggleSampleTap(context, 'morgan'),
+      ),
       const SizedBox(height: AppSpacing.xl),
       const SectionHeading(title: 'Weekly leaderboard'),
       const SizedBox(height: AppSpacing.md),
@@ -445,7 +477,11 @@ class _TeamPageState extends State<TeamPage> {
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,
               children: [
-                OutlinedButton.icon(onPressed: () => showFeatureMessage(context, 'Invite sharing is a sample action and is not connected yet.'), icon: const Icon(Icons.ios_share_outlined), label: const Text('Share invite')),
+                OutlinedButton.icon(
+                  onPressed: () => showFeatureMessage(context, 'Invite sharing is a sample action and is not connected yet.'),
+                  icon: const Icon(Icons.ios_share_outlined),
+                  label: const Text('Share invite'),
+                ),
                 TextButton.icon(onPressed: () => _showJoinInvite(context), icon: const Icon(Icons.key_outlined), label: const Text('Join with code')),
               ],
             ),
@@ -531,6 +567,7 @@ class _TeamPageState extends State<TeamPage> {
 
   Future<void> _showTeamDiscovery(BuildContext context) => showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     showDragHandle: true,
     isScrollControlled: true,
     builder: (sheetContext) => SafeArea(
@@ -554,6 +591,7 @@ class _TeamPageState extends State<TeamPage> {
 
   Future<void> _showJoinInvite(BuildContext context) => showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     showDragHandle: true,
     builder: (sheetContext) => SafeArea(
       child: Padding(
@@ -566,7 +604,11 @@ class _TeamPageState extends State<TeamPage> {
             const SizedBox(height: AppSpacing.xs),
             const Text('A constrained team-code entry will be connected with account and parent approval flows.'),
             const SizedBox(height: AppSpacing.xl),
-            OutlinedButton.icon(onPressed: () => _showUnavailableAction(sheetContext, 'Team-code lookup is not connected yet.'), icon: const Icon(Icons.key_outlined), label: const Text('Preview code lookup')),
+            OutlinedButton.icon(
+              onPressed: () => _showUnavailableAction(sheetContext, 'Team-code lookup is not connected yet.'),
+              icon: const Icon(Icons.key_outlined),
+              label: const Text('Preview code lookup'),
+            ),
           ],
         ),
       ),
@@ -639,7 +681,10 @@ class _LeaderboardRow extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.xs),
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
-      decoration: BoxDecoration(color: isCurrentPlayer ? theme.colorScheme.primary.withValues(alpha: .18) : theme.colorScheme.surface.withValues(alpha: .08), borderRadius: BorderRadius.circular(AppRadii.control)),
+      decoration: BoxDecoration(
+        color: isCurrentPlayer ? theme.colorScheme.primary.withValues(alpha: .18) : theme.colorScheme.surface.withValues(alpha: .08),
+        borderRadius: BorderRadius.circular(AppRadii.control),
+      ),
       child: Row(
         children: [
           SizedBox(width: 28, child: Text('$rank', style: theme.textTheme.titleMedium)),
@@ -744,7 +789,10 @@ class _MePageState extends ConsumerState<MePage> {
         Wrap(
           spacing: AppSpacing.xs,
           runSpacing: AppSpacing.xs,
-          children: [for (final option in AppAppearance.values) ChoiceChip(label: Text(option.label), selected: option == appearance, onSelected: (_) => unawaited(ref.read(appearanceProvider.notifier).setAppearance(option)))],
+          children: [
+            for (final option in AppAppearance.values)
+              ChoiceChip(label: Text(option.label), selected: option == appearance, onSelected: (_) => unawaited(ref.read(appearanceProvider.notifier).setAppearance(option))),
+          ],
         ),
         const SizedBox(height: AppSpacing.xl),
         TrainingCard(
@@ -781,6 +829,7 @@ class _MePageState extends ConsumerState<MePage> {
 
   Future<void> _showProfileSwitcher() => showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     showDragHandle: true,
     isScrollControlled: true,
     builder: (sheetContext) => SafeArea(
@@ -813,6 +862,7 @@ class _MePageState extends ConsumerState<MePage> {
 
   Future<void> _showRoleSwitcher() => showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     showDragHandle: true,
     isScrollControlled: true,
     builder: (sheetContext) => SafeArea(
@@ -827,8 +877,18 @@ class _MePageState extends ConsumerState<MePage> {
             const Text('Separate Parent and Coach shells are the next UX slices.'),
             const SizedBox(height: AppSpacing.md),
             const ListTile(leading: Icon(Icons.sports_hockey), title: Text('Player'), subtitle: Text('Current role'), trailing: Icon(Icons.check)),
-            ListTile(leading: const Icon(Icons.family_restroom), title: const Text('Parent'), subtitle: const Text('Preview unavailable'), onTap: () => _closeWithMessage(sheetContext, 'The Parent shell is not connected yet.')),
-            ListTile(leading: const Icon(Icons.groups_outlined), title: const Text('Coach'), subtitle: const Text('Preview unavailable'), onTap: () => _closeWithMessage(sheetContext, 'The Coach shell is not connected yet.')),
+            ListTile(
+              leading: const Icon(Icons.family_restroom),
+              title: const Text('Parent'),
+              subtitle: const Text('Preview unavailable'),
+              onTap: () => _closeWithMessage(sheetContext, 'The Parent shell is not connected yet.'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.groups_outlined),
+              title: const Text('Coach'),
+              subtitle: const Text('Preview unavailable'),
+              onTap: () => _closeWithMessage(sheetContext, 'The Coach shell is not connected yet.'),
+            ),
           ],
         ),
       ),
@@ -837,6 +897,7 @@ class _MePageState extends ConsumerState<MePage> {
 
   Future<void> _showAccount() => showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     showDragHandle: true,
     isScrollControlled: true,
     builder: (sheetContext) => SafeArea(
@@ -852,7 +913,11 @@ class _MePageState extends ConsumerState<MePage> {
             const SizedBox(height: AppSpacing.xl),
             FilledButton.icon(onPressed: () => _closeWithMessage(sheetContext, 'Account sign-in is not connected yet.'), icon: const Icon(Icons.login), label: const Text('Connect an account')),
             const SizedBox(height: AppSpacing.sm),
-            OutlinedButton.icon(onPressed: () => _closeWithMessage(sheetContext, 'Account deletion is not connected yet.'), icon: const Icon(Icons.delete_outline), label: const Text('Delete account')),
+            OutlinedButton.icon(
+              onPressed: () => _closeWithMessage(sheetContext, 'Account deletion is not connected yet.'),
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Delete account'),
+            ),
           ],
         ),
       ),
@@ -861,6 +926,7 @@ class _MePageState extends ConsumerState<MePage> {
 
   Future<void> _showSubscription() => showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     showDragHandle: true,
     isScrollControlled: true,
     builder: (sheetContext) => SafeArea(

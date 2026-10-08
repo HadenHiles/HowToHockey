@@ -109,11 +109,9 @@ class AppColors extends ThemeExtension<AppColors> {
 
     return AppColors(
       brandPrimary: Color.lerp(brandPrimary, other.brandPrimary, t)!,
-      brandPrimaryOnDark:
-          Color.lerp(brandPrimaryOnDark, other.brandPrimaryOnDark, t)!,
+      brandPrimaryOnDark: Color.lerp(brandPrimaryOnDark, other.brandPrimaryOnDark, t)!,
       primaryContainer: Color.lerp(primaryContainer, other.primaryContainer, t)!,
-      onPrimaryContainer:
-          Color.lerp(onPrimaryContainer, other.onPrimaryContainer, t)!,
+      onPrimaryContainer: Color.lerp(onPrimaryContainer, other.onPrimaryContainer, t)!,
       brandCream: Color.lerp(brandCream, other.brandCream, t)!,
       background: Color.lerp(background, other.background, t)!,
       surface: Color.lerp(surface, other.surface, t)!,
@@ -130,14 +128,7 @@ class AppColors extends ThemeExtension<AppColors> {
 
 @immutable
 class PillarColors extends ThemeExtension<PillarColors> {
-  const PillarColors({
-    required this.shotAccuracy,
-    required this.hands,
-    required this.shotPower,
-    required this.passing,
-    required this.speedStrength,
-    required this.endurance,
-  });
+  const PillarColors({required this.shotAccuracy, required this.hands, required this.shotPower, required this.passing, required this.speedStrength, required this.endurance});
 
   final Color shotAccuracy;
   final Color hands;
@@ -165,14 +156,7 @@ class PillarColors extends ThemeExtension<PillarColors> {
   );
 
   @override
-  PillarColors copyWith({
-    Color? shotAccuracy,
-    Color? hands,
-    Color? shotPower,
-    Color? passing,
-    Color? speedStrength,
-    Color? endurance,
-  }) {
+  PillarColors copyWith({Color? shotAccuracy, Color? hands, Color? shotPower, Color? passing, Color? speedStrength, Color? endurance}) {
     return PillarColors(
       shotAccuracy: shotAccuracy ?? this.shotAccuracy,
       hands: hands ?? this.hands,

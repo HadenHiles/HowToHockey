@@ -69,6 +69,24 @@ void main() {
     expect(() => notifier.selectDrill(-1), throwsRangeError);
   });
 
+  test('only a finished workout can dismiss its panel and a new workout resets it', () {
+    final notifier = container.read(trainingSessionProvider.notifier);
+    notifier.start([sampleDrills.first]);
+    expect(() => notifier.dismissFinishedWorkout(), throwsStateError);
+    notifier.logSet(reps: 10);
+    notifier.logSet(reps: 10);
+    final finished = container.read(trainingSessionProvider);
+    expect(finished.dismissed, isFalse);
+    notifier.dismissFinishedWorkout();
+    final dismissed = container.read(trainingSessionProvider);
+    expect(dismissed.dismissed, isTrue);
+    expect(dismissed.logs, finished.logs);
+    expect(dismissed.startedAt, finished.startedAt);
+    expect(dismissed.endedAt, finished.endedAt);
+    notifier.start(sampleDrills);
+    expect(container.read(trainingSessionProvider).dismissed, isFalse);
+  });
+
   test('elapsed time is fixed after completion and logged training distinguishes estimates', () {
     final start = DateTime.utc(2026, 10, 5, 12);
     final session = TrainingSession(drills: sampleDrills, startedAt: start, endedAt: start.add(const Duration(seconds: 125)));

@@ -15,14 +15,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     initialLocation: '/train',
     routes: [
       StatefulShellRoute.indexedStack(
-        builder: (context, state, shell) => _PlayerShell(shell: shell, sessionActive: state.matchedLocation == '/train/session'),
+        builder: (context, state, shell) => _PlayerShell(shell: shell),
         branches: [
           StatefulShellBranch(
             routes: [
               GoRoute(
                 path: '/train',
                 builder: (_, _) => const TrainPage(),
-                routes: [GoRoute(path: 'session', builder: (_, _) => const SessionPage())],
+                routes: [
+                  GoRoute(
+                    path: 'session',
+                    pageBuilder: (_, state) => CustomTransitionPage<void>(key: state.pageKey, opaque: false, child: const SizedBox.shrink(), transitionsBuilder: (_, _, _, child) => child),
+                  ),
+                ],
               ),
             ],
           ),
@@ -84,53 +89,86 @@ class HockeyApp extends ConsumerWidget {
 }
 
 class _PlayerShell extends ConsumerWidget {
-  const _PlayerShell({required this.shell, required this.sessionActive});
+  const _PlayerShell({required this.shell});
 
   final StatefulNavigationShell shell;
-  final bool sessionActive;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final sheetProgress = sessionActive ? ref.watch(workoutSheetProgressProvider) : 0.0;
-    final navigationHeight = 80 + MediaQuery.paddingOf(context).bottom;
-    return Scaffold(
-      // The navigation keeps its layout slot so the session sheet's viewport stays
-      // fixed; matching the sheet colour keeps the vacated strip from flashing.
-      backgroundColor: sessionActive ? HockeyTheme.dark.scaffoldBackgroundColor : null,
-      body: shell,
-      bottomNavigationBar: Transform.translate(
-        key: const ValueKey('player-navigation-motion'),
-        offset: Offset(0, navigationHeight * sheetProgress),
-        child: NavigationBar(
-          selectedIndex: shell.currentIndex,
-          onDestinationSelected: (index) {
-            Feedback.forTap(context);
-            shell.goBranch(index, initialLocation: index == shell.currentIndex);
-          },
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.sports_hockey_outlined),
-              selectedIcon: _NavSelectionIcon(icon: Icons.sports_hockey, selected: shell.currentIndex == 0),
-              label: 'Train',
+    final session = ref.watch(trainingSessionProvider);
+    final progress = ref.watch(workoutSheetProgressProvider);
+    final routerDelegate = ref.watch(appRouterProvider).routerDelegate;
+    return ListenableBuilder(
+      listenable: routerDelegate,
+      builder: (context, _) {
+        final sessionActive = routerDelegate.currentConfiguration.uri.path == '/train/session';
+        final showSession = !session.dismissed && (session.startedAt != null || sessionActive);
+        final sheetProgress = showSession ? progress : 0.0;
+        final deviceBottom = MediaQuery.paddingOf(context).bottom;
+        final navigationHeight = 80 + deviceBottom;
+        return Scaffold(
+          // The navigation keeps its layout slot so the session sheet's viewport stays
+          // fixed; matching the sheet colour keeps the vacated strip from flashing.
+          backgroundColor: showSession ? HockeyTheme.dark.scaffoldBackgroundColor : null,
+          extendBody: true,
+          body: Builder(
+            builder: (context) {
+              final media = MediaQuery.of(context);
+              return Stack(
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(bottom: navigationHeight + (showSession ? WorkoutSessionPanel.headerHeightOf(context) : 0)),
+                    child: MediaQuery(
+                      data: media.copyWith(padding: media.padding.copyWith(bottom: 0), viewPadding: media.viewPadding.copyWith(bottom: 0)),
+                      child: shell,
+                    ),
+                  ),
+                  if (showSession)
+                    Positioned.fill(
+                      child: MediaQuery(
+                        data: media.copyWith(padding: media.padding.copyWith(bottom: deviceBottom)),
+                        child: WorkoutSessionPanel(key: ValueKey(session.startedAt), expandRequested: sessionActive, navigationHeight: navigationHeight),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+          bottomNavigationBar: Transform.translate(
+            key: const ValueKey('player-navigation-motion'),
+            offset: Offset(0, navigationHeight * sheetProgress),
+            child: NavigationBar(
+              selectedIndex: shell.currentIndex,
+              onDestinationSelected: (index) {
+                Feedback.forTap(context);
+                shell.goBranch(index, initialLocation: index == 0 || index == shell.currentIndex);
+              },
+              destinations: [
+                NavigationDestination(
+                  icon: const Icon(Icons.sports_hockey_outlined),
+                  selectedIcon: _NavSelectionIcon(icon: Icons.sports_hockey, selected: shell.currentIndex == 0),
+                  label: 'Train',
+                ),
+                NavigationDestination(
+                  icon: const Icon(Icons.insights_outlined),
+                  selectedIcon: _NavSelectionIcon(icon: Icons.insights, selected: shell.currentIndex == 1),
+                  label: 'Progress',
+                ),
+                NavigationDestination(
+                  icon: const Icon(Icons.groups_outlined),
+                  selectedIcon: _NavSelectionIcon(icon: Icons.groups, selected: shell.currentIndex == 2),
+                  label: 'Team',
+                ),
+                NavigationDestination(
+                  icon: const Icon(Icons.person_outline),
+                  selectedIcon: _NavSelectionIcon(icon: Icons.person, selected: shell.currentIndex == 3),
+                  label: 'Me',
+                ),
+              ],
             ),
-            NavigationDestination(
-              icon: const Icon(Icons.insights_outlined),
-              selectedIcon: _NavSelectionIcon(icon: Icons.insights, selected: shell.currentIndex == 1),
-              label: 'Progress',
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.groups_outlined),
-              selectedIcon: _NavSelectionIcon(icon: Icons.groups, selected: shell.currentIndex == 2),
-              label: 'Team',
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.person_outline),
-              selectedIcon: _NavSelectionIcon(icon: Icons.person, selected: shell.currentIndex == 3),
-              label: 'Me',
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

@@ -55,7 +55,14 @@ final trainingSetupProvider = NotifierProvider<TrainingSetup, TrainingSetupState
 
 class TrainingFocus extends Notifier<Map<SkillPillar, int>> {
   @override
-  Map<SkillPillar, int> build() => const {SkillPillar.shotAccuracy: 25, SkillPillar.hands: 20, SkillPillar.shotPower: 20, SkillPillar.passing: 15, SkillPillar.speedStrength: 10, SkillPillar.endurance: 10};
+  Map<SkillPillar, int> build() => const {
+    SkillPillar.shotAccuracy: 25,
+    SkillPillar.hands: 20,
+    SkillPillar.shotPower: 20,
+    SkillPillar.passing: 15,
+    SkillPillar.speedStrength: 10,
+    SkillPillar.endurance: 10,
+  };
 
   void select(SkillPillar pillar, int value) {
     if (value < 0 || value > 100) {
@@ -81,7 +88,7 @@ class TrainingFocus extends Notifier<Map<SkillPillar, int>> {
 final trainingFocusProvider = NotifierProvider<TrainingFocus, Map<SkillPillar, int>>(TrainingFocus.new);
 
 class TrainingSession {
-  const TrainingSession({required this.drills, this.drillIndex = 0, this.setIndex = 0, this.logs = const [], this.startedAt, this.restEndsAt, this.endedAt});
+  const TrainingSession({required this.drills, this.drillIndex = 0, this.setIndex = 0, this.logs = const [], this.startedAt, this.restEndsAt, this.endedAt, this.dismissed = false});
 
   final List<Drill> drills;
   final int drillIndex;
@@ -90,6 +97,7 @@ class TrainingSession {
   final DateTime? startedAt;
   final DateTime? restEndsAt;
   final DateTime? endedAt;
+  final bool dismissed;
   int get elapsedSeconds => startedAt == null ? 0 : (endedAt ?? DateTime.now().toUtc()).difference(startedAt!).inSeconds;
 
   int setsLogged(int index) => logs.where((entry) => entry.drillId == drills[index].id).length;
@@ -98,8 +106,16 @@ class TrainingSession {
   bool get hasEstimatedTime => logs.any((entry) => entry.log.seconds == null);
   int get activeSeconds => logs.fold(0, (sum, entry) => sum + (entry.log.seconds ?? drills.firstWhere((drill) => drill.id == entry.drillId).estimatedSecondsPerSet));
 
-  TrainingSession copyWith({int? drillIndex, List<({String drillId, SetLog log})>? logs, DateTime? restEndsAt, DateTime? endedAt, bool clearRest = false}) =>
-      TrainingSession(drills: drills, drillIndex: drillIndex ?? this.drillIndex, logs: logs ?? this.logs, startedAt: startedAt, endedAt: endedAt ?? this.endedAt, restEndsAt: clearRest ? null : restEndsAt ?? this.restEndsAt, setIndex: (logs ?? this.logs).where((entry) => entry.drillId == drills[drillIndex ?? this.drillIndex].id).length);
+  TrainingSession copyWith({int? drillIndex, List<({String drillId, SetLog log})>? logs, DateTime? restEndsAt, DateTime? endedAt, bool clearRest = false, bool? dismissed}) => TrainingSession(
+    drills: drills,
+    drillIndex: drillIndex ?? this.drillIndex,
+    logs: logs ?? this.logs,
+    startedAt: startedAt,
+    endedAt: endedAt ?? this.endedAt,
+    restEndsAt: clearRest ? null : restEndsAt ?? this.restEndsAt,
+    setIndex: (logs ?? this.logs).where((entry) => entry.drillId == drills[drillIndex ?? this.drillIndex].id).length,
+    dismissed: dismissed ?? this.dismissed,
+  );
 }
 
 class TrainingSessionNotifier extends Notifier<TrainingSession> {
@@ -118,6 +134,11 @@ class TrainingSessionNotifier extends Notifier<TrainingSession> {
   }
 
   void skipRest() => state = state.copyWith(clearRest: true);
+
+  void dismissFinishedWorkout() {
+    if (!state.finished) throw StateError('Finish all sets before dismissing the workout.');
+    state = state.copyWith(dismissed: true);
+  }
 
   void adjustRest(int seconds) {
     final now = DateTime.now().toUtc();

@@ -92,12 +92,46 @@ extension DrillPresentation on Drill {
 }
 
 final sampleDrills = List<Drill>.unmodifiable([
-  _drill('quick-release', 'Quick-release wrist shots', TrackingType.volume, SkillPillar.shotPower, reps: 10, cues: ['Start with the puck close to your feet.', 'Load your stick, then snap your wrists.', 'Point your blade at the target.']),
-  _drill('quiet-hands', 'Quiet hands, quick feet', TrackingType.duration, SkillPillar.hands, seconds: 30, cues: ['Keep your top hand away from your body.', 'Look up between touches.', 'Stay light on your feet.']),
-  _drill('shot-burst', '30-second shot burst', TrackingType.density, SkillPillar.endurance, seconds: 30, cues: ['Set your pucks within easy reach.', 'Reset your feet between shots.', 'Keep a smooth, repeatable release.']),
-  _drill('pick-corners', 'Pick your corner', TrackingType.accuracy, SkillPillar.shotAccuracy, reps: 10, cues: ['Choose one corner for the full set.', 'Look at the target before you shoot.', 'Follow through toward your corner.']),
+  _drill(
+    'quick-release',
+    'Quick-release wrist shots',
+    TrackingType.volume,
+    SkillPillar.shotPower,
+    reps: 10,
+    cues: ['Start with the puck close to your feet.', 'Load your stick, then snap your wrists.', 'Point your blade at the target.'],
+  ),
+  _drill(
+    'quiet-hands',
+    'Quiet hands, quick feet',
+    TrackingType.duration,
+    SkillPillar.hands,
+    seconds: 30,
+    cues: ['Keep your top hand away from your body.', 'Look up between touches.', 'Stay light on your feet.'],
+  ),
+  _drill(
+    'shot-burst',
+    '30-second shot burst',
+    TrackingType.density,
+    SkillPillar.endurance,
+    seconds: 30,
+    cues: ['Set your pucks within easy reach.', 'Reset your feet between shots.', 'Keep a smooth, repeatable release.'],
+  ),
+  _drill(
+    'pick-corners',
+    'Pick your corner',
+    TrackingType.accuracy,
+    SkillPillar.shotAccuracy,
+    reps: 10,
+    cues: ['Choose one corner for the full set.', 'Look at the target before you shoot.', 'Follow through toward your corner.'],
+  ),
   _drill('partner-passes', 'Pass and settle', TrackingType.streak, SkillPillar.passing, cues: ['Show your blade as a target.', 'Cushion the pass as it arrives.', 'Send it back flat and on target.']),
-  _drill('athletic-reset', 'Athletic stance reset', TrackingType.binary, SkillPillar.speedStrength, cues: ['Bend at the knees, not the waist.', 'Keep your chest tall.', 'Hold your balance through each shift.']),
+  _drill(
+    'athletic-reset',
+    'Athletic stance reset',
+    TrackingType.binary,
+    SkillPillar.speedStrength,
+    cues: ['Bend at the knees, not the waist.', 'Keep your chest tall.', 'Hold your balance through each shift.'],
+  ),
 ]);
 
 Drill _drill(String id, String title, TrackingType type, SkillPillar pillar, {int? reps, int? seconds, required List<String> cues}) => Drill(
