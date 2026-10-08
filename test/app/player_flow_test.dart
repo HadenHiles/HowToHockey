@@ -681,7 +681,7 @@ void main() {
     await tester.drag(handle, const Offset(40, 900));
     await tester.pumpAndSettle();
     expect(find.textContaining('Your session').hitTestable(), findsNothing);
-    expect(find.text('ACTIVE'), findsOneWidget);
+    expect(find.text('TRAINING'), findsOneWidget);
     expect(tester.getTopLeft(find.byKey(const ValueKey('workout-status-header'))).dy, greaterThan(expandedHeaderTop));
     final navigationMotion = tester.widget<Transform>(find.byKey(const ValueKey('player-navigation-motion')));
     expect(navigationMotion.transform.getTranslation().y, 0);

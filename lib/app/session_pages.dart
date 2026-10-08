@@ -330,7 +330,7 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> {
                                   children: [
                                     const SectionHeading(title: 'Workout overview'),
                                     const SizedBox(height: AppSpacing.md),
-                                    const Text('Active time counts logged training sets, not rest. Untimed sets use estimated training time. Elapsed includes rest.'),
+                                    const Text('Training time is what counts toward your total: logged sets, not rest. A ~ means some untimed sets use estimates. Elapsed includes rest.'),
                                     const SizedBox(height: AppSpacing.md),
                                     for (final (index, drill) in session.drills.indexed) ...[
                                       TrainingCard(
@@ -451,7 +451,11 @@ class _WorkoutStatusHeader extends StatelessWidget {
                   child: _WorkoutMetric(label: 'ELAPSED', value: _time(elapsed), color: theme.colorScheme.onPrimary),
                 ),
                 Expanded(
-                  child: _WorkoutMetric(label: estimated ? 'ACTIVE · EST.' : 'ACTIVE', value: _time(active), centered: true, color: theme.colorScheme.onPrimary),
+                  child: Semantics(
+                    label: 'Training time ${_time(active)}${estimated ? ', partly estimated' : ''}. This is the time that counts toward your total training.',
+                    excludeSemantics: true,
+                    child: _WorkoutMetric(label: 'TRAINING', value: '${estimated ? '~' : ''}${_time(active)}', centered: true, color: theme.colorScheme.onPrimary),
+                  ),
                 ),
                 Expanded(
                   child: _WorkoutMetric(label: 'SETS', value: '$setsLogged/$totalSets', alignEnd: true, color: theme.colorScheme.onPrimary),
