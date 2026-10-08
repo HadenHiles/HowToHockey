@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../design/theme/app_theme.dart';
 import '../features/settings/appearance_settings_controller.dart';
+import 'parent_pages.dart';
 import 'player_pages.dart';
 import 'app_page.dart';
 import 'session_pages.dart';
@@ -39,6 +40,39 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           StatefulShellBranch(
             routes: [GoRoute(path: '/me', builder: (_, _) => const MePage())],
+          ),
+        ],
+      ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, shell) => _ParentShell(shell: shell),
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/parent/kids',
+                builder: (_, _) => const ParentKidsPage(),
+                routes: [
+                  GoRoute(path: 'approvals', builder: (_, _) => const ParentApprovalsPage()),
+                  GoRoute(path: 'train-together', builder: (_, _) => const ParentTrainTogetherPage()),
+                  GoRoute(
+                    path: ':id',
+                    builder: (_, state) => ParentChildPage(kidId: state.pathParameters['id']!),
+                    routes: [
+                      GoRoute(
+                        path: 'pair',
+                        builder: (_, state) => KidPairingPage(kidId: state.pathParameters['id']!),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [GoRoute(path: '/parent/verify', builder: (_, _) => const ParentVerifyPage())],
+          ),
+          StatefulShellBranch(
+            routes: [GoRoute(path: '/parent/account', builder: (_, _) => const ParentAccountPage())],
           ),
         ],
       ),
@@ -171,6 +205,41 @@ class _PlayerShell extends ConsumerWidget {
       },
     );
   }
+}
+
+class _ParentShell extends StatelessWidget {
+  const _ParentShell({required this.shell});
+
+  final StatefulNavigationShell shell;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    body: shell,
+    bottomNavigationBar: NavigationBar(
+      selectedIndex: shell.currentIndex,
+      onDestinationSelected: (index) {
+        Feedback.forTap(context);
+        shell.goBranch(index, initialLocation: index == shell.currentIndex);
+      },
+      destinations: [
+        NavigationDestination(
+          icon: const Icon(Icons.family_restroom_outlined),
+          selectedIcon: _NavSelectionIcon(icon: Icons.family_restroom, selected: shell.currentIndex == 0),
+          label: 'Kids',
+        ),
+        NavigationDestination(
+          icon: const Icon(Icons.verified_outlined),
+          selectedIcon: _NavSelectionIcon(icon: Icons.verified, selected: shell.currentIndex == 1),
+          label: 'Verify',
+        ),
+        NavigationDestination(
+          icon: const Icon(Icons.manage_accounts_outlined),
+          selectedIcon: _NavSelectionIcon(icon: Icons.manage_accounts, selected: shell.currentIndex == 2),
+          label: 'Account',
+        ),
+      ],
+    ),
+  );
 }
 
 class _NavSelectionIcon extends StatelessWidget {

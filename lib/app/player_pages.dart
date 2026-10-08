@@ -874,14 +874,17 @@ class _MePageState extends ConsumerState<MePage> {
           children: [
             Text('Switch role', style: Theme.of(sheetContext).textTheme.headlineSmall),
             const SizedBox(height: AppSpacing.xs),
-            const Text('Separate Parent and Coach shells are the next UX slices.'),
+            const Text('Parent mode is a sample preview. The Coach shell is the next UX slice.'),
             const SizedBox(height: AppSpacing.md),
             const ListTile(leading: Icon(Icons.sports_hockey), title: Text('Player'), subtitle: Text('Current role'), trailing: Icon(Icons.check)),
             ListTile(
               leading: const Icon(Icons.family_restroom),
               title: const Text('Parent'),
-              subtitle: const Text('Preview unavailable'),
-              onTap: () => _closeWithMessage(sheetContext, 'The Parent shell is not connected yet.'),
+              subtitle: const Text('Sample preview'),
+              onTap: () {
+                Navigator.of(sheetContext).pop();
+                context.go('/parent/kids');
+              },
             ),
             ListTile(
               leading: const Icon(Icons.groups_outlined),
