@@ -145,6 +145,31 @@ flutter test integration_test/player_flow_test.dart -d <emulator-or-simulator-id
 Add `--dart-define=USE_EMULATORS=true` when running against the local Firebase
 suite.
 
+### Drill catalog and media
+
+The starter catalog lives in [tool/seed/drills.json](../tool/seed/drills.json)
+(schema: [drill.schema.json](../tool/seed/drill.schema.json)). It holds the 20
+free starter drills across the six skills and all six tracking types.
+
+**Media spec** (one video and one poster per drill, under `tool/seed/media/drills/`):
+
+- Video `drills/<id>.mp4`: 3–5 s, 720p, muted, looping-friendly, at most
+  1,500,000 bytes.
+- Poster `drills/<id>.jpg`: same basename, beside the video.
+- Coach Jeremy media is produced separately; placeholders are used in the app
+  until then. Do not commit large media binaries without checking with the user.
+
+Commands (run from the repo root):
+
+```bash
+# Metadata only, before media exists
+npm --prefix functions run seed:drills -- --validate-only --skip-media-check
+# Full validation, including media existence, size, and posters
+npm --prefix functions run seed:drills -- --validate-only
+# Upload to the local emulators; --live uploads to production and needs explicit approval
+npm --prefix functions run seed:drills -- --emulator
+```
+
 ### Android and iOS emulators together (live Firebase)
 
 Select **Android + iOS Emulators (Live)** in VS Code's Run and Debug panel and

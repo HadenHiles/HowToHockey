@@ -48,7 +48,7 @@
           "minLength": 1
         },
         "mediaAssetPath": {
-          "description": "Path relative to the sibling media directory; uploaded to Storage at the same object path.",
+          "description": "Path relative to the sibling media directory; uploaded to Storage at the same object path. A poster JPG with the same basename (.jpg) must sit beside it. Video: 3-5 s, 720p, muted, at most 1,500,000 bytes.",
           "type": "string",
           "pattern": "^drills/(?!.*(?:^|/)\\.\\.(?:/|$)).+\\.mp4$"
         },
@@ -83,11 +83,12 @@
           "minProperties": 1,
           "additionalProperties": false,
           "properties": {
-            "shooting": { "type": "number", "minimum": 0, "maximum": 1 },
-            "stickhandling": { "type": "number", "minimum": 0, "maximum": 1 },
-            "skating": { "type": "number", "minimum": 0, "maximum": 1 },
+            "shotAccuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+            "hands": { "type": "number", "minimum": 0, "maximum": 1 },
+            "shotPower": { "type": "number", "minimum": 0, "maximum": 1 },
             "passing": { "type": "number", "minimum": 0, "maximum": 1 },
-            "iqConditioning": { "type": "number", "minimum": 0, "maximum": 1 }
+            "speedStrength": { "type": "number", "minimum": 0, "maximum": 1 },
+            "endurance": { "type": "number", "minimum": 0, "maximum": 1 }
           }
         },
         "tier": {

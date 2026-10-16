@@ -5,8 +5,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 ## 📍 Current Status
 > Update this block at the end of every work session.
 
-- **Current phase:** UX-first — actual app screens (in progress; 11 of 12 checklist items complete). Player training, workflow refinement, local routine management, Progress, Team, and Me slices are complete for representative local UX, not production functionality. Team covers member/no-team/locked states, homework, locker-room stick taps, sample standings, discovery, and join/invite entry points. Me covers device-persisted appearance, local sample-profile switching, and role/account/subscription entry points; Parent/Coach switching and account/purchase operations explicitly remain unavailable. The active workout panel belongs to the shared Player shell, remains collapsed above navigation across all four tabs, and stays behind detail/settings screens. Its previews are a single-row 9:16 carousel synchronized with tap/swipe drill selection. Separate drill details and the scroll-ending Log/Finish action remain intact; finishing dismisses the panel without losing summary data.
-- **Next task:** Get the user's approval of the screen inventory, navigation, visual design, and core flows (use a simulator walkthrough); then resume Phases 2–14. Local sample data has no real loading/error states; add them when backends connect.
+- **Current phase:** Phase 2 — Drill Catalog & Content Pipeline (in progress). The UX-first screens milestone is complete and user-approved (2026-10-16); its screens run on local sample data, which later phases replace with real backends. Phase 2 so far: models, seed schema/uploader, media spec, and the 20-drill starter catalog metadata.
+- **Next task:** Produce the 20 starter videos/posters (needs Coach Jeremy media, which the agent cannot create), then run the seed upload. Meanwhile, work the remaining Phase 2 app items: connect the Drill Library to the catalog, add Pro-gated filters (location, puck inventory, ball, passer, skill, tracking type), and media caching/preloading with offline browsing.
 - **Validation:** On 2026-10-16, `flutter analyze` passes and `flutter test test` passes all 55 host-only tests. A 23-screen walkthrough in light and dark on the iPhone 16 Plus simulator and the Medium Phone API 36 Android emulator found no runtime errors; the live `integration_test/player_flow_test.dart` (Firebase boot, anonymous sign-in, workout start/log/finish) passes on both. Fixed in that pass: invisible text in dark panels under the light theme, and a zero-width weekly chart. Physical devices were not used.
 - **Blockers:** None for the next UX slice. Phase 2 content/media and later backend integrations remain paused: workout history, real team membership/feed/standings, account-wide profile switching, and purchases are not implemented. Production App Check/release setup remains deferred; no production milestone is completed by these UI changes.
 - **Last updated:** 2026-10-08
@@ -16,6 +16,7 @@ Detailed Copilot development notes live in [.github/COPILOT_REFERENCE.md](.githu
 ### Session Log
 | Date | Summary | Commit |
 |---|---|---|
+| 2026-10-16 | User approved the UX-first screens; resumed Phase 2. Moved the seed validator/schema to the six skills (legacy names rejected), enforced the media spec (≤1.5 MB, same-name poster JPG) with a metadata-only `--skip-media-check` mode, authored the 20 free starter drills (all six skills and tracking types), added Node and Flutter catalog tests, and documented the media spec and seed commands | See commit history |
 | 2026-10-16 | Emulator/simulator QA (iPhone 16 Plus, Android API 36; light and dark). Fixed arena panels showing dark-on-dark text in the light theme and the collapsed weekly training chart. Updated the stale live integration test (six skills, new workout-panel actions) and made it restore the test error handler so failures are visible. Both platforms pass | See commit history |
 | 2026-10-16 | Cross-screen review: added a sweep test rendering every static route in light/dark at 320×568, 200% text, and Reduce Motion with no overflow/exceptions; fixed the workout sheet's settle animation ignoring Reduce Motion. Fixed the VS Code Gradle import error (JAVA_HOME was JDK 27-ea, unsupported by Gradle 9.3.1) by pinning `java.import.gradle.java.home` to Temurin 17 in `.vscode/settings.json`. Analysis clean and all 55 host-only tests pass; no simulator walkthrough done | See commit history |
 | 2026-10-16 | Built welcome, birth-year age gate (under-13 directed to a parent-created child profile; no free-text inputs), provider sign-up placeholders, multi-role onboarding into each shell, Player/Coach Pro paywall with plan/billing toggles, restore/manage entries, and program storefront/detail/day/lesson with owned vs locked states. Reachable from Me, Parent Account, Coach Team. All unconnected actions disclose status. Analysis clean and all 53 host-only tests pass | See commit history |
@@ -375,8 +376,8 @@ Provided in `assets/`: maple-leaf "HTH" monogram (≈square, viewBox 1307×1251)
 ## Phase 2 — Drill Catalog & Content Pipeline
 - [x] Implement models in §2 with freezed + converters
 - [x] Define drill spreadsheet/JSON schema; write `tool/seed/` script to upload drills to Firestore and media to Storage
-- [ ] Media spec: 3–5s MP4, 720p, muted, ≤1.5 MB, plus poster JPG
-- [ ] Seed the **20 free starter drills** covering all 5 pillars and all 6 tracking types
+- [x] Media spec: 3–5s MP4, 720p, muted, ≤1.5 MB, plus poster JPG *(documented in the Copilot reference; the seed validator enforces size, existence, and a same-name poster JPG)*
+- [ ] Seed the **20 free starter drills** *(catalog metadata authored and validated in `tool/seed/drills.json`; remaining: produce the 20 videos/posters, then upload to Firestore/Storage)* covering all 5 pillars and all 6 tracking types
 - [ ] Drill Library screen: list, detail, looping media card, form cues
 - [ ] Filters: location, puck inventory, ball type, passer, pillar, tracking type (filters are Pro-only per tier matrix; free sees the starter 20)
 - [ ] Media caching and preloading of the next drill's video
@@ -402,7 +403,7 @@ Work these slices in order, reviewing the visual direction between slices:
 - [x] Coach shell: Roster, Homework/builder/assignment, Compliance, Team settings/invites/verification
 - [x] Welcome/signup/age gate, role onboarding, paywalls/restore/manage, program storefront/detail/day/lesson
 - [x] Review every screen in light/dark, 200% text scale, small phone sizes, and Reduce Motion; include loading/empty/error/locked states where applicable
-- [ ] User approval of screen inventory, navigation, visual design, and core flows before resuming backend/content milestones
+- [x] User approval of screen inventory, navigation, visual design, and core flows before resuming backend/content milestones
 
 **Exit Criteria:** All planned screens are navigable in the normal app using representative placeholder data/media; user approves the UX direction. Unimplemented operations disclose their status instead of reporting success. Production roadmap checkboxes stay unchecked unless their original functional criteria are independently met.
 

@@ -12,7 +12,8 @@ const defaultDataPath = fileURLToPath(new URL('./drills.json', import.meta.url))
 const trackingTypes = ['volume', 'duration', 'density', 'accuracy', 'streak', 'binary'];
 const locations = ['ice', 'roller', 'drivewayGarage', 'basement', 'syntheticIce'];
 const puckInventories = ['low', 'medium', 'high'];
-const pillars = ['shooting', 'stickhandling', 'skating', 'passing', 'iqConditioning'];
+const pillars = ['shotAccuracy', 'hands', 'shotPower', 'passing', 'speedStrength', 'endurance'];
+const maxVideoBytes = 1_500_000;
 const accessTiers = ['free', 'pro'];
 const ballTypes = ['golfBall', 'trainingBall', 'greenBiscuit'];
 const passerTypes = ['rebounder', 'partner'];
@@ -89,7 +90,7 @@ function assertPrescription(value, label) {
   }
 }
 
-async function validateDrill(drill, index, mediaRoot) {
+async function validateDrill(drill, index, mediaRoot, checkMedia) {
   const label = `drills[${index}]`;
   const fields = [
     'id',
@@ -132,14 +133,29 @@ async function validateDrill(drill, index, mediaRoot) {
   ) {
     throw new TypeError(`${label}.mediaAssetPath must stay inside the media directory.`);
   }
-  const mediaInfo = await stat(mediaPath).catch((error) => {
-    if (error.code === 'ENOENT') {
-      throw new Error(`${label}.mediaAssetPath file does not exist: ${mediaPath}`);
+  if (checkMedia) {
+    const mediaInfo = await stat(mediaPath).catch((error) => {
+      if (error.code === 'ENOENT') {
+        throw new Error(`${label}.mediaAssetPath file does not exist: ${mediaPath}`);
+      }
+      throw error;
+    });
+    if (!mediaInfo.isFile()) {
+      throw new TypeError(`${label}.mediaAssetPath must refer to a file.`);
     }
-    throw error;
-  });
-  if (!mediaInfo.isFile()) {
-    throw new TypeError(`${label}.mediaAssetPath must refer to a file.`);
+    if (mediaInfo.size > maxVideoBytes) {
+      throw new TypeError(`${label}.mediaAssetPath must be at most ${maxVideoBytes} bytes.`);
+    }
+    const posterPath = posterPathFor(mediaPath);
+    const posterInfo = await stat(posterPath).catch((error) => {
+      if (error.code === 'ENOENT') {
+        throw new Error(`${label} poster file does not exist: ${posterPath}`);
+      }
+      throw error;
+    });
+    if (!posterInfo.isFile()) {
+      throw new TypeError(`${label} poster must refer to a file.`);
+    }
   }
 
   assertStringArray(entry.formCues, `${label}.formCues`, { minItems: 1, maxItems: 3 });
@@ -182,7 +198,11 @@ async function validateDrill(drill, index, mediaRoot) {
   }
 }
 
-export async function validateCatalog(catalog, mediaRoot) {
+function posterPathFor(mediaPath) {
+  return mediaPath.slice(0, -extname(mediaPath).length) + '.jpg';
+}
+
+export async function validateCatalog(catalog, mediaRoot, { checkMedia = true } = {}) {
   const root = assertObject(catalog, 'Catalog');
   assertOnlyKeys(root, ['schemaVersion', 'drills'], 'Catalog');
   if (root.schemaVersion !== 1) {
@@ -194,7 +214,7 @@ export async function validateCatalog(catalog, mediaRoot) {
 
   const ids = new Set();
   for (const [index, drill] of root.drills.entries()) {
-    await validateDrill(drill, index, mediaRoot);
+    await validateDrill(drill, index, mediaRoot, checkMedia);
     if (ids.has(drill.id)) {
       throw new TypeError(`Duplicate drill id "${drill.id}".`);
     }
@@ -204,7 +224,7 @@ export async function validateCatalog(catalog, mediaRoot) {
 }
 
 function parseArguments(args) {
-  const options = { dataPath: defaultDataPath, mode: null, validateOnly: false };
+  const options = { dataPath: defaultDataPath, mode: null, validateOnly: false, checkMedia: true };
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
     if (argument === '--data') {
@@ -235,6 +255,8 @@ function parseArguments(args) {
       options.mode = argument.slice(2);
     } else if (argument === '--validate-only') {
       options.validateOnly = true;
+    } else if (argument === '--skip-media-check') {
+      options.checkMedia = false;
     } else if (argument === '--help') {
       options.help = true;
     } else {
@@ -244,6 +266,9 @@ function parseArguments(args) {
 
   if (!options.validateOnly && options.mode === null) {
     throw new TypeError('Choose --emulator or explicitly opt in to production with --live.');
+  }
+  if (!options.checkMedia && !options.validateOnly) {
+    throw new TypeError('--skip-media-check can only be used with --validate-only.');
   }
   if (options.projectId === undefined) {
     options.projectId = process.env.GCLOUD_PROJECT ?? 'how-to-hockey';
@@ -264,6 +289,7 @@ Options:
   --project <id>  Firebase project id (default: how-to-hockey)
   --bucket <name> Storage bucket (default: <project>.firebasestorage.app)
   --validate-only Validate files without connecting to Firebase
+  --skip-media-check  With --validate-only, validate metadata when media is not produced yet
   --help          Show this help`);
 }
 
@@ -277,10 +303,10 @@ async function main(args = process.argv.slice(2)) {
   const dataPath = resolve(options.dataPath);
   const mediaRoot = resolve(dirname(dataPath), 'media');
   const catalog = JSON.parse(await readFile(dataPath, 'utf8'));
-  const drills = await validateCatalog(catalog, mediaRoot);
+  const drills = await validateCatalog(catalog, mediaRoot, { checkMedia: options.checkMedia });
 
   if (options.validateOnly) {
-    console.log(`Validated ${drills.length} drill(s) and their media files.`);
+    console.log(`Validated ${drills.length} drill(s)${options.checkMedia ? ' and their media files' : ' (media not checked)'}.`);
     return;
   }
   if (drills.length === 0) {
@@ -310,6 +336,10 @@ async function main(args = process.argv.slice(2)) {
       await bucket.upload(mediaPath, {
         destination: drill.mediaAssetPath,
         metadata: { contentType: 'video/mp4' },
+      });
+      await bucket.upload(posterPathFor(mediaPath), {
+        destination: posterPathFor(drill.mediaAssetPath),
+        metadata: { contentType: 'image/jpeg' },
       });
       await db.collection('drills').doc(drill.id).set({
         ...drill,
