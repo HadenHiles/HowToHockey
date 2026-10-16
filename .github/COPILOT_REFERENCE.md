@@ -164,6 +164,16 @@ flutter test integration_test/player_flow_test.dart -d <emulator-or-simulator-id
 Add `--dart-define=USE_EMULATORS=true` when running against the local Firebase
 suite.
 
+### Workout cues
+
+Timed sets use a pure, wall-clock `SetCountdown` (`lib/features/session/set_countdown.dart`):
+3-2-1 lead-in, then the set, with pause/resume and cancel. Cues (short original tones in
+`assets/audio/` plus haptics) come from `SessionCues` and mix with the player's music
+(iOS `ambient`, Android no audio focus), staying quiet on the silent switch. Players can
+turn them off in Me → Workout. Session timing reads `clock.now()` (package:clock) so widget
+tests can fake time; tests use `RecordingCues` from `test/support/test_catalog.dart`.
+Emulators cannot confirm audible sound or vibration; check on a device.
+
 ### Drill catalog and media
 
 The starter catalog lives in [tool/seed/drills.json](../tool/seed/drills.json)

@@ -6,8 +6,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 > Update this block at the end of every work session.
 
 - **Current phase:** Phase 3 — Active Training Engine (starting). Phase 2 is complete except for replacing the placeholder video, which is tracked as a launch-blocking item inside Phase 2. The UX-first screens (user-approved 2026-10-16) run on local sample data that later phases replace with real backends.
-- **Next task:** Phase 3 remaining: Duration countdown with 3-2-1 lead-in and start/stop chimes plus haptics (with audio mixing alongside the user's music), local notification when rest ends while backgrounded, `Swap Drill` and `Rest Timer` in the action bar, and wiring `summarizeDrill` totals into the session summary.
-- **Validation:** On 2026-10-16, `flutter analyze` passes and `flutter test test` passes all 104 host-only tests. On the Android emulator, a workout survived a verified force-stop and relaunch (new process ID) with sets and elapsed time restored; the screen wake lock engages during a workout on both the iPhone 16 Plus simulator and Android emulator. Physical devices were not used.
+- **Next task:** Phase 3 remaining: local notification when rest ends while the app is backgrounded (needs a notifications package and permission prompt), `Swap Drill` and `Rest Timer` in the action bar, wiring `summarizeDrill` totals into the session summary, and the top-bar active-time accounting.
+- **Validation:** On 2026-10-16, `flutter analyze` passes and `flutter test test` passes all 121 host-only tests. On both the iPhone 16 Plus simulator and the Android emulator, a real timed set runs through lead-in, countdown and completion using the real audio/haptics service with no errors. Emulators cannot confirm audible sound or vibration, so check those on a device. Physical devices were not used.
 - **Blockers:** None for the next UX slice. Phase 2 content/media and later backend integrations remain paused: workout history, real team membership/feed/standings, account-wide profile switching, and purchases are not implemented. Production App Check/release setup remains deferred; no production milestone is completed by these UI changes.
 - **Last updated:** 2026-10-08
 
@@ -16,6 +16,7 @@ Detailed Copilot development notes live in [.github/COPILOT_REFERENCE.md](.githu
 ### Session Log
 | Date | Summary | Commit |
 |---|---|---|
+| 2026-10-16 | Phase 3 cues: added a wall-clock `SetCountdown` (3-2-1 lead-in, pause/resume/cancel) with 10 unit tests, four original synthesized tones, haptics, rest-end chime, and a saved Sounds and haptics setting on Me. Session timing now uses the injectable clock so widget tests can fake time. Device runs caught two real bugs, both fixed: iOS rejects the generic mix-with-music plus respect-silent audio flags (now an explicit ambient session) and low-latency audio mode keeps a frame callback running (now the normal mode). 121 host tests pass | See commit history |
 | 2026-10-16 | Phase 3 start: added shared tracking-type calculations and entry validation (`set_calculations.dart`), persisted the active workout after every change with safe restore of corrupt data, and wired validation into `logSet`. Added screen wake lock during workouts. 27 new unit tests (calculations, persistence, state machine). Verified resume-after-kill and wake lock on the emulators. Also corrected an earlier overclaim: `flutter test` uninstalls the app, so the media-cache refresh was only unit-tested; verified it properly with a pre-seeded stale cache on both platforms | See commit history |
 | 2026-10-16 | Closed Phase 2: ran the full seed (20 drill docs plus media in production) and verified the exit criterion on the Android emulator with the network off (library lists all 20 drills; a previously viewed demo plays). Placeholder-video replacement stays open as a launch blocker | See commit history |
 | 2026-10-16 | Per the user, filled every missing video with a shared Skills Vault clip: all 20 drills plus a shared lesson/trailer/welcome clip now carry a burned-in "PLACEHOLDER VIDEO · REPLACE BEFORE LAUNCH" banner; uploaded all 21 to Storage. Program trailer, lesson, and welcome screens now play the placeholder through the same media card. Added cache version checks so a replaced upload refreshes devices (offline keeps the cached copy). Verified on both emulators (cache refreshed to the new file); analysis clean, 77 host tests pass | See commit history |
@@ -424,15 +425,15 @@ Build as a pure-Dart `SessionController` (Riverpod Notifier) with a thin UI on t
 - [ ] Media card with looping demo + 3 form cues
 - [ ] Dynamic Input Module, one widget per `TrackingType`:
   - [x] **Volume:** stepper + direct numeric entry per set
-  - [ ] **Duration:** countdown with start/stop chimes, 3-2-1 lead-in
+  - [x] **Duration:** countdown with start/stop chimes, 3-2-1 lead-in *(wall-clock `SetCountdown` with a 3-2-1 lead-in, start and stop cues, pause/resume and cancel, all unit-tested)*
   - [x] **Density:** timer → numeric pad → computes SPM = `reps / seconds * 60` *(SPM computed by the shared, unit-tested calculation)*
   - [x] **Accuracy:** hits / total → accuracy %; validate `hits ≤ total` *(enforced in the controller and the input)*
   - [x] **Streak:** single numeric entry for max consecutive
   - [x] **Binary:** large toggle per set
 - [ ] Action bar: `Log Set`, `Swap Drill` (same `swapGroup`, still matching setup), `Rest Timer`
-- [ ] Production rest mechanics: off by default, configurable enable/duration per drill; when enabled auto-start inline after Log Set except the final workout set; `+15s`, `-15s`, `Skip Rest`; chime + haptic on end
+- [x] Production rest mechanics: off by default, configurable enable/duration per drill; when enabled auto-start inline after Log Set except the final workout set; `+15s`, `-15s`, `Skip Rest`; chime + haptic on end *(rest-end chime and haptics added; skipping a rest stays silent)*
 - [ ] Local notification when rest ends while app is backgrounded
-- [ ] Wakelock on during session; audio session mixes with user's music *(wakelock done and verified on both emulators; the audio-session mixing half waits for session chimes)*
+- [x] Wakelock on during session; audio session mixes with user's music *(wake lock verified on both emulators; cues use an iOS `ambient` / Android no-focus audio session so music keeps playing and the silent switch is respected; the audio session is configured on both platforms without errors, but audible output could not be judged on emulators)*
 - [x] Persist session progress after every set (resume after app kill) *(verified on the Android emulator by force-stopping the app and relaunching: workout, sets and elapsed time were restored)*
 - [ ] Session summary screen with totals per drill
 - [ ] **Manual loggers (free tier):** standalone Shot Logger and Timer without a routine

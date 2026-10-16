@@ -57,7 +57,7 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     final preferences = await SharedPreferences.getInstance();
     final container = ProviderContainer(
-      overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, drillFiltersUnlockedProvider.overrideWithValue(pro)],
+      overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, drillFiltersUnlockedProvider.overrideWithValue(pro)],
     );
     addTearDown(container.dispose);
     tester.view.physicalSize = const Size(1000, 3000);

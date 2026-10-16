@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -103,7 +104,7 @@ class TrainingSession {
   final DateTime? restEndsAt;
   final DateTime? endedAt;
   final bool dismissed;
-  int get elapsedSeconds => startedAt == null ? 0 : (endedAt ?? DateTime.now().toUtc()).difference(startedAt!).inSeconds;
+  int get elapsedSeconds => startedAt == null ? 0 : (endedAt ?? clock.now().toUtc()).difference(startedAt!).inSeconds;
 
   int setsLogged(int index) => logs.where((entry) => entry.drillId == drills[index].id).length;
   bool get finished => drills.asMap().entries.every((entry) => setsLogged(entry.key) >= entry.value.defaultPrescription.sets);
@@ -217,7 +218,7 @@ class TrainingSessionNotifier extends Notifier<TrainingSession> {
   void start(List<Drill> drills) {
     if (drills.isEmpty) throw ArgumentError('A session needs at least one drill.');
     if (drills.map((drill) => drill.id).toSet().length != drills.length) throw ArgumentError('Session drills must have unique IDs.');
-    _update(TrainingSession(drills: List.unmodifiable(drills), startedAt: DateTime.now().toUtc()));
+    _update(TrainingSession(drills: List.unmodifiable(drills), startedAt: clock.now().toUtc()));
   }
 
   void selectDrill(int index) {
@@ -233,7 +234,7 @@ class TrainingSessionNotifier extends Notifier<TrainingSession> {
   }
 
   void adjustRest(int seconds) {
-    final now = DateTime.now().toUtc();
+    final now = clock.now().toUtc();
     final deadline = state.restEndsAt;
     if (deadline == null) throw StateError('There is no rest countdown to adjust.');
     final adjusted = (deadline.isBefore(now) ? now : deadline).add(Duration(seconds: seconds));
@@ -254,14 +255,14 @@ class TrainingSessionNotifier extends Notifier<TrainingSession> {
     final drill = state.drill;
     if (state.setsLogged(state.drillIndex) >= drill.defaultPrescription.sets) throw StateError('All sets for this drill are logged.');
     validateSetEntry(drill.trackingType, reps: reps, hits: hits, seconds: seconds, streak: streak, completed: completed);
-    final log = SetLog(setIndex: state.setIndex, reps: reps, hits: hits, seconds: seconds, streak: streak, completed: completed, loggedAt: DateTime.now().toUtc());
+    final log = SetLog(setIndex: state.setIndex, reps: reps, hits: hits, seconds: seconds, streak: streak, completed: completed, loggedAt: clock.now().toUtc());
     final settings = ref.read(drillRestSettingsProvider)[drill.id];
     var next = state.copyWith(
       logs: List.unmodifiable([...state.logs, (drillId: drill.id, log: log)]),
-      restEndsAt: settings?.enabled == true ? DateTime.now().toUtc().add(Duration(seconds: settings!.seconds)) : null,
+      restEndsAt: settings?.enabled == true ? clock.now().toUtc().add(Duration(seconds: settings!.seconds)) : null,
       clearRest: settings?.enabled != true,
     );
-    if (next.finished) next = next.copyWith(clearRest: true, endedAt: DateTime.now().toUtc());
+    if (next.finished) next = next.copyWith(clearRest: true, endedAt: clock.now().toUtc());
     _update(next);
   }
 }

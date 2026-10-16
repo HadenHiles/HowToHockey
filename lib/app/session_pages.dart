@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
@@ -14,6 +15,8 @@ import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/drills/drill_media.dart';
 import '../features/drills/models/drill.dart';
+import '../features/session/session_cues.dart';
+import '../features/session/set_countdown.dart';
 import 'sample_data.dart';
 import 'app_page.dart';
 import 'training_state.dart';
@@ -52,7 +55,10 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> {
   void initState() {
     super.initState();
     _sheet.addListener(_syncSheetProgress);
-    _ticker = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
+      _checkRestFinished();
+      setState(() {});
+    });
     _prefetchFrom(ref.read(trainingSessionProvider).drillIndex);
     _keepScreenOn(true);
   }
@@ -64,6 +70,17 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> {
         FlutterError.reportError(FlutterErrorDetails(exception: error, stack: stack, library: 'workout screen', context: ErrorDescription('while ${on ? 'enabling' : 'disabling'} keep-screen-on')));
       }),
     );
+  }
+
+  var _wasResting = false;
+
+  // Chime when a rest countdown runs out on its own (skipping it stays silent).
+  void _checkRestFinished() {
+    final session = ref.read(trainingSessionProvider);
+    final deadline = session.restEndsAt;
+    final resting = deadline != null && deadline.isAfter(clock.now().toUtc());
+    if (_wasResting && !resting && deadline != null) ref.read(sessionCuesProvider).restFinished();
+    _wasResting = resting;
   }
 
   // Warms the cache for this drill and the next so their demos are ready when opened.
@@ -170,7 +187,7 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> {
   Widget build(BuildContext context) {
     final session = ref.watch(trainingSessionProvider);
     final elapsed = session.elapsedSeconds;
-    final remaining = session.restEndsAt == null ? 0 : (session.restEndsAt!.difference(DateTime.now().toUtc()).inMilliseconds / 1000).ceil().clamp(0, 600);
+    final remaining = session.restEndsAt == null ? 0 : (session.restEndsAt!.difference(clock.now().toUtc()).inMilliseconds / 1000).ceil().clamp(0, 600);
     final totalSets = session.drills.fold<int>(0, (sum, drill) => sum + drill.defaultPrescription.sets);
     final pillars = HockeyTheme.dark.extension<PillarColors>()!;
     final textScale = MediaQuery.textScalerOf(context).scale(1);
@@ -652,13 +669,12 @@ class _ActiveDrill extends ConsumerStatefulWidget {
 class _ActiveDrillState extends ConsumerState<_ActiveDrill> with AutomaticKeepAliveClientMixin {
   Timer? _timer;
   int _count = 0;
-  int _remaining = 0;
   bool _completed = false;
-  bool _running = false;
+  late final SetCountdown _countdown = SetCountdown(totalSeconds: drill.defaultPrescription.seconds ?? 1);
 
   Drill get drill => widget.session.drill;
   bool get _timed => drill.trackingType == TrackingType.duration || drill.trackingType == TrackingType.density;
-  bool get _canLog => !_timed || _remaining == 0;
+  bool get _canLog => !_timed || _countdown.isDone;
   bool get _drillComplete => widget.session.setIndex >= drill.defaultPrescription.sets;
   int? get _nextIncomplete {
     final session = widget.session;
@@ -675,16 +691,15 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> with AutomaticKeepAl
   @override
   void didUpdateWidget(_ActiveDrill oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!widget.active && _running) {
+    if (!widget.active && _countdown.isActive) {
+      _countdown.pause(clock.now().toUtc());
       _timer?.cancel();
-      _running = false;
     }
   }
 
   @override
   void initState() {
     super.initState();
-    _remaining = drill.defaultPrescription.seconds ?? 0;
     _count = drill.trackingType == TrackingType.volume ? drill.defaultPrescription.reps! : 0;
   }
 
@@ -695,21 +710,36 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> with AutomaticKeepAl
   }
 
   void _toggleTimer() {
-    if (_running) {
+    final now = clock.now().toUtc();
+    if (_countdown.isActive) {
+      _countdown.pause(now);
       _timer?.cancel();
-      setState(() => _running = false);
+      setState(() {});
       return;
     }
-    setState(() => _running = true);
-    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      setState(() {
-        _remaining--;
-        if (_remaining == 0) {
-          _running = false;
-          _timer?.cancel();
-        }
-      });
+    _handle(_countdown.start(now));
+    setState(() {});
+    // Ticking often keeps the display and the 3-2-1 beats accurate; the countdown itself uses the clock.
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(milliseconds: 200), (_) {
+      _handle(_countdown.tick(clock.now().toUtc()));
+      if (!_countdown.isActive) _timer?.cancel();
+      if (mounted) setState(() {});
     });
+  }
+
+  void _handle(List<CountdownEvent> events) {
+    final cues = ref.read(sessionCuesProvider);
+    for (final event in events) {
+      switch (event) {
+        case LeadInTick(:final secondsLeft):
+          cues.leadInTick(secondsLeft);
+        case CountdownStarted():
+          cues.setStarted();
+        case CountdownFinished():
+          cues.setFinished();
+      }
+    }
   }
 
   void _log() {
@@ -787,15 +817,35 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> with AutomaticKeepAl
             const TrainingCard(child: Text('Drill done. Swipe to the next drill or open the workout overview.'))
           else if (_timed) ...[
             Center(
-              child: TrainingProgressRing(
-                progress: 1 - _remaining / drill.defaultPrescription.seconds!,
-                value: '${_remaining ~/ 60}:${(_remaining % 60).toString().padLeft(2, '0')}',
-                label: _remaining == 0 ? 'Set complete' : 'seconds remaining',
+              child: Semantics(
+                liveRegion: _countdown.phase == CountdownPhase.leadIn,
+                child: TrainingProgressRing(
+                  progress: _countdown.phase == CountdownPhase.leadIn ? 0 : _countdown.progress,
+                  value: _countdown.phase == CountdownPhase.leadIn
+                      ? '${_countdown.leadInSecondsLeft}'
+                      : '${_countdown.remainingSeconds ~/ 60}:${(_countdown.remainingSeconds % 60).toString().padLeft(2, '0')}',
+                  label: switch (_countdown.phase) {
+                    CountdownPhase.leadIn => 'Get ready',
+                    CountdownPhase.done => 'Set complete',
+                    CountdownPhase.paused => 'Paused',
+                    _ => 'seconds remaining',
+                  },
+                ),
               ),
             ),
             const SizedBox(height: AppSpacing.md),
-            if (_remaining > 0) OutlinedButton.icon(onPressed: _toggleTimer, icon: Icon(_running ? Icons.pause : Icons.play_arrow), label: Text(_running ? 'Pause timer' : 'Start timer')),
-            if (type == TrackingType.density && _remaining == 0) ...[const SizedBox(height: AppSpacing.md), _counter('Shots in this window', 999)],
+            if (!_countdown.isDone)
+              OutlinedButton.icon(
+                onPressed: _toggleTimer,
+                icon: Icon(_countdown.isActive ? Icons.pause : Icons.play_arrow),
+                label: Text(switch (_countdown.phase) {
+                  CountdownPhase.leadIn => 'Cancel',
+                  CountdownPhase.running => 'Pause timer',
+                  CountdownPhase.paused => 'Resume timer',
+                  _ => 'Start timer',
+                }),
+              ),
+            if (type == TrackingType.density && _countdown.isDone) ...[const SizedBox(height: AppSpacing.md), _counter('Shots in this window', 999)],
           ] else if (type == TrackingType.binary)
             SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
@@ -814,7 +864,7 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> with AutomaticKeepAl
             const SizedBox(height: AppSpacing.md),
             Text('${(_count / drill.defaultPrescription.reps! * 100).round()}% accuracy', textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
           ],
-          if (type == TrackingType.density && _remaining == 0) ...[
+          if (type == TrackingType.density && _countdown.isDone) ...[
             const SizedBox(height: AppSpacing.md),
             Text('${(_count / drill.defaultPrescription.seconds! * 60).round()} shots / min', textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
           ],

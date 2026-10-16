@@ -9,6 +9,7 @@ import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_shapes.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/drills/models/drill.dart';
+import '../features/session/session_cues.dart';
 import '../features/settings/appearance_settings_controller.dart';
 import 'sample_data.dart';
 import 'app_page.dart';
@@ -831,6 +832,18 @@ class _MePageState extends ConsumerState<MePage> {
             for (final option in AppAppearance.values)
               ChoiceChip(label: Text(option.label), selected: option == appearance, onSelected: (_) => unawaited(ref.read(appearanceProvider.notifier).setAppearance(option))),
           ],
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        const SectionHeading(title: 'Workout'),
+        const SizedBox(height: AppSpacing.sm),
+        TrainingCard(
+          child: SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Sounds and haptics'),
+            subtitle: const Text('Countdown beeps and rest chimes. They play alongside your music and stay quiet on silent.'),
+            value: ref.watch(workoutCuesEnabledProvider),
+            onChanged: (value) => unawaited(ref.read(workoutCuesEnabledProvider.notifier).set(value)),
+          ),
         ),
         const SizedBox(height: AppSpacing.xl),
         TrainingCard(

@@ -15,7 +15,7 @@ import '../support/test_catalog.dart';
 Future<ProviderContainer> mountApp(WidgetTester tester, {String appearance = 'light'}) async {
   SharedPreferences.setMockInitialValues({'appearance': appearance});
   final preferences = await SharedPreferences.getInstance();
-  final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride]);
+  final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride]);
   addTearDown(container.dispose);
   await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));
   await tester.pumpAndSettle();
@@ -313,7 +313,8 @@ void main() {
         await tester.ensureVisible(startTimer);
         await tester.pumpAndSettle();
         await tester.tap(startTimer);
-        await tester.pump(Duration(seconds: drill.defaultPrescription.seconds!));
+        await tester.pump(Duration(seconds: 3 + drill.defaultPrescription.seconds!));
+        await tester.pump(const Duration(milliseconds: 300));
         await tester.pumpAndSettle();
       }
       if (drill.trackingType == TrackingType.binary) {
@@ -581,17 +582,17 @@ void main() {
     await tester.ensureVisible(find.text('Start timer'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Start timer'));
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 4));
     await openDrillDetails(tester);
     await tester.pump(const Duration(seconds: 5));
     await tester.tap(find.text('Back to workout'));
     await tester.pumpAndSettle();
     await revealWorkoutDrill(tester);
-    await tester.ensureVisible(find.text('Start timer'));
+    await tester.ensureVisible(find.text('Resume timer'));
     await tester.pumpAndSettle();
     // The five seconds spent on the details screen must not count down.
     expect(find.textContaining(RegExp(r'^1:5[89]$')), findsOneWidget);
-    expect(find.text('Start timer'), findsOneWidget);
+    expect(find.text('Resume timer'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -797,7 +798,7 @@ void main() {
     await tester.ensureVisible(find.text('Start timer'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Start timer'));
-    await tester.pump(const Duration(seconds: 1));
+    await tester.pump(const Duration(seconds: 4));
     expect(find.text('0:02'), findsOneWidget);
     returnWorkoutSheetToTop(tester);
     await tester.pumpAndSettle();
@@ -812,10 +813,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('0:02'), findsOneWidget);
     await revealWorkoutDrill(tester);
-    await tester.ensureVisible(find.text('Start timer'));
+    await tester.ensureVisible(find.text('Resume timer'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Start timer'));
-    await tester.pump(const Duration(seconds: 2));
+    await tester.tap(find.text('Resume timer'));
+    await tester.pump(const Duration(seconds: 3));
     await tester.pumpAndSettle();
     expect(find.text('0:00'), findsWidgets);
     await tapWorkoutAction(tester, 'Log set');

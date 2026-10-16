@@ -51,6 +51,8 @@ dependencies:
   video_player: ^2.14.1
   path_provider: ^2.1.6
   wakelock_plus: ^1.8.1
+  audioplayers: ^6.8.1
+  clock: ^1.1.3
 
 dev_dependencies:
   flutter_test:
@@ -114,6 +116,7 @@ flutter:
     - assets/fonts/OFL.txt
     - assets/brand/HTH_TEXT_ONLY.png
     - tool/seed/drills.json
+    - assets/audio/
 
   fonts:
     - family: Inter

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:how_to_hockey/features/drills/drill_catalog.dart';
 import 'package:how_to_hockey/features/drills/drill_media.dart';
+import 'package:how_to_hockey/features/session/session_cues.dart';
 
 /// Widget tests cannot finish real asset I/O under fake time, so they read the
 /// same catalog file from disk and provide it directly.
@@ -18,3 +19,23 @@ class _NoMedia implements DrillMediaSource {
 
 /// Keeps widget tests off Firebase Storage; drills simply show their illustrated placeholder.
 final testMediaOverride = drillMediaSourceProvider.overrideWithValue(_NoMedia());
+
+/// Records which cues fired so tests never touch real audio or haptics.
+class RecordingCues implements SessionCues {
+  final events = <String>[];
+
+  @override
+  void leadInTick(int secondsLeft) => events.add('tick$secondsLeft');
+
+  @override
+  void setStarted() => events.add('start');
+
+  @override
+  void setFinished() => events.add('stop');
+
+  @override
+  void restFinished() => events.add('rest');
+}
+
+final testCues = RecordingCues();
+final testCuesOverride = sessionCuesProvider.overrideWithValue(testCues);
