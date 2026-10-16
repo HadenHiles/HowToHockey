@@ -86,17 +86,22 @@ class FocusPage extends ConsumerWidget {
       action: FilledButton(onPressed: () => context.push('/routine'), child: const Text('View my workout')),
       children: [
         ArenaPanel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.tune, color: theme.colorScheme.primary, size: 28),
-              const SizedBox(height: AppSpacing.md),
-              Text('BUILD A SMARTER SESSION', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary, letterSpacing: 1)),
-              const SizedBox(height: AppSpacing.xs),
-              Text('Your game.\nYour focus.', style: theme.textTheme.headlineMedium),
-              const SizedBox(height: AppSpacing.xs),
-              Text('Set priorities for a sample plan. Workout generation is coming later.', style: theme.textTheme.bodyMedium),
-            ],
+          child: Builder(
+            builder: (context) {
+              final theme = Theme.of(context);
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.tune, color: theme.colorScheme.primary, size: 28),
+                  const SizedBox(height: AppSpacing.md),
+                  Text('BUILD A SMARTER SESSION', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary, letterSpacing: 1)),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text('Your game.\nYour focus.', style: theme.textTheme.headlineMedium),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text('Set priorities for a sample plan. Workout generation is coming later.', style: theme.textTheme.bodyMedium),
+                ],
+              );
+            },
           ),
         ),
         const SizedBox(height: AppSpacing.xl),

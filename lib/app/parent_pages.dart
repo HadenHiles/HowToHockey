@@ -157,7 +157,6 @@ class ParentChildPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final kid = ref.watch(parentKidsProvider).where((k) => k.id == kidId).firstOrNull;
     if (kid == null) {
       return AppPage(
@@ -172,17 +171,22 @@ class ParentChildPage extends ConsumerWidget {
       actions: [IconButton(tooltip: 'Back to Kids', icon: const Icon(Icons.close), onPressed: () => context.go('/parent/kids'))],
       children: [
         ArenaPanel(
-          child: Row(
-            children: [
-              CircleAvatar(
-                radius: 32,
-                backgroundColor: theme.colorScheme.primary,
-                foregroundColor: theme.colorScheme.onPrimary,
-                child: Text(kid.initials, style: theme.textTheme.titleLarge),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              Expanded(child: Text(kid.team ?? 'Not on a team yet', style: theme.textTheme.titleMedium)),
-            ],
+          child: Builder(
+            builder: (context) {
+              final theme = Theme.of(context);
+              return Row(
+                children: [
+                  CircleAvatar(
+                    radius: 32,
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
+                    child: Text(kid.initials, style: theme.textTheme.titleLarge),
+                  ),
+                  const SizedBox(width: AppSpacing.md),
+                  Expanded(child: Text(kid.team ?? 'Not on a team yet', style: theme.textTheme.titleMedium)),
+                ],
+              );
+            },
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
@@ -278,7 +282,6 @@ class KidPairingPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
     final kid = ref.watch(parentKidsProvider).where((k) => k.id == kidId).firstOrNull;
     return AppPage(
       title: 'Pair a kid device',
@@ -286,15 +289,20 @@ class KidPairingPage extends ConsumerWidget {
       actions: [IconButton(tooltip: 'Back', icon: const Icon(Icons.close), onPressed: () => context.go(kid == null ? '/parent/kids' : '/parent/kids/${kid.id}'))],
       children: [
         ArenaPanel(
-          child: Column(
-            children: [
-              Semantics(
-                label: 'Sample pairing code 4 8 2 9 1 7, not valid',
-                child: ExcludeSemantics(child: Text('482 917', style: theme.textTheme.displaySmall)),
-              ),
-              const SizedBox(height: AppSpacing.xs),
-              Text('SAMPLE CODE · NOT VALID', style: theme.textTheme.labelSmall),
-            ],
+          child: Builder(
+            builder: (context) {
+              final theme = Theme.of(context);
+              return Column(
+                children: [
+                  Semantics(
+                    label: 'Sample pairing code 4 8 2 9 1 7, not valid',
+                    child: ExcludeSemantics(child: Text('482 917', style: theme.textTheme.displaySmall)),
+                  ),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text('SAMPLE CODE · NOT VALID', style: theme.textTheme.labelSmall),
+                ],
+              );
+            },
           ),
         ),
         const SizedBox(height: AppSpacing.md),

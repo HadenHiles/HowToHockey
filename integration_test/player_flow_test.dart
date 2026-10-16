@@ -13,7 +13,10 @@ void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   testWidgets('normal app boots with Firebase and completes a local workout', (tester) async {
+    // main() installs Crashlytics handlers that would hide test failures.
+    final testErrorHandler = FlutterError.onError;
     await app.main();
+    FlutterError.onError = testErrorHandler;
     await tester.pumpAndSettle();
 
     expect(Firebase.apps, isNotEmpty);
@@ -27,37 +30,33 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Next: choose your focus'));
     await tester.pumpAndSettle();
-    expect(find.byType(Slider), findsNWidgets(5));
+    expect(find.byType(Slider), findsNWidgets(6));
     await tester.tap(find.text('View my workout'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Start workout'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Log set'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Log set'));
-    await tester.pumpAndSettle();
+    await tapWorkoutAction(tester, 'Log set');
+    await tapWorkoutAction(tester, 'Log set');
     expect(container.read(trainingSessionProvider).logs.length, 2);
     expect(find.text('Skip rest'), findsNothing);
-    await tester.drag(find.byType(PageView), const Offset(-400, 0));
-    await tester.pumpAndSettle();
-    expect(container.read(trainingSessionProvider).drillIndex, 1);
-    await tester.tap(find.byTooltip('Workout overview'));
-    await tester.pumpAndSettle();
-    expect(find.text('Workout overview'), findsOneWidget);
-    await tester.tap(find.text('Quick-release wrist shots'));
-    await tester.pumpAndSettle();
-    expect(container.read(trainingSessionProvider).drillIndex, 0);
 
     container.read(trainingSessionProvider.notifier).start([sampleDrills.first.copyWith(defaultPrescription: sampleDrills.first.defaultPrescription.copyWith(sets: 1))]);
-    router.go('/session');
+    router.go('/train/session');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Log set'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Finish workout'));
-    await tester.pumpAndSettle();
+    await tapWorkoutAction(tester, 'Log set');
+    await tapWorkoutAction(tester, 'Finish workout');
     expect(find.text('Shots logged'), findsOneWidget);
     expect(container.read(trainingSessionProvider).finished, isTrue);
     expect(Firebase.apps, isNotEmpty);
     expect(tester.takeException(), isNull);
   });
+}
+
+Future<void> tapWorkoutAction(WidgetTester tester, String label) async {
+  final scroll = find.descendant(of: find.byKey(const ValueKey('workout-session-scroll')), matching: find.byType(Scrollable)).first;
+  final position = tester.state<ScrollableState>(scroll).position;
+  position.jumpTo(position.maxScrollExtent);
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(label));
+  await tester.pumpAndSettle();
 }

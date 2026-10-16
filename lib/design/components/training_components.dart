@@ -214,6 +214,7 @@ class WeeklyTrainingChart extends StatelessWidget {
     label: 'Weekly training chart. Monday 42 percent, Tuesday 72 percent, Wednesday 54 percent, Thursday 90 percent, Friday 62 percent, Saturday 30 percent, Sunday 76 percent.',
     child: ExcludeSemantics(
       child: SizedBox(
+        width: double.infinity,
         height: 98,
         child: CustomPaint(
           painter: _WeeklyTrainingPainter(

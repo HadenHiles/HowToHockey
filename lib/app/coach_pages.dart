@@ -324,19 +324,23 @@ class _CoachTeamPageState extends State<CoachTeamPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return AppPage(
       title: 'Team',
       children: [
         const _Notice('Team settings and invites are not connected yet. Changes here last only until restart.'),
         const SizedBox(height: AppSpacing.xl),
         ArenaPanel(
-          child: Column(
-            children: [
-              Text('NOVAS-4821', style: theme.textTheme.displaySmall),
-              const SizedBox(height: AppSpacing.xs),
-              Text('SAMPLE JOIN CODE · NOT VALID', style: theme.textTheme.labelSmall),
-            ],
+          child: Builder(
+            builder: (context) {
+              final theme = Theme.of(context);
+              return Column(
+                children: [
+                  Text('NOVAS-4821', style: theme.textTheme.displaySmall),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text('SAMPLE JOIN CODE · NOT VALID', style: theme.textTheme.labelSmall),
+                ],
+              );
+            },
           ),
         ),
         const SizedBox(height: AppSpacing.sm),

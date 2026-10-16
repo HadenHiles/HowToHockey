@@ -158,32 +158,42 @@ class ProgressPage extends StatelessWidget {
       subtitle: 'Your work is adding up.',
       children: [
         ArenaPanel(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('THIS SEASON', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary, letterSpacing: 1.2)),
-              const SizedBox(height: AppSpacing.sm),
-              Text('2,480', style: theme.textTheme.displayMedium),
-              Text('SHOTS ON GOAL', style: theme.textTheme.labelMedium),
-              const SizedBox(height: AppSpacing.xl),
-              const WeeklyTrainingChart(),
-              const SizedBox(height: AppSpacing.md),
-              Text('140 shots this week  ·  18.5 hours on ice', style: theme.textTheme.bodySmall),
-            ],
+          child: Builder(
+            builder: (context) {
+              final theme = Theme.of(context);
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('THIS SEASON', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary, letterSpacing: 1.2)),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text('2,480', style: theme.textTheme.displayMedium),
+                  Text('SHOTS ON GOAL', style: theme.textTheme.labelMedium),
+                  const SizedBox(height: AppSpacing.xl),
+                  const WeeklyTrainingChart(),
+                  const SizedBox(height: AppSpacing.md),
+                  Text('140 shots this week  ·  18.5 hours on ice', style: theme.textTheme.bodySmall),
+                ],
+              );
+            },
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Your skill map'),
         const SizedBox(height: AppSpacing.md),
         ArenaPanel(
-          child: Column(
-            children: [
-              const SkillRadar(scores: [82, 68, 74, 57, 65, 61]),
-              const SizedBox(height: AppSpacing.md),
-              Text('ACCURACY IS YOUR TOP SKILL', style: theme.textTheme.labelMedium?.copyWith(color: pillars.shotAccuracy, letterSpacing: .6)),
-              const SizedBox(height: AppSpacing.xs),
-              Text('One more endurance session rounds out your game.', style: theme.textTheme.bodySmall, textAlign: TextAlign.center),
-            ],
+          child: Builder(
+            builder: (context) {
+              final theme = Theme.of(context);
+              return Column(
+                children: [
+                  const SkillRadar(scores: [82, 68, 74, 57, 65, 61]),
+                  const SizedBox(height: AppSpacing.md),
+                  Text('ACCURACY IS YOUR TOP SKILL', style: theme.textTheme.labelMedium?.copyWith(color: pillars.shotAccuracy, letterSpacing: .6)),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text('One more endurance session rounds out your game.', style: theme.textTheme.bodySmall, textAlign: TextAlign.center),
+                ],
+              );
+            },
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
@@ -442,24 +452,29 @@ class _TeamPageState extends State<TeamPage> {
       const SectionHeading(title: 'Weekly leaderboard'),
       const SizedBox(height: AppSpacing.md),
       ArenaPanel(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
+        child: Builder(
+          builder: (context) {
+            final theme = Theme.of(context);
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(
-                  child: Text('ACTIVE TRAINING TIME', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary, letterSpacing: .8)),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text('ACTIVE TRAINING TIME', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary, letterSpacing: .8)),
+                    ),
+                    Text('THIS WEEK', style: theme.textTheme.labelSmall),
+                  ],
                 ),
-                Text('THIS WEEK', style: theme.textTheme.labelSmall),
+                const SizedBox(height: AppSpacing.md),
+                const _LeaderboardRow(rank: 1, name: 'Morgan S.', minutes: 92),
+                const _LeaderboardRow(rank: 2, name: 'Jamie H.', minutes: 76, isCurrentPlayer: true),
+                const _LeaderboardRow(rank: 3, name: 'Alex R.', minutes: 64),
+                const SizedBox(height: AppSpacing.sm),
+                Text('Only verified active training time counts. Sample standings.', style: theme.textTheme.bodySmall),
               ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            const _LeaderboardRow(rank: 1, name: 'Morgan S.', minutes: 92),
-            const _LeaderboardRow(rank: 2, name: 'Jamie H.', minutes: 76, isCurrentPlayer: true),
-            const _LeaderboardRow(rank: 3, name: 'Alex R.', minutes: 64),
-            const SizedBox(height: AppSpacing.sm),
-            Text('Only verified active training time counts. Sample standings.', style: theme.textTheme.bodySmall),
-          ],
+            );
+          },
         ),
       ),
       const SizedBox(height: AppSpacing.xl),
@@ -495,19 +510,24 @@ class _TeamPageState extends State<TeamPage> {
     final theme = Theme.of(context);
     return [
       ArenaPanel(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Icon(Icons.groups_outlined, size: 44, color: theme.colorScheme.primary),
-            const SizedBox(height: AppSpacing.md),
-            Text('Your next team starts here', style: theme.textTheme.headlineSmall),
-            const SizedBox(height: AppSpacing.xs),
-            const Text('Discover a public team or review an invite from your coach. Team membership is managed per player profile.'),
-            const SizedBox(height: AppSpacing.xl),
-            FilledButton.icon(onPressed: () => _showTeamDiscovery(context), icon: const Icon(Icons.search), label: const Text('Find a team')),
-            const SizedBox(height: AppSpacing.sm),
-            OutlinedButton.icon(onPressed: () => _showJoinInvite(context), icon: const Icon(Icons.key_outlined), label: const Text('Join with code')),
-          ],
+        child: Builder(
+          builder: (context) {
+            final theme = Theme.of(context);
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Icon(Icons.groups_outlined, size: 44, color: theme.colorScheme.primary),
+                const SizedBox(height: AppSpacing.md),
+                Text('Your next team starts here', style: theme.textTheme.headlineSmall),
+                const SizedBox(height: AppSpacing.xs),
+                const Text('Discover a public team or review an invite from your coach. Team membership is managed per player profile.'),
+                const SizedBox(height: AppSpacing.xl),
+                FilledButton.icon(onPressed: () => _showTeamDiscovery(context), icon: const Icon(Icons.search), label: const Text('Find a team')),
+                const SizedBox(height: AppSpacing.sm),
+                OutlinedButton.icon(onPressed: () => _showJoinInvite(context), icon: const Icon(Icons.key_outlined), label: const Text('Join with code')),
+              ],
+            );
+          },
         ),
       ),
       const SizedBox(height: AppSpacing.xl),
@@ -532,17 +552,22 @@ class _TeamPageState extends State<TeamPage> {
     final theme = Theme.of(context);
     return [
       ArenaPanel(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Icon(Icons.lock_outline, size: 44, color: theme.colorScheme.primary),
-            const SizedBox(height: AppSpacing.md),
-            Text('Members only', style: theme.textTheme.headlineSmall),
-            const SizedBox(height: AppSpacing.xs),
-            const Text('Locker room posts, homework, and team standings unlock after this player profile joins the team.'),
-            const SizedBox(height: AppSpacing.xl),
-            FilledButton(onPressed: () => setState(() => _previewState = _TeamPreviewState.noTeam), child: const Text('View joining options')),
-          ],
+        child: Builder(
+          builder: (context) {
+            final theme = Theme.of(context);
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Icon(Icons.lock_outline, size: 44, color: theme.colorScheme.primary),
+                const SizedBox(height: AppSpacing.md),
+                Text('Members only', style: theme.textTheme.headlineSmall),
+                const SizedBox(height: AppSpacing.xs),
+                const Text('Locker room posts, homework, and team standings unlock after this player profile joins the team.'),
+                const SizedBox(height: AppSpacing.xl),
+                FilledButton(onPressed: () => setState(() => _previewState = _TeamPreviewState.noTeam), child: const Text('View joining options')),
+              ],
+            );
+          },
         ),
       ),
       const SizedBox(height: AppSpacing.xl),
@@ -745,27 +770,32 @@ class _MePageState extends ConsumerState<MePage> {
             borderRadius: BorderRadius.circular(AppRadii.card),
             onTap: _showProfileSwitcher,
             child: ArenaPanel(
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    radius: 32,
-                    backgroundColor: theme.colorScheme.primary,
-                    foregroundColor: theme.colorScheme.onPrimary,
-                    child: Text(profile.initials, style: theme.textTheme.titleLarge),
-                  ),
-                  const SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(profile.name, style: theme.textTheme.headlineSmall),
-                        const SizedBox(height: AppSpacing.xs),
-                        Text('PLAYER  ·  SAMPLE PROFILE', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
-                      ],
-                    ),
-                  ),
-                  Icon(Icons.swap_horiz, color: theme.colorScheme.onSurfaceVariant),
-                ],
+              child: Builder(
+                builder: (context) {
+                  final theme = Theme.of(context);
+                  return Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 32,
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        child: Text(profile.initials, style: theme.textTheme.titleLarge),
+                      ),
+                      const SizedBox(width: AppSpacing.md),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(profile.name, style: theme.textTheme.headlineSmall),
+                            const SizedBox(height: AppSpacing.xs),
+                            Text('PLAYER  ·  SAMPLE PROFILE', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                          ],
+                        ),
+                      ),
+                      Icon(Icons.swap_horiz, color: theme.colorScheme.onSurfaceVariant),
+                    ],
+                  );
+                },
               ),
             ),
           ),
