@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../features/drills/models/drill.dart';
 import '../features/drills/set_calculations.dart';
 import 'sample_data.dart';
+import 'workout_history.dart';
 import '../features/settings/appearance_settings_controller.dart';
 
 typedef DrillRestSettings = ({bool enabled, int seconds});
@@ -257,7 +258,9 @@ class TrainingSessionNotifier extends Notifier<TrainingSession> {
 
   void dismissFinishedWorkout() {
     if (!state.finished) throw StateError('Finish all sets before dismissing the workout.');
+    final finished = state;
     _update(state.copyWith(dismissed: true));
+    ref.read(workoutHistoryProvider.notifier).add(finished);
   }
 
   void adjustRest(int seconds) {

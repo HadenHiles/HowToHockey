@@ -85,7 +85,7 @@ void main() {
 
     expect(find.byType(SkillRadar), findsOneWidget);
     expect(find.text('Personal bests'), findsOneWidget);
-    expect(find.text('Lifetime totals'), findsOneWidget);
+    expect(find.text('Your totals'), findsOneWidget);
 
     await tester.ensureVisible(find.text('Share your progress'));
     await tester.pumpAndSettle();

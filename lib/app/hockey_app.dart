@@ -161,6 +161,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/rest', redirect: (_, _) => '/train/session'),
       GoRoute(path: '/session', redirect: (_, _) => '/train/session'),
       GoRoute(path: '/summary', builder: (_, _) => const SummaryPage()),
+      GoRoute(
+        path: '/history/:id',
+        builder: (_, state) => SummaryPage(workoutId: state.pathParameters['id']),
+      ),
     ],
     errorBuilder: (context, state) => AppPage(
       title: 'Screen not found',

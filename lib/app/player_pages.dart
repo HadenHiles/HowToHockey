@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -15,6 +16,7 @@ import '../features/settings/appearance_settings_controller.dart';
 import 'sample_data.dart';
 import 'app_page.dart';
 import 'training_state.dart';
+import 'workout_history.dart';
 
 class TrainPage extends ConsumerWidget {
   const TrainPage({super.key});
@@ -134,11 +136,13 @@ class DrillListCard extends StatelessWidget {
   }
 }
 
-class ProgressPage extends StatelessWidget {
+class ProgressPage extends ConsumerWidget {
   const ProgressPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final history = ref.watch(workoutHistoryProvider);
+    final totals = totalsFor(history, clock.now());
     final theme = Theme.of(context);
     final pillars = theme.extension<PillarColors>()!;
     return AppPage(
@@ -197,70 +201,59 @@ class ProgressPage extends StatelessWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.xl),
-        const SectionHeading(title: 'Lifetime totals'),
+        const SectionHeading(title: 'Your totals'),
+        const SizedBox(height: AppSpacing.sm),
+        const Text('From the workouts saved on this device.'),
         const SizedBox(height: AppSpacing.md),
-        const ArenaPanel(
+        ArenaPanel(
           child: Wrap(
             spacing: AppSpacing.xl,
             runSpacing: AppSpacing.md,
             children: [
-              _HistoryStat(value: '18.5 h', label: 'active hours'),
-              _HistoryStat(value: '32', label: 'workouts'),
-              _HistoryStat(value: '140', label: 'shots this week'),
+              _HistoryStat(value: totals.activeSeconds >= 3600 ? '${(totals.activeSeconds / 3600).toStringAsFixed(1)} h' : '${(totals.activeSeconds / 60).round()} min', label: 'active time'),
+              _HistoryStat(value: '${totals.workouts}', label: totals.workouts == 1 ? 'workout' : 'workouts'),
+              _HistoryStat(value: '${totals.shotsThisWeek}', label: 'shots this week'),
             ],
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Recent training'),
         const SizedBox(height: AppSpacing.md),
-        TrainingCard(
-          onTap: () => showModalBottomSheet<void>(
-            context: context,
-            useRootNavigator: true,
-            isScrollControlled: true,
-            showDragHandle: true,
-            builder: (context) => SafeArea(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.screen),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Quick hands, clean release', style: Theme.of(context).textTheme.headlineSmall),
-                    const SizedBox(height: AppSpacing.xs),
-                    Text('EXAMPLE SESSION  ·  YESTERDAY', style: Theme.of(context).textTheme.labelSmall),
-                    const SizedBox(height: AppSpacing.md),
-                    const Text('24 active min · 80 shots · 4 drills · 6 sets'),
-                    const SizedBox(height: AppSpacing.md),
-                    const Text('This is an example session. Your workouts aren\'t saved to history yet.'),
-                  ],
-                ),
+        if (history.isEmpty)
+          const TrainingCard(child: Text('No workouts yet. Finish one and it shows up here.'))
+        else
+          for (final workout in history.take(5)) ...[
+            TrainingCard(
+              onTap: () => context.push('/history/${workoutId(workout)}'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(child: Text(workoutTitle(workout), style: Theme.of(context).textTheme.titleLarge)),
+                      Icon(Icons.arrow_outward, color: Theme.of(context).colorScheme.primary, size: 18),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  Text(
+                    '${workoutDateLabel(workout.startedAt!.toLocal(), clock.now()).toUpperCase()}  ·  ${(workout.activeSeconds / 60).round()} ACTIVE MIN',
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  Wrap(
+                    spacing: AppSpacing.xl,
+                    runSpacing: AppSpacing.sm,
+                    children: [
+                      _HistoryStat(value: '${shotsLogged(workout)}', label: 'shots'),
+                      _HistoryStat(value: '${workout.drills.length}', label: workout.drills.length == 1 ? 'drill' : 'drills'),
+                      _HistoryStat(value: '${workout.logs.length}', label: workout.logs.length == 1 ? 'set' : 'sets'),
+                    ],
+                  ),
+                ],
               ),
             ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(child: Text('Quick hands, clean release', style: Theme.of(context).textTheme.titleLarge)),
-                  Icon(Icons.arrow_outward, color: Theme.of(context).colorScheme.primary, size: 18),
-                ],
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              Text('YESTERDAY  ·  24 ACTIVE MIN', style: Theme.of(context).textTheme.labelSmall),
-              const SizedBox(height: AppSpacing.md),
-              const Wrap(
-                spacing: AppSpacing.xl,
-                runSpacing: AppSpacing.sm,
-                children: [
-                  _HistoryStat(value: '80', label: 'shots'),
-                  _HistoryStat(value: '4', label: 'drills'),
-                  _HistoryStat(value: '6', label: 'sets'),
-                ],
-              ),
-            ],
-          ),
-        ),
+            const SizedBox(height: AppSpacing.sm),
+          ],
         const SizedBox(height: AppSpacing.xl),
         TrainingCard(
           onTap: () => showModalBottomSheet<void>(
@@ -322,7 +315,7 @@ class ProgressPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        Text('You\'re looking at example numbers. Your workouts aren\'t saved to history yet.', style: Theme.of(context).textTheme.bodySmall),
+        Text('The skill map, personal bests and weekly chart are example numbers for now. Your totals and recent training above are real.', style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }

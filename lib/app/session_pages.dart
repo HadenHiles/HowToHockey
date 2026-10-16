@@ -23,6 +23,7 @@ import '../features/session/rest_notifications.dart';
 import '../features/session/session_cues.dart';
 import '../features/session/set_countdown.dart';
 import 'sample_data.dart';
+import 'workout_history.dart';
 import 'app_page.dart';
 import 'training_state.dart';
 
@@ -1049,12 +1050,24 @@ class _CountDialogState extends State<_CountDialog> {
 }
 
 class SummaryPage extends ConsumerWidget {
-  const SummaryPage({super.key});
+  const SummaryPage({this.workoutId, super.key});
+
+  /// Set to show a saved workout from history instead of the one just finished.
+  final String? workoutId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final session = ref.watch(trainingSessionProvider);
+    final saved = workoutId != null;
+    final session = saved ? ref.watch(workoutHistoryProvider.notifier).byId(workoutId!) ?? const TrainingSession(drills: []) : ref.watch(trainingSessionProvider);
+    ref.watch(workoutHistoryProvider);
     final theme = Theme.of(context);
+    if (saved && session.drills.isEmpty) {
+      return AppPage(
+        title: 'Workout not found',
+        action: FilledButton(onPressed: () => context.go('/progress'), child: const Text('Back to Progress')),
+        children: const [Text('This workout isn\'t in your history anymore.')],
+      );
+    }
     if (!session.finished) {
       return AppPage(
         title: 'No finished workout yet',
@@ -1062,16 +1075,11 @@ class SummaryPage extends ConsumerWidget {
         children: const [Text('Finish a workout and your summary shows up here.')],
       );
     }
-    final shots = session.logs
-        .where((entry) {
-          final pillar = session.drills.firstWhere((drill) => drill.id == entry.drillId).pillar;
-          return pillar == SkillPillar.shotAccuracy || pillar == SkillPillar.shotPower;
-        })
-        .fold(0, (total, entry) => total + (entry.log.reps ?? 0));
+    final shots = shotsLogged(session);
     return AppPage(
-      title: 'You showed up.',
-      subtitle: 'That’s how you get better.',
-      action: FilledButton(onPressed: () => context.go('/train'), child: const Text('Back to Train')),
+      title: saved ? 'Workout summary' : 'You showed up.',
+      subtitle: saved ? '${workoutDateLabel(session.startedAt!.toLocal(), clock.now())} · ${workoutTitle(session)}' : 'That’s how you get better.',
+      action: FilledButton(onPressed: () => context.go(saved ? '/progress' : '/train'), child: Text(saved ? 'Back to Progress' : 'Back to Train')),
       children: [
         Icon(Icons.check_circle_outline, size: 64, color: theme.colorScheme.primary),
         const SizedBox(height: AppSpacing.xl),
@@ -1114,7 +1122,7 @@ class SummaryPage extends ConsumerWidget {
           const SizedBox(height: AppSpacing.sm),
         ],
         const SizedBox(height: AppSpacing.md),
-        const Text('Your results are saved on this device for now. History, lifetime stats and team updates aren\'t live yet.'),
+        const Text('Saved to your history on this device. Syncing to your account and team updates aren\'t live yet.'),
       ],
     );
   }
