@@ -60,7 +60,7 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> {
     final drills = ref.read(trainingSessionProvider).drills;
     final source = ref.read(drillMediaSourceProvider);
     for (final i in [index, index + 1]) {
-      if (i >= 0 && i < drills.length) unawaited(source.prefetch(drills[i]));
+      if (i >= 0 && i < drills.length) unawaited(source.prefetch(drills[i].mediaAssetPath));
     }
   }
 

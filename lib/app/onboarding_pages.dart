@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 
 import '../design/components/training_components.dart';
 import '../design/tokens/app_spacing.dart';
+import '../features/drills/drill_media.dart';
 import 'app_page.dart';
+import 'drill_media_card.dart';
 
 class WelcomePage extends StatelessWidget {
   const WelcomePage({super.key});
@@ -18,7 +20,7 @@ class WelcomePage extends StatelessWidget {
         const SizedBox(height: AppSpacing.xl),
         const Center(child: BrandWordmark()),
         const SizedBox(height: AppSpacing.xl),
-        const ArenaPanel(child: DrillMediaPlaceholder(title: 'Coach Jeremy')),
+        const DrillMediaCard(title: 'Coach Jeremy', mediaPath: placeholderLessonMediaPath),
         const SizedBox(height: AppSpacing.xl),
         Text('Feel more confident in your next game.', style: theme.textTheme.headlineLarge),
         const SizedBox(height: AppSpacing.sm),

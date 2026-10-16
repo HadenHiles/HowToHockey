@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 
 import '../design/components/training_components.dart';
 import '../design/tokens/app_spacing.dart';
+import '../features/drills/drill_media.dart';
 import 'app_page.dart';
+import 'drill_media_card.dart';
 
 class PaywallPage extends StatefulWidget {
   const PaywallPage({super.key, this.coach = false});
@@ -185,7 +187,7 @@ class ProgramDetailPage extends StatelessWidget {
           ? FilledButton(onPressed: () => context.push('/programs/${program.id}/day/${program.dayReached}'), child: Text('Continue · Day ${program.dayReached}'))
           : FilledButton(onPressed: () => showFeatureMessage(context, 'Purchases aren\'t live yet. You weren\'t charged.'), child: Text('Buy for ${program.price}')),
       children: [
-        const DrillMediaPlaceholder(title: 'Program trailer'),
+        const DrillMediaCard(title: 'Program trailer', mediaPath: placeholderLessonMediaPath),
         const SizedBox(height: AppSpacing.md),
         Text(program.detail),
         if (program.owned) ...[
@@ -283,7 +285,7 @@ class ProgramLessonPage extends StatelessWidget {
     subtitle: programById(programId)?.title,
     actions: [IconButton(tooltip: 'Close', icon: const Icon(Icons.close), onPressed: () => context.pop())],
     children: [
-      const DrillMediaPlaceholder(title: 'Lesson video'),
+      const DrillMediaCard(title: 'Lesson video', mediaPath: placeholderLessonMediaPath),
       const SizedBox(height: AppSpacing.md),
       const Text('Example lesson. Coach Jeremy\'s lesson videos are coming soon.'),
       const SizedBox(height: AppSpacing.xl),

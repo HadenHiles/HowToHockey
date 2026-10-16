@@ -8,22 +8,25 @@ import '../design/tokens/app_shapes.dart';
 import '../features/drills/drill_media.dart';
 import '../features/drills/models/drill.dart';
 
-/// Looping, muted demo for a drill. Falls back to the illustrated placeholder when the
-/// drill has no demo yet or it cannot be loaded.
+/// Looping, muted video for a Storage path (a drill demo or the shared placeholder clip).
+/// Falls back to the illustrated placeholder when there is no video or it cannot be loaded.
 class DrillMediaCard extends ConsumerWidget {
-  const DrillMediaCard({required this.drill, super.key});
+  const DrillMediaCard({required this.title, required this.mediaPath, super.key});
 
-  final Drill drill;
+  DrillMediaCard.forDrill(Drill drill, {Key? key}) : this(key: key, title: drill.title, mediaPath: drill.mediaAssetPath);
+
+  final String title;
+  final String mediaPath;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) => ref
-      .watch(drillMediaProvider(drill))
+      .watch(drillMediaProvider(mediaPath))
       .when(
-        data: (media) => media == null ? DrillMediaPlaceholder(title: drill.title) : _DrillVideo(key: ValueKey(media.video.path), drill: drill, media: media),
+        data: (media) => media == null ? DrillMediaPlaceholder(title: title) : _DrillVideo(key: ValueKey(media.video.path), title: title, media: media),
         loading: () => _MediaFrame(
-          child: Center(child: CircularProgressIndicator(semanticsLabel: 'Loading demo for ${drill.title}')),
+          child: Center(child: CircularProgressIndicator(semanticsLabel: 'Loading video for $title')),
         ),
-        error: (_, _) => DrillMediaPlaceholder(title: drill.title),
+        error: (_, _) => DrillMediaPlaceholder(title: title),
       );
 }
 
@@ -43,9 +46,9 @@ class _MediaFrame extends StatelessWidget {
 }
 
 class _DrillVideo extends StatefulWidget {
-  const _DrillVideo({required this.drill, required this.media, super.key});
+  const _DrillVideo({required this.title, required this.media, super.key});
 
-  final Drill drill;
+  final String title;
   final DrillMedia media;
 
   @override
@@ -100,11 +103,11 @@ class _DrillVideoState extends State<_DrillVideo> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    if (_failed || _controller.value.hasError) return DrillMediaPlaceholder(title: widget.drill.title);
+    if (_failed || _controller.value.hasError) return DrillMediaPlaceholder(title: widget.title);
     final playing = _ready && _controller.value.isPlaying;
     return Semantics(
       button: true,
-      label: '${widget.drill.title} demo. ${playing ? 'Playing. Double tap to pause.' : 'Paused. Double tap to play.'}',
+      label: '${widget.title} video. ${playing ? 'Playing. Double tap to pause.' : 'Paused. Double tap to play.'}',
       child: GestureDetector(
         onTap: _ready ? _togglePlayback : null,
         child: _MediaFrame(

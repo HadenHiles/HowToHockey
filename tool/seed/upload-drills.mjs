@@ -363,6 +363,17 @@ async function main(args = process.argv.slice(2)) {
         console.log(`Uploaded media for ${drill.id}`);
         uploaded += 1;
       }
+      // Shared stand-in clips (placeholder-*.mp4) are not catalog drills but the app plays them.
+      const { readdir } = await import('node:fs/promises');
+      for (const name of await readdir(resolve(mediaRoot, 'drills')).catch(() => [])) {
+        if (!/^placeholder-[a-z0-9-]+\.mp4$/.test(name)) continue;
+        const mediaPath = resolve(mediaRoot, 'drills', name);
+        const posterPath = posterPathFor(mediaPath);
+        if (!(await exists(posterPath))) continue;
+        await bucket.upload(mediaPath, { destination: `drills/${name}`, metadata: { contentType: 'video/mp4', cacheControl: 'public, max-age=86400' } });
+        await bucket.upload(posterPath, { destination: `drills/${basename(posterPath)}`, metadata: { contentType: 'image/jpeg', cacheControl: 'public, max-age=86400' } });
+        console.log(`Uploaded shared placeholder ${name}`);
+      }
       console.log(`Uploaded media for ${uploaded} of ${drills.length} drill(s) to ${options.projectId}.`);
       return;
     }

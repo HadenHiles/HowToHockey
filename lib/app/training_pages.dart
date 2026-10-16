@@ -672,7 +672,7 @@ class DrillDetailPage extends ConsumerWidget {
               child: const Text('Try this drill'),
             ),
       children: [
-        DrillMediaCard(drill: drill),
+        DrillMediaCard.forDrill(drill),
         const SizedBox(height: AppSpacing.xl),
         Text(drill.title, style: theme.textTheme.headlineMedium),
         const SizedBox(height: AppSpacing.md),

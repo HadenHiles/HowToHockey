@@ -185,8 +185,11 @@ under `drills/` and cached on the device by `FirebaseDrillMediaSource`
 (`lib/features/drills/drill_media.dart`), so a demo replays offline after its first
 view. Storage rules allow a signed-in player to fetch a known file only (no
 listing, no writes). Placeholder clips come from the members-only Skills Vault and
-have been uploaded to the production bucket for development; replace them with final
-media before launch. If iOS shows Storage error `-13020` (unauthenticated), the
+have been uploaded to the production bucket for development. Every placeholder has
+"PLACEHOLDER VIDEO · REPLACE BEFORE LAUNCH" burned in (all 20 drills plus
+`drills/placeholder-lesson.mp4`, shared by the welcome, program trailer, and lesson
+screens); replace them all with final media before launch. Re-uploading a file under
+the same name refreshes it on devices. If iOS shows Storage error `-13020` (unauthenticated), the
 simulator holds a stale anonymous user; the app now replaces dead anonymous sessions
 at startup. On macOS, iOS builds may need the SwiftPM Git-policy exception described
 below.
