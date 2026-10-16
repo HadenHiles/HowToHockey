@@ -51,7 +51,7 @@ void main() {
     testWidgets('every screen renders at 320x568, 200% text, Reduce Motion ($appearance)', (tester) async {
       SharedPreferences.setMockInitialValues({'appearance': appearance});
       final preferences = await SharedPreferences.getInstance();
-      final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride]);
+      final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride]);
       addTearDown(container.dispose);
       tester.view.physicalSize = const Size(640, 1136);
       tester.view.devicePixelRatio = 2;

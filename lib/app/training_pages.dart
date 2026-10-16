@@ -8,6 +8,7 @@ import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/drills/drill_catalog.dart';
 import '../features/drills/models/drill.dart';
+import 'drill_media_card.dart';
 import 'player_pages.dart';
 import 'sample_data.dart';
 import 'app_page.dart';
@@ -671,7 +672,7 @@ class DrillDetailPage extends ConsumerWidget {
               child: const Text('Try this drill'),
             ),
       children: [
-        DrillMediaPlaceholder(title: drill.title),
+        DrillMediaCard(drill: drill),
         const SizedBox(height: AppSpacing.xl),
         Text(drill.title, style: theme.textTheme.headlineMedium),
         const SizedBox(height: AppSpacing.md),

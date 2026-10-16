@@ -14,7 +14,7 @@ void main() {
   testWidgets('Coach shell exposes only coach navigation and disclosed actions at 200% text', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final preferences = await SharedPreferences.getInstance();
-    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride]);
+    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride]);
     addTearDown(container.dispose);
     tester.view.physicalSize = const Size(1000, 3000);
     tester.view.devicePixelRatio = 2;

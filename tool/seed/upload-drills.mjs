@@ -198,6 +198,20 @@ async function validateDrill(drill, index, mediaRoot, checkMedia) {
   }
 }
 
+async function exists(path) {
+  return stat(path).then(
+    () => true,
+    () => false,
+  );
+}
+
+async function validateMediaFiles(drill, mediaPath) {
+  const info = await stat(mediaPath);
+  if (info.size > maxVideoBytes) {
+    throw new TypeError(`${drill.id} video must be at most ${maxVideoBytes} bytes.`);
+  }
+}
+
 function posterPathFor(mediaPath) {
   return mediaPath.slice(0, -extname(mediaPath).length) + '.jpg';
 }
@@ -224,7 +238,7 @@ export async function validateCatalog(catalog, mediaRoot, { checkMedia = true } 
 }
 
 function parseArguments(args) {
-  const options = { dataPath: defaultDataPath, mode: null, validateOnly: false, checkMedia: true };
+  const options = { dataPath: defaultDataPath, mode: null, validateOnly: false, checkMedia: true, mediaOnly: false };
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
     if (argument === '--data') {
@@ -255,6 +269,8 @@ function parseArguments(args) {
       options.mode = argument.slice(2);
     } else if (argument === '--validate-only') {
       options.validateOnly = true;
+    } else if (argument === '--media-only') {
+      options.mediaOnly = true;
     } else if (argument === '--skip-media-check') {
       options.checkMedia = false;
     } else if (argument === '--help') {
@@ -288,6 +304,7 @@ Options:
   --live          Explicitly upload to the configured live Firebase project
   --project <id>  Firebase project id (default: how-to-hockey)
   --bucket <name> Storage bucket (default: <project>.firebasestorage.app)
+  --media-only    Upload only videos and posters that exist (no Firestore writes); skips drills without media
   --validate-only Validate files without connecting to Firebase
   --skip-media-check  With --validate-only, validate metadata when media is not produced yet
   --help          Show this help`);
@@ -303,7 +320,7 @@ async function main(args = process.argv.slice(2)) {
   const dataPath = resolve(options.dataPath);
   const mediaRoot = resolve(dirname(dataPath), 'media');
   const catalog = JSON.parse(await readFile(dataPath, 'utf8'));
-  const drills = await validateCatalog(catalog, mediaRoot, { checkMedia: options.checkMedia });
+  const drills = await validateCatalog(catalog, mediaRoot, { checkMedia: options.checkMedia && !options.mediaOnly });
 
   if (options.validateOnly) {
     console.log(`Validated ${drills.length} drill(s)${options.checkMedia ? ' and their media files' : ' (media not checked)'}.`);
@@ -331,6 +348,24 @@ async function main(args = process.argv.slice(2)) {
   const bucket = getStorage(app).bucket(options.bucketName);
 
   try {
+    if (options.mediaOnly) {
+      let uploaded = 0;
+      for (const drill of drills) {
+        const mediaPath = resolve(mediaRoot, drill.mediaAssetPath);
+        const posterPath = posterPathFor(mediaPath);
+        if (!(await exists(mediaPath)) || !(await exists(posterPath))) {
+          console.log(`Skipped ${drill.id} (no media yet)`);
+          continue;
+        }
+        await validateMediaFiles(drill, mediaPath);
+        await bucket.upload(mediaPath, { destination: drill.mediaAssetPath, metadata: { contentType: 'video/mp4', cacheControl: 'public, max-age=86400' } });
+        await bucket.upload(posterPath, { destination: posterPathFor(drill.mediaAssetPath), metadata: { contentType: 'image/jpeg', cacheControl: 'public, max-age=86400' } });
+        console.log(`Uploaded media for ${drill.id}`);
+        uploaded += 1;
+      }
+      console.log(`Uploaded media for ${uploaded} of ${drills.length} drill(s) to ${options.projectId}.`);
+      return;
+    }
     for (const drill of drills) {
       const mediaPath = resolve(mediaRoot, drill.mediaAssetPath);
       await bucket.upload(mediaPath, {

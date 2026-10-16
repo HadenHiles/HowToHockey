@@ -180,6 +180,17 @@ free starter drills across the six skills and all six tracking types.
 
 The app bundles `tool/seed/drills.json` as an asset (see `lib/features/drills/drill_catalog.dart`), so the library works offline. Widget tests inject the same file through `test/support/test_catalog.dart` because real asset I/O does not finish under fake time.
 
+**Hosting and playback.** Videos and posters are served from Firebase Storage
+under `drills/` and cached on the device by `FirebaseDrillMediaSource`
+(`lib/features/drills/drill_media.dart`), so a demo replays offline after its first
+view. Storage rules allow a signed-in player to fetch a known file only (no
+listing, no writes). Placeholder clips come from the members-only Skills Vault and
+have been uploaded to the production bucket for development; replace them with final
+media before launch. If iOS shows Storage error `-13020` (unauthenticated), the
+simulator holds a stale anonymous user; the app now replaces dead anonymous sessions
+at startup. On macOS, iOS builds may need the SwiftPM Git-policy exception described
+below.
+
 Commands (run from the repo root):
 
 ```bash
@@ -187,7 +198,7 @@ Commands (run from the repo root):
 npm --prefix functions run seed:drills -- --validate-only --skip-media-check
 # Full validation, including media existence, size, and posters
 npm --prefix functions run seed:drills -- --validate-only
-# Upload to the local emulators; --live uploads to production and needs explicit approval
+# Upload to the local emulators; --media-only uploads just the videos and posters that exist; --live uploads everything to production and needs explicit approval
 npm --prefix functions run seed:drills -- --emulator
 ```
 

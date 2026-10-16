@@ -76,11 +76,30 @@ Future<void> main() async {
     FirebaseStorage.instance.useStorageEmulator(emulatorHost, 9199);
   }
 
-  if (FirebaseAuth.instance.currentUser == null) {
-    await FirebaseAuth.instance.signInAnonymously();
-  }
+  await ensureSignedIn(FirebaseAuth.instance);
 
   runApp(ProviderScope(overrides: [sharedPreferencesProvider.overrideWithValue(preferences)], child: const MyApp()));
+}
+
+/// Auth error codes that mean a saved anonymous session can never refresh its token.
+/// Offline errors are deliberately not listed: the player keeps their identity.
+const deadSessionErrorCodes = {'internal-error', 'invalid-user-token', 'user-token-expired', 'user-not-found', 'user-disabled'};
+
+/// Signs in anonymously when there is no user, and replaces a saved anonymous user whose
+/// session is dead (for example deleted on the server) so Firebase services keep working.
+/// Accounts with a real sign-in are never replaced automatically.
+Future<void> ensureSignedIn(FirebaseAuth auth) async {
+  final user = auth.currentUser;
+  if (user != null) {
+    try {
+      await user.getIdToken();
+      return;
+    } on FirebaseAuthException catch (error) {
+      if (!user.isAnonymous || !deadSessionErrorCodes.contains(error.code)) return;
+      await auth.signOut();
+    }
+  }
+  await auth.signInAnonymously();
 }
 
 class MyApp extends ConsumerWidget {

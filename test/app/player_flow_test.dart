@@ -15,7 +15,7 @@ import '../support/test_catalog.dart';
 Future<ProviderContainer> mountApp(WidgetTester tester, {String appearance = 'light'}) async {
   SharedPreferences.setMockInitialValues({'appearance': appearance});
   final preferences = await SharedPreferences.getInstance();
-  final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride]);
+  final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride]);
   addTearDown(container.dispose);
   await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));
   await tester.pumpAndSettle();

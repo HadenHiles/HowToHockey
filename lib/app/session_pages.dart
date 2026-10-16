@@ -11,6 +11,7 @@ import '../design/components/training_components.dart';
 import '../design/theme/app_theme.dart';
 import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_spacing.dart';
+import '../features/drills/drill_media.dart';
 import '../features/drills/models/drill.dart';
 import 'sample_data.dart';
 import 'app_page.dart';
@@ -51,6 +52,16 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> {
     super.initState();
     _sheet.addListener(_syncSheetProgress);
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+    _prefetchFrom(ref.read(trainingSessionProvider).drillIndex);
+  }
+
+  // Warms the cache for this drill and the next so their demos are ready when opened.
+  void _prefetchFrom(int index) {
+    final drills = ref.read(trainingSessionProvider).drills;
+    final source = ref.read(drillMediaSourceProvider);
+    for (final i in [index, index + 1]) {
+      if (i >= 0 && i < drills.length) unawaited(source.prefetch(drills[i]));
+    }
   }
 
   @override
@@ -121,6 +132,7 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> {
   void _select(int index) {
     _drillAction.value = null;
     ref.read(trainingSessionProvider.notifier).selectDrill(index);
+    _prefetchFrom(index);
     setState(() => _overview = false);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && _pages.hasClients) _pages.jumpToPage(index);
@@ -139,6 +151,7 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> {
   void _onPageChanged(int index) {
     _drillAction.value = null;
     ref.read(trainingSessionProvider.notifier).selectDrill(index);
+    _prefetchFrom(index);
   }
 
   @override

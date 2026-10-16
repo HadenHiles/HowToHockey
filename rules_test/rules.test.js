@@ -4,6 +4,7 @@ import { after, before, describe, it } from 'node:test';
 
 import {
   assertFails,
+  assertSucceeds,
   initializeTestEnvironment,
 } from '@firebase/rules-unit-testing';
 import {
@@ -29,6 +30,7 @@ const projectId = 'demo-how-to-hockey';
 const bucket = `gs://${projectId}.appspot.com`;
 const documentPaths = ['profiles/player', 'teams/team/private/details'];
 const objectPaths = ['media/drill.bin', 'profiles/player/private/image.bin'];
+const drillMediaPath = 'drills/starter.mp4';
 const identities = [
   { name: 'unauthenticated' },
   { name: 'anonymous', uid: 'player', claims: { firebase: { sign_in_provider: 'anonymous' } } },
@@ -72,6 +74,7 @@ describe('deny-by-default Firebase rules', () => {
       for (const path of objectPaths) {
         await uploadBytes(ref(context.storage(bucket), path), new Uint8Array([1, 2, 3]));
       }
+      await uploadBytes(ref(context.storage(bucket), drillMediaPath), new Uint8Array([1, 2, 3]));
     });
   });
 
@@ -123,4 +126,25 @@ describe('deny-by-default Firebase rules', () => {
       }
     });
   }
+
+  describe('starter drill media', () => {
+    it('denies unauthenticated downloads', async () => {
+      const object = ref(environment.unauthenticatedContext().storage(bucket), drillMediaPath);
+      await assertFails(getBytes(object));
+      await assertFails(getMetadata(object));
+    });
+
+    for (const identity of identities.filter((item) => item.uid)) {
+      it(`lets ${identity.name} fetch a known file but never list or write`, async () => {
+        const context = environment.authenticatedContext(identity.uid, identity.claims);
+        const object = ref(context.storage(bucket), drillMediaPath);
+        await assertSucceeds(getBytes(object));
+        await assertFails(listAll(ref(context.storage(bucket), 'drills')));
+        await assertFails(uploadBytes(ref(context.storage(bucket), 'drills/new.mp4'), new Uint8Array([4])));
+        await assertFails(uploadBytes(object, new Uint8Array([4])));
+        await assertFails(updateMetadata(object, { contentType: 'text/plain' }));
+        await assertFails(deleteObject(object));
+      });
+    }
+  });
 });

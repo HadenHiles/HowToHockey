@@ -2,6 +2,13 @@ rules_version = '2';
 
 service firebase.storage {
   match /b/{bucket}/o {
+    // Starter drill videos and posters: any signed-in (including anonymous) player may
+    // fetch a known file. Listing and all writes stay denied; uploads use the admin seed tool.
+    match /drills/{file} {
+      allow get: if request.auth != null;
+      allow list, write: if false;
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }
