@@ -87,8 +87,7 @@ void main() {
   for (final entry in [
     (route: '/routines', label: 'Start', drills: 6),
     (route: '/drills/quick-release-wrist-shots', label: 'Try this drill', drills: 1),
-    (route: '/train', label: 'Shot logger', drills: 1),
-    (route: '/train', label: 'Timer', drills: 1),
+    (route: '/log/timer', label: 'Start 1 min timer', drills: 1),
   ]) {
     testWidgets('${entry.label} enters the existing Player shell without duplicate pages', (tester) async {
       phoneSize(tester);

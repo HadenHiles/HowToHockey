@@ -19,6 +19,8 @@ const routes = [
   '/routines',
   '/routines/new',
   '/library',
+  '/log/shots',
+  '/log/timer',
   '/summary',
   '/parent/kids',
   '/parent/kids/avery',

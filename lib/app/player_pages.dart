@@ -83,22 +83,8 @@ class TrainPage extends ConsumerWidget {
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
           children: [
-            OutlinedButton.icon(
-              onPressed: () {
-                ref.read(trainingSessionProvider.notifier).start([sampleDrills.first]);
-                context.go('/train/session');
-              },
-              icon: const Icon(Icons.add_circle_outline),
-              label: const Text('Shot logger'),
-            ),
-            OutlinedButton.icon(
-              onPressed: () {
-                ref.read(trainingSessionProvider.notifier).start([sampleDrills[1]]);
-                context.go('/train/session');
-              },
-              icon: const Icon(Icons.timer_outlined),
-              label: const Text('Timer'),
-            ),
+            OutlinedButton.icon(onPressed: () => context.push('/log/shots'), icon: const Icon(Icons.add_circle_outline), label: const Text('Shot logger')),
+            OutlinedButton.icon(onPressed: () => context.push('/log/timer'), icon: const Icon(Icons.timer_outlined), label: const Text('Timer')),
           ],
         ),
         const SizedBox(height: AppSpacing.xl),

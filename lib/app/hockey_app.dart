@@ -6,6 +6,7 @@ import '../design/theme/app_theme.dart';
 import '../features/settings/appearance_settings_controller.dart';
 import 'coach_pages.dart';
 import 'commerce_pages.dart';
+import 'manual_logger_pages.dart';
 import 'onboarding_pages.dart';
 import 'parent_pages.dart';
 import 'player_pages.dart';
@@ -108,6 +109,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
+      GoRoute(path: '/log/shots', builder: (_, _) => const ShotLoggerPage()),
+      GoRoute(path: '/log/timer', builder: (_, _) => const TimerSetupPage()),
       GoRoute(path: '/welcome', builder: (_, _) => const WelcomePage()),
       GoRoute(path: '/signup', builder: (_, _) => const SignupPage()),
       GoRoute(path: '/onboarding/role', builder: (_, _) => const RoleOnboardingPage()),
