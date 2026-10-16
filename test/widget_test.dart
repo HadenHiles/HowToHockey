@@ -67,7 +67,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Share your progress'));
     await tester.pumpAndSettle();
-    expect(find.text('Progress card preview'), findsOneWidget);
+    expect(find.text('Progress card example'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -90,8 +90,8 @@ void main() {
     await tester.tap(find.text('Share your progress'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Progress card preview'), findsOneWidget);
-    expect(find.textContaining('Preview only'), findsOneWidget);
+    expect(find.text('Progress card example'), findsOneWidget);
+    expect(find.textContaining('Sharing isn\'t live yet'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

@@ -14,7 +14,7 @@ const _players = [
   (id: 'p5', name: 'Avery H.', done: 3, assigned: 3, minutes: 118, verified: false),
 ];
 
-const _requests = [(name: 'Riley H.', detail: 'Requested via public listing · parent approved'), (name: 'Drew K.', detail: 'Joined with team code · awaiting your approval')];
+const _requests = [(name: 'Riley H.', detail: 'Asked to join from your public listing · parent approved'), (name: 'Drew K.', detail: 'Used your team code · waiting on your approval')];
 
 const _routines = [(title: 'Wrist Shot Ladder', detail: '4 drills · 25 min'), (title: 'Stickhandling Box', detail: '3 drills · 20 min'), (title: 'Skating Edges Circuit', detail: '5 drills · 30 min')];
 
@@ -79,7 +79,7 @@ class CoachRosterPage extends StatelessWidget {
       title: 'Roster',
       subtitle: 'Northside Novas · U12 · ${_players.length} of 30 players',
       children: [
-        const _Notice('Coach screens use representative local sample data. Roster changes, approvals, and invites are not connected yet.'),
+        const _Notice('You\'re looking at a preview with example data. Roster changes, approvals and invites go live soon.'),
         const SizedBox(height: AppSpacing.xl),
         _Entry(icon: Icons.how_to_reg_outlined, title: 'Join requests', detail: '${_requests.length} waiting for approval', onTap: () => context.go('/coach/roster/requests')),
         const SizedBox(height: AppSpacing.xl),
@@ -103,7 +103,7 @@ class CoachRosterPage extends StatelessWidget {
                 if (player.verified) Icon(Icons.verified, color: theme.colorScheme.primary, semanticLabel: 'Parent verified'),
                 PopupMenuButton<String>(
                   tooltip: 'Manage ${player.name}',
-                  onSelected: (_) => showFeatureMessage(context, 'Roster changes are not connected yet. Nothing was changed.'),
+                  onSelected: (_) => showFeatureMessage(context, 'Roster changes aren\'t live yet. Nothing was changed.'),
                   itemBuilder: (_) => const [PopupMenuItem(value: 'remove', child: Text('Remove from team'))],
                 ),
               ],
@@ -122,7 +122,7 @@ class CoachRequestsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => AppPage(
     title: 'Join requests',
-    subtitle: 'Coaches cannot search for players. Requests only arrive from your team code or public listing.',
+    subtitle: 'Coaches can\'t search for players. Requests only come in through your team code or public listing.',
     actions: [IconButton(tooltip: 'Back to Roster', icon: const Icon(Icons.close), onPressed: () => context.go('/coach/roster'))],
     children: [
       for (final request in _requests) ...[
@@ -137,8 +137,8 @@ class CoachRequestsPage extends StatelessWidget {
                 spacing: AppSpacing.sm,
                 runSpacing: AppSpacing.sm,
                 children: [
-                  FilledButton(onPressed: () => showFeatureMessage(context, 'Approvals are not connected yet. Nothing was approved.'), child: const Text('Approve')),
-                  OutlinedButton(onPressed: () => showFeatureMessage(context, 'Declining is not connected yet. Nothing was declined.'), child: const Text('Decline')),
+                  FilledButton(onPressed: () => showFeatureMessage(context, 'Approvals aren\'t live yet. Nothing was approved.'), child: const Text('Approve')),
+                  OutlinedButton(onPressed: () => showFeatureMessage(context, 'Declining isn\'t live yet. Nothing was declined.'), child: const Text('Decline')),
                 ],
               ),
             ],
@@ -181,8 +181,8 @@ class CoachHomeworkPage extends StatelessWidget {
         _Entry(
           icon: Icons.edit_note,
           title: 'Build a team routine',
-          detail: 'Pick drills, set prescriptions, reorder',
-          onTap: () => showFeatureMessage(context, 'The team routine builder is not connected yet.'),
+          detail: 'Pick drills, set sets and reps, reorder',
+          onTap: () => showFeatureMessage(context, 'The team routine builder isn\'t live yet. Nothing was changed.'),
         ),
       ],
     );
@@ -206,10 +206,10 @@ class _CoachAssignPageState extends State<CoachAssignPage> {
   @override
   Widget build(BuildContext context) => AppPage(
     title: 'Assign homework',
-    subtitle: 'Players are notified when assignments are connected.',
+    subtitle: 'Players get notified once assignments go live.',
     actions: [IconButton(tooltip: 'Back to Homework', icon: const Icon(Icons.close), onPressed: () => context.go('/coach/homework'))],
     action: FilledButton(
-      onPressed: _selected.isEmpty ? null : () => showFeatureMessage(context, 'Assignments are not connected yet. Nothing was sent to ${_selected.length} players.'),
+      onPressed: _selected.isEmpty ? null : () => showFeatureMessage(context, 'Assignments aren\'t live yet. Nothing was sent to ${_selected.length} players.'),
       child: Text('Assign to ${_selected.length} players'),
     ),
     children: [
@@ -261,7 +261,7 @@ class _CoachCompliancePageState extends State<CoachCompliancePage> {
     return AppPage(
       title: 'Compliance',
       children: [
-        const _Notice('Figures are sample data and do not change with the date range yet.'),
+        const _Notice('These are example numbers. They don\'t change with the date range yet.'),
         const SizedBox(height: AppSpacing.md),
         Wrap(
           spacing: AppSpacing.xs,
@@ -300,7 +300,7 @@ class _CoachCompliancePageState extends State<CoachCompliancePage> {
                 if (player.done > 0 && !player.verified)
                   Align(
                     alignment: Alignment.centerRight,
-                    child: TextButton(onPressed: () => showFeatureMessage(context, 'Verification is not connected yet. Nothing was verified.'), child: const Text('Verify workouts')),
+                    child: TextButton(onPressed: () => showFeatureMessage(context, 'Verification isn\'t live yet. Nothing was verified.'), child: const Text('Verify workouts')),
                   ),
               ],
             ),
@@ -327,7 +327,7 @@ class _CoachTeamPageState extends State<CoachTeamPage> {
     return AppPage(
       title: 'Team',
       children: [
-        const _Notice('Team settings and invites are not connected yet. Changes here last only until restart.'),
+        const _Notice('Team settings and invites aren\'t live yet. Changes here only last until you restart the app.'),
         const SizedBox(height: AppSpacing.xl),
         ArenaPanel(
           child: Builder(
@@ -337,7 +337,7 @@ class _CoachTeamPageState extends State<CoachTeamPage> {
                 children: [
                   Text('NOVAS-4821', style: theme.textTheme.displaySmall),
                   const SizedBox(height: AppSpacing.xs),
-                  Text('SAMPLE JOIN CODE · NOT VALID', style: theme.textTheme.labelSmall),
+                  Text('EXAMPLE JOIN CODE · NOT VALID', style: theme.textTheme.labelSmall),
                 ],
               );
             },
@@ -348,8 +348,8 @@ class _CoachTeamPageState extends State<CoachTeamPage> {
           spacing: AppSpacing.sm,
           runSpacing: AppSpacing.sm,
           children: [
-            FilledButton.icon(onPressed: () => showFeatureMessage(context, 'Invite links are not connected yet.'), icon: const Icon(Icons.ios_share), label: const Text('Share invite')),
-            OutlinedButton(onPressed: () => showFeatureMessage(context, 'Join codes are not connected yet. The code was not changed.'), child: const Text('New code')),
+            FilledButton.icon(onPressed: () => showFeatureMessage(context, 'Invite links aren\'t live yet. Nothing was sent.'), icon: const Icon(Icons.ios_share), label: const Text('Share invite')),
+            OutlinedButton(onPressed: () => showFeatureMessage(context, 'New codes aren\'t live yet. The code was not changed.'), child: const Text('New code')),
           ],
         ),
         const SizedBox(height: AppSpacing.xl),
@@ -359,7 +359,7 @@ class _CoachTeamPageState extends State<CoachTeamPage> {
           child: SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Public listing'),
-            subtitle: Text(_public ? 'Shown in team discovery with team name, coach name, and player count.' : 'Private. Players join only with your code.'),
+            subtitle: Text(_public ? 'Shows in team search with your team name, coach name and player count.' : 'Private. Players can only join with your code.'),
             value: _public,
             onChanged: (value) => setState(() => _public = value),
           ),
@@ -369,7 +369,7 @@ class _CoachTeamPageState extends State<CoachTeamPage> {
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Mode'),
         const SizedBox(height: AppSpacing.md),
-        _Entry(icon: Icons.workspace_premium_outlined, title: 'Coach Pro', detail: 'Plans, restore, and manage', onTap: () => context.push('/paywall?plan=coach')),
+        _Entry(icon: Icons.workspace_premium_outlined, title: 'Coach Pro', detail: 'Plans, restore and manage', onTap: () => context.push('/paywall?plan=coach')),
         const SizedBox(height: AppSpacing.sm),
         _Entry(icon: Icons.sports_hockey, title: 'Switch to Player', detail: 'Currently in Coach mode', onTap: () => context.go('/train')),
       ],

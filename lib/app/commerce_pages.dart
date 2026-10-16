@@ -41,17 +41,17 @@ class _PaywallPageState extends State<PaywallPage> {
     final name = _coach ? 'Coach Pro' : 'Player Pro';
     return AppPage(
       title: name,
-      subtitle: 'Sample paywall. Prices match the plan but nothing can be purchased yet.',
+      subtitle: 'Example plans. Purchases aren\'t live yet, so you can\'t be charged.',
       actions: [IconButton(tooltip: 'Close', icon: const Icon(Icons.close), onPressed: () => context.canPop() ? context.pop() : context.go('/me'))],
       action: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FilledButton(onPressed: () => showFeatureMessage(context, 'Purchases are not connected yet. Nothing was charged.'), child: Text('Start $name · $price')),
+          FilledButton(onPressed: () => showFeatureMessage(context, 'Purchases aren\'t live yet. You weren\'t charged.'), child: Text('Start $name · $price')),
           Wrap(
             alignment: WrapAlignment.center,
             children: [
-              TextButton(onPressed: () => showFeatureMessage(context, 'Purchase restore is not connected yet.'), child: const Text('Restore purchases')),
-              TextButton(onPressed: () => showFeatureMessage(context, 'Subscription management is not connected yet.'), child: const Text('Manage subscription')),
+              TextButton(onPressed: () => showFeatureMessage(context, 'Restoring purchases isn\'t live yet. You weren\'t charged.'), child: const Text('Restore purchases')),
+              TextButton(onPressed: () => showFeatureMessage(context, 'Managing your plan isn\'t live yet. Nothing was changed.'), child: const Text('Manage subscription')),
             ],
           ),
         ],
@@ -103,7 +103,7 @@ class _PaywallPageState extends State<PaywallPage> {
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        if (_coach) const Text('Rostered players get a 30-day Player Pro month when they join a Coach Pro team.'),
+        if (_coach) const Text('Players get a free month of Player Pro (30 days) when they join a Coach Pro team.'),
       ],
     );
   }
@@ -122,9 +122,9 @@ class SampleProgram {
 }
 
 const samplePrograms = [
-  SampleProgram(id: 'shooting-30', title: '30 Days to a Harder Shot', detail: 'Daily shooting routines with a lesson from Coach Jeremy.', price: r'$29.99', days: 30, owned: true, dayReached: 3),
-  SampleProgram(id: 'hands-21', title: 'Elite Hands in 21 Days', detail: 'Stickhandling progressions from basics to game speed.', price: r'$19.99', days: 21),
-  SampleProgram(id: 'power-skating-14', title: 'Power Skating Kickstart', detail: 'Two weeks of edges, crossovers, and explosive starts.', price: r'$14.99', days: 14),
+  SampleProgram(id: 'shooting-30', title: '30 Days to a Harder Shot', detail: 'Daily shooting work with a lesson from Coach Jeremy.', price: r'$29.99', days: 30, owned: true, dayReached: 3),
+  SampleProgram(id: 'hands-21', title: 'Elite Hands in 21 Days', detail: 'Stickhandling that builds from the basics to game speed.', price: r'$19.99', days: 21),
+  SampleProgram(id: 'power-skating-14', title: 'Power Skating Kickstart', detail: 'Two weeks of edges, crossovers and explosive starts.', price: r'$14.99', days: 14),
 ];
 
 SampleProgram? programById(String id) => samplePrograms.where((p) => p.id == id).firstOrNull;
@@ -137,7 +137,7 @@ class ProgramsPage extends StatelessWidget {
     final theme = Theme.of(context);
     return AppPage(
       title: 'Programs',
-      subtitle: 'Signature programs are bought once and yours to keep. Sample catalog only.',
+      subtitle: 'Buy a program once and keep it. These are examples for now.',
       actions: [IconButton(tooltip: 'Close', icon: const Icon(Icons.close), onPressed: () => context.canPop() ? context.pop() : context.go('/train'))],
       children: [
         for (final program in samplePrograms) ...[
@@ -146,7 +146,7 @@ class ProgramsPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const DrillMediaPlaceholder(title: 'Program preview', compact: true),
+                const DrillMediaPlaceholder(title: 'Program video', compact: true),
                 const SizedBox(height: AppSpacing.md),
                 Text(program.title, style: theme.textTheme.titleMedium),
                 Text(program.detail, style: theme.textTheme.bodySmall),
@@ -174,7 +174,7 @@ class ProgramDetailPage extends StatelessWidget {
       return AppPage(
         title: 'Program not found',
         action: FilledButton(onPressed: () => context.go('/programs'), child: const Text('Back to Programs')),
-        children: const [Text('This program is unavailable.')],
+        children: const [Text('We can\'t find this program.')],
       );
     }
     final theme = Theme.of(context);
@@ -183,7 +183,7 @@ class ProgramDetailPage extends StatelessWidget {
       actions: [IconButton(tooltip: 'Back to Programs', icon: const Icon(Icons.close), onPressed: () => context.go('/programs'))],
       action: program.owned
           ? FilledButton(onPressed: () => context.push('/programs/${program.id}/day/${program.dayReached}'), child: Text('Continue · Day ${program.dayReached}'))
-          : FilledButton(onPressed: () => showFeatureMessage(context, 'Purchases are not connected yet. Nothing was charged.'), child: Text('Buy for ${program.price}')),
+          : FilledButton(onPressed: () => showFeatureMessage(context, 'Purchases aren\'t live yet. You weren\'t charged.'), child: Text('Buy for ${program.price}')),
       children: [
         const DrillMediaPlaceholder(title: 'Program trailer'),
         const SizedBox(height: AppSpacing.md),
@@ -195,7 +195,7 @@ class ProgramDetailPage extends StatelessWidget {
           Text('Day ${program.dayReached} of ${program.days}', style: theme.textTheme.bodySmall),
         ] else ...[
           const SizedBox(height: AppSpacing.sm),
-          Text('Pro members see a 20% discount once purchases are connected.', style: theme.textTheme.bodySmall),
+          Text('Pro members get 20% off once purchases go live.', style: theme.textTheme.bodySmall),
         ],
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Plan'),
@@ -205,12 +205,12 @@ class ProgramDetailPage extends StatelessWidget {
             contentPadding: EdgeInsets.zero,
             leading: Icon(program.owned && day <= program.dayReached ? Icons.play_circle_outline : Icons.lock_outline),
             title: Text('Day $day'),
-            subtitle: Text(day == 1 ? 'Free preview' : (program.owned ? 'Included' : 'Unlocks with purchase')),
+            subtitle: Text(day == 1 ? 'Free to watch' : (program.owned ? 'Included' : 'Unlocks when you buy')),
             onTap: () {
               if (day == 1 || (program.owned && day <= program.dayReached)) {
                 context.push('/programs/${program.id}/day/$day');
               } else {
-                showFeatureMessage(context, program.owned ? 'Reach this day by finishing the earlier days.' : 'Buy this program to unlock this day.');
+                showFeatureMessage(context, program.owned ? 'Finish the earlier days to reach this one.' : 'Buy this program to unlock this day. Purchases aren\'t live yet.');
               }
             },
           ),
@@ -233,7 +233,7 @@ class ProgramDayPage extends StatelessWidget {
       return AppPage(
         title: 'Day not found',
         action: FilledButton(onPressed: () => context.go('/programs'), child: const Text('Back to Programs')),
-        children: const [Text('This program day is unavailable.')],
+        children: const [Text('We can\'t find this program day.')],
       );
     }
     final theme = Theme.of(context);
@@ -265,7 +265,7 @@ class ProgramDayPage extends StatelessWidget {
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: "Today's routine"),
         const SizedBox(height: AppSpacing.md),
-        const TrainingCard(child: Text('3 drills · 25 min. The workout opens in Train with sample content until programs are connected.')),
+        const TrainingCard(child: Text('3 drills · 25 min. The workout opens in Train with example drills until programs go live.')),
       ],
     );
   }
@@ -285,7 +285,7 @@ class ProgramLessonPage extends StatelessWidget {
     children: [
       const DrillMediaPlaceholder(title: 'Lesson video'),
       const SizedBox(height: AppSpacing.md),
-      const Text('Sample lesson placeholder. Real lesson video will play from a signed link after the entitlement check.'),
+      const Text('Example lesson. Coach Jeremy\'s lesson videos are coming soon.'),
       const SizedBox(height: AppSpacing.xl),
       const SectionHeading(title: 'Key cues'),
       const SizedBox(height: AppSpacing.sm),

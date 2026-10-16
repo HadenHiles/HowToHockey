@@ -98,7 +98,7 @@ final sampleDrills = List<Drill>.unmodifiable([
     TrackingType.volume,
     SkillPillar.shotPower,
     reps: 10,
-    cues: ['Start with the puck close to your feet.', 'Load your stick, then snap your wrists.', 'Point your blade at the target.'],
+    cues: ['Start with the puck close to your feet.', 'Load the stick, then snap your wrists.', 'Finish with your blade pointing at the target.'],
   ),
   _drill(
     'quiet-hands',
@@ -106,7 +106,7 @@ final sampleDrills = List<Drill>.unmodifiable([
     TrackingType.duration,
     SkillPillar.hands,
     seconds: 30,
-    cues: ['Keep your top hand away from your body.', 'Look up between touches.', 'Stay light on your feet.'],
+    cues: ['Keep your top hand out in front of you.', 'Eyes up between touches.', 'Stay light on your feet.'],
   ),
   _drill(
     'shot-burst',
@@ -114,7 +114,7 @@ final sampleDrills = List<Drill>.unmodifiable([
     TrackingType.density,
     SkillPillar.endurance,
     seconds: 30,
-    cues: ['Set your pucks within easy reach.', 'Reset your feet between shots.', 'Keep a smooth, repeatable release.'],
+    cues: ['Set your pucks within easy reach.', 'Reset your feet after every shot.', 'Keep your release smooth and the same each time.'],
   ),
   _drill(
     'pick-corners',
@@ -122,15 +122,21 @@ final sampleDrills = List<Drill>.unmodifiable([
     TrackingType.accuracy,
     SkillPillar.shotAccuracy,
     reps: 10,
-    cues: ['Choose one corner for the full set.', 'Look at the target before you shoot.', 'Follow through toward your corner.'],
+    cues: ['Pick one corner for the whole set.', 'Look at your target before you shoot.', 'Follow through toward that corner.'],
   ),
-  _drill('partner-passes', 'Pass and settle', TrackingType.streak, SkillPillar.passing, cues: ['Show your blade as a target.', 'Cushion the pass as it arrives.', 'Send it back flat and on target.']),
+  _drill(
+    'partner-passes',
+    'Pass and settle',
+    TrackingType.streak,
+    SkillPillar.passing,
+    cues: ['Give your partner your blade as a target.', 'Soften your hands to cushion the pass.', 'Send it back flat and on the tape.'],
+  ),
   _drill(
     'athletic-reset',
     'Athletic stance reset',
     TrackingType.binary,
     SkillPillar.speedStrength,
-    cues: ['Bend at the knees, not the waist.', 'Keep your chest tall.', 'Hold your balance through each shift.'],
+    cues: ['Bend at the knees, not the waist.', 'Keep your chest tall.', 'Stay balanced through every rep.'],
   ),
 ]);
 

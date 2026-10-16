@@ -26,9 +26,9 @@ class TrainPage extends ConsumerWidget {
       centerAppBarTitle: true,
       children: [
         TrainingHeroCard(
-          eyebrow: 'Today on the ice',
+          eyebrow: 'Today\'s workout',
           title: 'Build your\nfoundation',
-          detail: 'A little better. Every day.',
+          detail: 'Start with a small win.',
           metrics: const [('20', 'minutes'), ('06', 'drills'), ('12', 'sets')],
           actionLabel: 'View workout',
           onTap: () => context.push('/routine'),
@@ -63,7 +63,7 @@ class TrainPage extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.xs),
                   Text('5-day streak', style: theme.textTheme.titleLarge),
                   const SizedBox(height: AppSpacing.xs),
-                  const Text('Keep showing up.'),
+                  const Text('Keep grinding.'),
                 ],
               ),
             ],
@@ -74,7 +74,7 @@ class TrainPage extends ConsumerWidget {
         const SizedBox(height: AppSpacing.md),
         for (final drill in sampleDrills.take(2)) ...[DrillListCard(drillId: drill.id), const SizedBox(height: AppSpacing.sm)],
         const SizedBox(height: AppSpacing.sm),
-        Text('Just want to log?', style: theme.textTheme.titleLarge),
+        Text('Just want to log some work?', style: theme.textTheme.titleLarge),
         const SizedBox(height: AppSpacing.md),
         Wrap(
           spacing: AppSpacing.sm,
@@ -239,11 +239,11 @@ class ProgressPage extends StatelessWidget {
                   children: [
                     Text('Quick hands, clean release', style: Theme.of(context).textTheme.headlineSmall),
                     const SizedBox(height: AppSpacing.xs),
-                    Text('SAMPLE SESSION  ·  YESTERDAY', style: Theme.of(context).textTheme.labelSmall),
+                    Text('EXAMPLE SESSION  ·  YESTERDAY', style: Theme.of(context).textTheme.labelSmall),
                     const SizedBox(height: AppSpacing.md),
                     const Text('24 active min · 80 shots · 4 drills · 6 sets'),
                     const SizedBox(height: AppSpacing.md),
-                    const Text('This session is a design sample. Completed workouts are not saved to history yet.'),
+                    const Text('This is an example session. Your workouts aren\'t saved to history yet.'),
                   ],
                 ),
               ),
@@ -289,7 +289,7 @@ class ProgressPage extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('Progress card preview', style: theme.textTheme.headlineSmall),
+                      Text('Progress card example', style: theme.textTheme.headlineSmall),
                       const SizedBox(height: AppSpacing.md),
                       DecoratedBox(
                         decoration: BoxDecoration(color: theme.brightness == Brightness.dark ? colors.surface : colors.textPrimary, borderRadius: BorderRadius.circular(AppRadii.card)),
@@ -307,7 +307,7 @@ class ProgressPage extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      Text('Preview only · Sample data · Sharing is not connected yet', style: theme.textTheme.bodySmall),
+                      Text('Example data · Sharing isn\'t live yet', style: theme.textTheme.bodySmall),
                       const SizedBox(height: AppSpacing.md),
                     ],
                   ),
@@ -334,7 +334,7 @@ class ProgressPage extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        Text('Progress is representative sample data. Workouts are not yet saved to history.', style: Theme.of(context).textTheme.bodySmall),
+        Text('You\'re looking at example numbers. Your workouts aren\'t saved to history yet.', style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }
@@ -382,12 +382,12 @@ class _TeamPageState extends State<TeamPage> {
             children: [
               Icon(Icons.info_outline, color: theme.colorScheme.primary),
               const SizedBox(width: AppSpacing.sm),
-              const Expanded(child: Text('Team content and actions are representative. Joining, invites, leaderboards, and stick taps are not connected yet.')),
+              const Expanded(child: Text('You\'re looking at a preview with example data. Joining, invites and stick taps go live soon.')),
             ],
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        Text('PREVIEW TEAM STATE', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant, letterSpacing: .8)),
+        Text('TEAM VIEW', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant, letterSpacing: .8)),
         const SizedBox(height: AppSpacing.xs),
         Wrap(
           spacing: AppSpacing.xs,
@@ -471,7 +471,7 @@ class _TeamPageState extends State<TeamPage> {
                 const _LeaderboardRow(rank: 2, name: 'Jamie H.', minutes: 76, isCurrentPlayer: true),
                 const _LeaderboardRow(rank: 3, name: 'Alex R.', minutes: 64),
                 const SizedBox(height: AppSpacing.sm),
-                Text('Only verified active training time counts. Sample standings.', style: theme.textTheme.bodySmall),
+                Text('Only verified training time counts. Example standings.', style: theme.textTheme.bodySmall),
               ],
             );
           },
@@ -486,14 +486,14 @@ class _TeamPageState extends State<TeamPage> {
           children: [
             Text('North Stars invite', style: theme.textTheme.titleMedium),
             const SizedBox(height: AppSpacing.xs),
-            Text('Share the coach-managed join code with a parent or teammate.', style: theme.textTheme.bodySmall),
+            Text('Share your coach\'s join code with a parent or teammate.', style: theme.textTheme.bodySmall),
             const SizedBox(height: AppSpacing.md),
             Wrap(
               spacing: AppSpacing.sm,
               runSpacing: AppSpacing.sm,
               children: [
                 OutlinedButton.icon(
-                  onPressed: () => showFeatureMessage(context, 'Invite sharing is a sample action and is not connected yet.'),
+                  onPressed: () => showFeatureMessage(context, 'Invite sharing isn\'t live yet. Nothing was sent.'),
                   icon: const Icon(Icons.ios_share_outlined),
                   label: const Text('Share invite'),
                 ),
@@ -520,7 +520,7 @@ class _TeamPageState extends State<TeamPage> {
                 const SizedBox(height: AppSpacing.md),
                 Text('Your next team starts here', style: theme.textTheme.headlineSmall),
                 const SizedBox(height: AppSpacing.xs),
-                const Text('Discover a public team or review an invite from your coach. Team membership is managed per player profile.'),
+                const Text('Find a public team or review an invite from your coach. Each player profile joins on its own.'),
                 const SizedBox(height: AppSpacing.xl),
                 FilledButton.icon(onPressed: () => _showTeamDiscovery(context), icon: const Icon(Icons.search), label: const Text('Find a team')),
                 const SizedBox(height: AppSpacing.sm),
@@ -539,9 +539,9 @@ class _TeamPageState extends State<TeamPage> {
           children: [
             Text('Westside Wolves · U15', style: theme.textTheme.titleMedium),
             const SizedBox(height: AppSpacing.xs),
-            const Text('Invited by Coach Taylor. A parent approval is required for child profiles.'),
+            const Text('Invited by Coach Taylor. Child profiles need a parent\'s approval.'),
             const SizedBox(height: AppSpacing.md),
-            OutlinedButton(onPressed: () => showFeatureMessage(context, 'Invite review is not connected yet.'), child: const Text('Review invite')),
+            OutlinedButton(onPressed: () => showFeatureMessage(context, 'Invite review isn\'t live yet. Nothing was changed.'), child: const Text('Review invite')),
           ],
         ),
       ),
@@ -562,7 +562,7 @@ class _TeamPageState extends State<TeamPage> {
                 const SizedBox(height: AppSpacing.md),
                 Text('Members only', style: theme.textTheme.headlineSmall),
                 const SizedBox(height: AppSpacing.xs),
-                const Text('Locker room posts, homework, and team standings unlock after this player profile joins the team.'),
+                const Text('Locker room posts, homework and standings unlock once this player joins the team.'),
                 const SizedBox(height: AppSpacing.xl),
                 FilledButton(onPressed: () => setState(() => _previewState = _TeamPreviewState.noTeam), child: const Text('View joining options')),
               ],
@@ -576,7 +576,7 @@ class _TeamPageState extends State<TeamPage> {
           children: [
             Icon(Icons.shield_outlined, color: theme.colorScheme.primary),
             const SizedBox(width: AppSpacing.md),
-            const Expanded(child: Text('Team activity is visible only to rostered members. Public discovery shows generic team details, not player activity.')),
+            const Expanded(child: Text('Only team members can see team activity. Public team pages never show player activity.')),
           ],
         ),
       ),
@@ -587,7 +587,7 @@ class _TeamPageState extends State<TeamPage> {
     setState(() {
       if (!_sampleTaps.add(postId)) _sampleTaps.remove(postId);
     });
-    showFeatureMessage(context, 'Sample preview only. Stick taps are not sent.');
+    showFeatureMessage(context, 'Stick taps aren\'t live yet. Nothing was sent.');
   }
 
   Future<void> _showTeamDiscovery(BuildContext context) => showModalBottomSheet<void>(
@@ -603,11 +603,19 @@ class _TeamPageState extends State<TeamPage> {
           children: [
             Text('Discover teams', style: Theme.of(sheetContext).textTheme.headlineSmall),
             const SizedBox(height: AppSpacing.xs),
-            const Text('Public team results use representative content. Player activity stays member-only.'),
+            const Text('These are example teams. Player activity stays private to members.'),
             const SizedBox(height: AppSpacing.xl),
-            _DiscoveryTeamCard(name: 'Westside Wolves', detail: 'U15 · Coach Taylor · 18 players', onRequest: () => _showUnavailableAction(sheetContext, 'Join requests are not connected yet.')),
+            _DiscoveryTeamCard(
+              name: 'Westside Wolves',
+              detail: 'U15 · Coach Taylor · 18 players',
+              onRequest: () => _showUnavailableAction(sheetContext, 'Join requests aren\'t live yet. Nothing was sent.'),
+            ),
             const SizedBox(height: AppSpacing.sm),
-            _DiscoveryTeamCard(name: 'River City Rockets', detail: 'U14 · Coach Lee · 16 players', onRequest: () => _showUnavailableAction(sheetContext, 'Join requests are not connected yet.')),
+            _DiscoveryTeamCard(
+              name: 'River City Rockets',
+              detail: 'U14 · Coach Lee · 16 players',
+              onRequest: () => _showUnavailableAction(sheetContext, 'Join requests aren\'t live yet. Nothing was sent.'),
+            ),
           ],
         ),
       ),
@@ -627,12 +635,12 @@ class _TeamPageState extends State<TeamPage> {
           children: [
             Text('Join with a team code', style: Theme.of(sheetContext).textTheme.headlineSmall),
             const SizedBox(height: AppSpacing.xs),
-            const Text('A constrained team-code entry will be connected with account and parent approval flows.'),
+            const Text('Team code entry is coming soon, along with accounts and parent approval.'),
             const SizedBox(height: AppSpacing.xl),
             OutlinedButton.icon(
-              onPressed: () => _showUnavailableAction(sheetContext, 'Team-code lookup is not connected yet.'),
+              onPressed: () => _showUnavailableAction(sheetContext, 'Team code lookup isn\'t live yet. Nothing was changed.'),
               icon: const Icon(Icons.key_outlined),
-              label: const Text('Preview code lookup'),
+              label: const Text('Look up code'),
             ),
           ],
         ),
@@ -751,7 +759,7 @@ class MePage extends ConsumerStatefulWidget {
 }
 
 class _MePageState extends ConsumerState<MePage> {
-  static const _profiles = [(initials: 'JH', name: 'Jamie H.', detail: 'Player profile'), (initials: 'AH', name: 'Avery H.', detail: 'Child profile · sample')];
+  static const _profiles = [(initials: 'JH', name: 'Jamie H.', detail: 'Player profile'), (initials: 'AH', name: 'Avery H.', detail: 'Child profile · example')];
 
   var _activeProfile = 0;
 
@@ -788,7 +796,7 @@ class _MePageState extends ConsumerState<MePage> {
                           children: [
                             Text(profile.name, style: theme.textTheme.headlineSmall),
                             const SizedBox(height: AppSpacing.xs),
-                            Text('PLAYER  ·  SAMPLE PROFILE', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                            Text('PLAYER  ·  EXAMPLE PROFILE', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
                           ],
                         ),
                       ),
@@ -807,14 +815,14 @@ class _MePageState extends ConsumerState<MePage> {
             children: [
               Icon(Icons.info_outline, color: theme.colorScheme.primary),
               const SizedBox(width: AppSpacing.sm),
-              const Expanded(child: Text('Profiles, roles, accounts, and subscriptions use representative local screens. They are not connected yet.')),
+              const Expanded(child: Text('You\'re looking at a preview with example data. Accounts, profiles and plans go live soon.')),
             ],
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Appearance'),
         const SizedBox(height: AppSpacing.sm),
-        const Text('One app. Light, dark, or your device setting.'),
+        const Text('Light, dark, or match your device.'),
         const SizedBox(height: AppSpacing.md),
         Wrap(
           spacing: AppSpacing.xs,
@@ -831,7 +839,7 @@ class _MePageState extends ConsumerState<MePage> {
             children: [
               Text('Data & services', style: theme.textTheme.titleMedium),
               const SizedBox(height: AppSpacing.sm),
-              const Text('Screens currently use sample content. Workout results stay on this device until restart; history, team updates, and purchases are not connected yet.'),
+              const Text('Example data for now. Workout results stay on this device until you restart. History, team updates and purchases aren\'t live yet.'),
               const SizedBox(height: AppSpacing.md),
               Row(
                 children: [
@@ -850,7 +858,7 @@ class _MePageState extends ConsumerState<MePage> {
         const SizedBox(height: AppSpacing.sm),
         _MeEntryCard(icon: Icons.switch_account_outlined, title: 'Switch role', detail: 'Player mode', onTap: _showRoleSwitcher),
         const SizedBox(height: AppSpacing.sm),
-        _MeEntryCard(icon: Icons.person_outline, title: 'Account', detail: 'Anonymous sample session', onTap: _showAccount),
+        _MeEntryCard(icon: Icons.person_outline, title: 'Account', detail: 'Guest session (example)', onTap: _showAccount),
         const SizedBox(height: AppSpacing.sm),
         _MeEntryCard(icon: Icons.workspace_premium_outlined, title: 'Subscription', detail: 'Free plan', onTap: _showSubscription),
         const SizedBox(height: AppSpacing.sm),
@@ -875,7 +883,7 @@ class _MePageState extends ConsumerState<MePage> {
           children: [
             Text('Switch player', style: Theme.of(sheetContext).textTheme.headlineSmall),
             const SizedBox(height: AppSpacing.xs),
-            const Text('The active profile is kept only for this preview session.'),
+            const Text('Your choice only lasts until you close the app.'),
             const SizedBox(height: AppSpacing.md),
             RadioGroup<int>(
               groupValue: _activeProfile,
@@ -908,13 +916,13 @@ class _MePageState extends ConsumerState<MePage> {
           children: [
             Text('Switch role', style: Theme.of(sheetContext).textTheme.headlineSmall),
             const SizedBox(height: AppSpacing.xs),
-            const Text('Parent and Coach modes are sample previews.'),
+            const Text('Parent and Coach views are example previews.'),
             const SizedBox(height: AppSpacing.md),
             const ListTile(leading: Icon(Icons.sports_hockey), title: Text('Player'), subtitle: Text('Current role'), trailing: Icon(Icons.check)),
             ListTile(
               leading: const Icon(Icons.family_restroom),
               title: const Text('Parent'),
-              subtitle: const Text('Sample preview'),
+              subtitle: const Text('Example preview'),
               onTap: () {
                 Navigator.of(sheetContext).pop();
                 context.go('/parent/kids');
@@ -923,7 +931,7 @@ class _MePageState extends ConsumerState<MePage> {
             ListTile(
               leading: const Icon(Icons.groups_outlined),
               title: const Text('Coach'),
-              subtitle: const Text('Sample preview'),
+              subtitle: const Text('Example preview'),
               onTap: () {
                 Navigator.of(sheetContext).pop();
                 context.go('/coach/roster');
@@ -949,12 +957,16 @@ class _MePageState extends ConsumerState<MePage> {
           children: [
             Text('Account', style: Theme.of(sheetContext).textTheme.headlineSmall),
             const SizedBox(height: AppSpacing.xs),
-            const Text('This preview is using an anonymous session. Account linking and deletion are not connected yet.'),
+            const Text('You\'re using a guest session. Linking and deleting accounts isn\'t live yet.'),
             const SizedBox(height: AppSpacing.xl),
-            FilledButton.icon(onPressed: () => _closeWithMessage(sheetContext, 'Account sign-in is not connected yet.'), icon: const Icon(Icons.login), label: const Text('Connect an account')),
+            FilledButton.icon(
+              onPressed: () => _closeWithMessage(sheetContext, 'Account sign-in isn\'t live yet. Nothing was changed.'),
+              icon: const Icon(Icons.login),
+              label: const Text('Connect an account'),
+            ),
             const SizedBox(height: AppSpacing.sm),
             OutlinedButton.icon(
-              onPressed: () => _closeWithMessage(sheetContext, 'Account deletion is not connected yet.'),
+              onPressed: () => _closeWithMessage(sheetContext, 'Account deletion isn\'t live yet. Nothing was deleted.'),
               icon: const Icon(Icons.delete_outline),
               label: const Text('Delete account'),
             ),
@@ -978,7 +990,7 @@ class _MePageState extends ConsumerState<MePage> {
           children: [
             Text('Player Free', style: Theme.of(sheetContext).textTheme.headlineSmall),
             const SizedBox(height: AppSpacing.xs),
-            const Text('Player Pro purchase, restore, and subscription management will be connected through RevenueCat in the commerce slice.'),
+            const Text('Player Pro purchases, restores and plan management are coming soon.'),
             const SizedBox(height: AppSpacing.xl),
             FilledButton(
               onPressed: () {
@@ -988,7 +1000,7 @@ class _MePageState extends ConsumerState<MePage> {
               child: const Text('Explore Player Pro'),
             ),
             const SizedBox(height: AppSpacing.sm),
-            OutlinedButton(onPressed: () => _closeWithMessage(sheetContext, 'Purchase restore is not connected yet.'), child: const Text('Restore purchases')),
+            OutlinedButton(onPressed: () => _closeWithMessage(sheetContext, 'Restoring purchases isn\'t live yet. You weren\'t charged.'), child: const Text('Restore purchases')),
           ],
         ),
       ),

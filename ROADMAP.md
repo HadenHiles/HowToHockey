@@ -16,6 +16,7 @@ Detailed Copilot development notes live in [.github/COPILOT_REFERENCE.md](.githu
 ### Session Log
 | Date | Summary | Commit |
 |---|---|---|
+| 2026-10-16 | Transcoded 10 Skills Vault clips to spec (4 s, 720p, muted, <1 MB, plus posters) as local gitignored placeholder media for 10 hands/shooting drills; rewrote all app copy in the Coach Jeremy / The Pond voice with honest "isn't live yet" messaging and updated tests; added the voice guide to the Copilot reference. Analysis clean, 56 host tests pass | See commit history |
 | 2026-10-16 | User approved the UX-first screens; resumed Phase 2. Moved the seed validator/schema to the six skills (legacy names rejected), enforced the media spec (≤1.5 MB, same-name poster JPG) with a metadata-only `--skip-media-check` mode, authored the 20 free starter drills (all six skills and tracking types), added Node and Flutter catalog tests, and documented the media spec and seed commands | See commit history |
 | 2026-10-16 | Emulator/simulator QA (iPhone 16 Plus, Android API 36; light and dark). Fixed arena panels showing dark-on-dark text in the light theme and the collapsed weekly training chart. Updated the stale live integration test (six skills, new workout-panel actions) and made it restore the test error handler so failures are visible. Both platforms pass | See commit history |
 | 2026-10-16 | Cross-screen review: added a sweep test rendering every static route in light/dark at 320×568, 200% text, and Reduce Motion with no overflow/exceptions; fixed the workout sheet's settle animation ignoring Reduce Motion. Fixed the VS Code Gradle import error (JAVA_HOME was JDK 27-ea, unsupported by Gradle 9.3.1) by pinning `java.import.gradle.java.home` to Temurin 17 in `.vscode/settings.json`. Analysis clean and all 55 host-only tests pass; no simulator walkthrough done | See commit history |
@@ -377,7 +378,7 @@ Provided in `assets/`: maple-leaf "HTH" monogram (≈square, viewBox 1307×1251)
 - [x] Implement models in §2 with freezed + converters
 - [x] Define drill spreadsheet/JSON schema; write `tool/seed/` script to upload drills to Firestore and media to Storage
 - [x] Media spec: 3–5s MP4, 720p, muted, ≤1.5 MB, plus poster JPG *(documented in the Copilot reference; the seed validator enforces size, existence, and a same-name poster JPG)*
-- [ ] Seed the **20 free starter drills** *(catalog metadata authored and validated in `tool/seed/drills.json`; remaining: produce the 20 videos/posters, then upload to Firestore/Storage)* covering all 5 pillars and all 6 tracking types
+- [ ] Seed the **20 free starter drills** *(catalog authored; 10 drills have local placeholder clips from the Skills Vault; remaining: footage for the other 10 (passing, strength, conditioning, one-timer, cooldown), then upload to Firestore/Storage)* covering all 5 pillars and all 6 tracking types
 - [ ] Drill Library screen: list, detail, looping media card, form cues
 - [ ] Filters: location, puck inventory, ball type, passer, pillar, tracking type (filters are Pro-only per tier matrix; free sees the starter 20)
 - [ ] Media caching and preloading of the next drill's video
@@ -668,3 +669,5 @@ Phases **1–7** deliver the full free tier + solo core loop. Phase 8 (monetizat
 - **Team Pro Month scope:** Once per profile ever; only the rostered player profile receives it. *(Phase 11)*
 - **Public teams:** Discoverable with name, player count, and generic team stats; feed and leaderboard stay members-only. *(Phase 9)*
 - **Child devices:** Kid-device QR sign-in **or** parent-device profile switching. Siblings can train concurrently on separate devices or together via Group Session. *(Phases 4, 10B)*
+- **Voice and tone:** App copy follows the Coach Jeremy / The Pond voice (plain, warm, second-person, short sentences, light hockey flavor) and the TenThousandShots app's friendly empty states and prompts. Unimplemented actions must still say so plainly and never claim success ("isn't live yet. Nothing was changed."). Details in `.github/COPILOT_REFERENCE.md`. *(2026-10-16)*
+- **Placeholder drill media:** Members-only Skills Vault clips are used locally as placeholder drill media in the gitignored `tool/seed/media/`; they are never committed because the repo is public. Replace with final media before launch. *(Phase 2, 2026-10-16)*

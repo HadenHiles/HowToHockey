@@ -23,7 +23,7 @@ class SetupPage extends ConsumerWidget {
     final controller = ref.read(trainingSetupProvider.notifier);
     return AppPage(
       title: 'Your setup',
-      subtitle: 'Good training starts with what you have.',
+      subtitle: 'Great training starts with what you have.',
       action: FilledButton(onPressed: () => context.push('/focus'), child: const Text('Next: choose your focus')),
       children: [
         const SectionHeading(title: 'Where are you training?'),
@@ -36,7 +36,7 @@ class SetupPage extends ConsumerWidget {
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'How many pucks?'),
         const SizedBox(height: AppSpacing.xs),
-        const Text('We can make a single puck go a long way.'),
+        const Text('One puck is plenty. We\'ll make it count.'),
         const SizedBox(height: AppSpacing.md),
         Wrap(
           spacing: AppSpacing.xs,
@@ -66,7 +66,7 @@ class SetupPage extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.xl),
-        const Text('Workouts currently use a sample plan. Equipment matching will be connected when workout generation is implemented.'),
+        const Text('For now, workouts use an example plan. Matching drills to your gear is coming soon.'),
       ],
     );
   }
@@ -82,7 +82,7 @@ class FocusPage extends ConsumerWidget {
     final pillars = theme.extension<PillarColors>()!;
     return AppPage(
       title: 'Find your focus',
-      subtitle: '100 points. Your priorities. Adjust one and the others rebalance.',
+      subtitle: '100 points. Your priorities. Move one and the others adjust.',
       action: FilledButton(onPressed: () => context.push('/routine'), child: const Text('View my workout')),
       children: [
         ArenaPanel(
@@ -94,11 +94,11 @@ class FocusPage extends ConsumerWidget {
                 children: [
                   Icon(Icons.tune, color: theme.colorScheme.primary, size: 28),
                   const SizedBox(height: AppSpacing.md),
-                  Text('BUILD A SMARTER SESSION', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary, letterSpacing: 1)),
+                  Text('BUILD A BETTER SESSION', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary, letterSpacing: 1)),
                   const SizedBox(height: AppSpacing.xs),
                   Text('Your game.\nYour focus.', style: theme.textTheme.headlineMedium),
                   const SizedBox(height: AppSpacing.xs),
-                  Text('Set priorities for a sample plan. Workout generation is coming later.', style: theme.textTheme.bodyMedium),
+                  Text('Set your priorities. Custom workouts are coming soon.', style: theme.textTheme.bodyMedium),
                 ],
               );
             },
@@ -136,7 +136,7 @@ class FocusPage extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
         ],
-        const TrainingCard(child: Text('A balanced foundation\nYour priorities will shape your workouts once generation is connected. For now, train with a sample six-drill plan.')),
+        const TrainingCard(child: Text('A balanced foundation\nSoon your priorities will shape your workouts. For now, train with an example six-drill plan.')),
       ],
     );
   }
@@ -164,7 +164,7 @@ class RoutinePage extends ConsumerWidget {
         ),
         const SizedBox(height: AppSpacing.md),
         OutlinedButton.icon(
-          onPressed: () => showFeatureMessage(context, 'Saved workouts are not connected yet. No workout was saved.'),
+          onPressed: () => showFeatureMessage(context, 'Saving workouts isn\'t live yet. No workout was saved.'),
           icon: const Icon(Icons.bookmark_border),
           label: const Text('Save workout'),
         ),
@@ -186,7 +186,7 @@ class RoutineLibraryPage extends ConsumerWidget {
     final theme = Theme.of(context);
     return AppPage(
       title: 'My routines',
-      subtitle: 'Build sessions from the drill library or create a drill from a skill template.',
+      subtitle: 'Build sessions from the drill library, or start from a skill template.',
       action: FilledButton.icon(onPressed: () => context.push('/routines/new'), icon: const Icon(Icons.add), label: const Text('Create routine')),
       children: [
         for (final routine in routines) ...[
@@ -223,7 +223,7 @@ class RoutineLibraryPage extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.md),
         ],
-        if (routines.isEmpty) const TrainingCard(child: Text('No saved routines yet. Create one to get started.')),
+        if (routines.isEmpty) const TrainingCard(child: Text('No routines yet. Create one and it shows up here.')),
       ],
     );
   }
@@ -233,7 +233,7 @@ class RoutineLibraryPage extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Delete ${routine.name}?'),
-        content: const Text('This removes the saved routine from this device.'),
+        content: const Text('This removes the routine from this device.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
@@ -246,7 +246,7 @@ class RoutineLibraryPage extends ConsumerWidget {
     } on StateError catch (error) {
       if (context.mounted) showFeatureMessage(context, error.message);
     } on PlatformException catch (error) {
-      if (context.mounted) showFeatureMessage(context, 'Could not delete routine: ${error.message ?? error.code}');
+      if (context.mounted) showFeatureMessage(context, 'Couldn\'t delete routine: ${error.message ?? error.code}');
     }
   }
 }
@@ -314,7 +314,7 @@ class _RoutineBuilderPageState extends ConsumerState<RoutineBuilderPage> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Could not save routine: ${error.message ?? error.code}';
+          _error = 'Couldn\'t save routine: ${error.message ?? error.code}';
         });
       }
     }
@@ -326,7 +326,7 @@ class _RoutineBuilderPageState extends ConsumerState<RoutineBuilderPage> {
     final pillars = theme.extension<PillarColors>()!;
     return AppPage(
       title: widget.routineId == null ? 'Create routine' : 'Edit routine',
-      subtitle: 'Choose a routine style, then add drills in your preferred order.',
+      subtitle: 'Pick a routine style, then add drills in the order you like.',
       action: FilledButton.icon(onPressed: _saving ? null : _save, icon: const Icon(Icons.save_outlined), label: Text(_saving ? 'Saving…' : 'Save routine')),
       children: [
         DropdownButtonFormField<String>(
@@ -369,7 +369,7 @@ class _RoutineBuilderPageState extends ConsumerState<RoutineBuilderPage> {
         ],
         if (_error != null) ...[const SizedBox(height: AppSpacing.md), Text(_error!, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error))],
         const SizedBox(height: AppSpacing.md),
-        const Text('Routine changes and template drills are saved on this device. Cloud sync and entitlement checks will be connected with the routine and RevenueCat milestones.'),
+        const Text('Routines and template drills are saved on this device. Cloud sync and plan checks are coming soon.'),
       ],
     );
   }
@@ -433,9 +433,9 @@ class _LibraryPageState extends State<LibraryPage> {
   @override
   Widget build(BuildContext context) => AppPage(
     title: 'Drill library',
-    subtitle: 'Six sample drills. Real demos will replace these illustrations.',
+    subtitle: 'Six example drills. Coach Jeremy\'s video demos are coming soon.',
     children: [
-      const Text('Sample catalog · Filters shown for UX development; Pro access is not connected yet.'),
+      const Text('Example drills · Pro access isn\'t live yet.'),
       const SizedBox(height: AppSpacing.sm),
       Wrap(
         spacing: AppSpacing.xs,
@@ -446,8 +446,7 @@ class _LibraryPageState extends State<LibraryPage> {
         ],
       ),
       const SizedBox(height: AppSpacing.xl),
-      if (sampleDrills.where((drill) => _pillar == null || drill.pillar == _pillar).isEmpty)
-        const TrainingCard(child: Text('No sample drills for this focus yet.\nTry All drills to explore the current fixtures.')),
+      if (sampleDrills.where((drill) => _pillar == null || drill.pillar == _pillar).isEmpty) const TrainingCard(child: Text('No drills for this focus yet.\nTry All drills to see what\'s here.')),
       for (final drill in sampleDrills.where((drill) => _pillar == null || drill.pillar == _pillar)) ...[DrillListCard(drillId: drill.id), const SizedBox(height: AppSpacing.sm)],
     ],
   );
@@ -465,9 +464,9 @@ class DrillDetailPage extends ConsumerWidget {
     final matches = drills.where((drill) => drill.id == drillId);
     if (matches.isEmpty) {
       return AppPage(
-        title: 'Drill unavailable',
+        title: 'Drill not found',
         action: OutlinedButton(onPressed: () => fromSession ? context.pop() : context.go('/library'), child: Text(fromSession ? 'Back to workout' : 'Go to drill library')),
-        children: [Text(fromSession ? 'This drill is no longer in the workout.' : 'This drill is unavailable. Return to the library to choose a drill.')],
+        children: [Text(fromSession ? 'This drill is no longer in the workout.' : 'We can\'t find this drill. Head back to the library and pick another.')],
       );
     }
     final drill = matches.single;

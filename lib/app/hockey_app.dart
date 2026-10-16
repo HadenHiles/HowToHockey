@@ -162,7 +162,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     errorBuilder: (context, state) => AppPage(
       title: 'Screen not found',
       action: FilledButton(onPressed: () => context.go('/train'), child: const Text('Back to Train')),
-      children: [Text('The requested screen is unavailable: ${state.uri.path}')],
+      children: [Text('We can\'t find that screen: ${state.uri.path}')],
     ),
   );
   ref.onDispose(router.dispose);

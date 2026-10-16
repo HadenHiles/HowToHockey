@@ -446,7 +446,7 @@ void main() {
     await tester.tap(find.text('8 stick taps'));
     await tester.pumpAndSettle();
     expect(find.text('9 stick taps'), findsOneWidget);
-    expect(find.text('Sample preview only. Stick taps are not sent.'), findsOneWidget);
+    expect(find.text('Stick taps aren\'t live yet. Nothing was sent.'), findsOneWidget);
     ScaffoldMessenger.of(tester.element(find.text('Locker room'))).hideCurrentSnackBar();
     await tester.pumpAndSettle();
 
@@ -465,14 +465,14 @@ void main() {
     expect(find.text('Westside Wolves'), findsWidgets);
     await tester.tap(find.text('Request to join').first);
     await tester.pumpAndSettle();
-    expect(find.text('Join requests are not connected yet.'), findsOneWidget);
+    expect(find.text('Join requests aren\'t live yet. Nothing was sent.'), findsOneWidget);
 
     tester.state<ScrollableState>(pageScroll).position.jumpTo(100);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Locked'));
     await tester.pumpAndSettle();
     expect(find.text('Members only'), findsOneWidget);
-    expect(find.textContaining('visible only to rostered members'), findsOneWidget);
+    expect(find.textContaining('Only team members can see team activity'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -503,7 +503,7 @@ void main() {
     await tester.tap(find.text('Account'));
     await tester.pumpAndSettle();
     expect(find.text('Connect an account'), findsOneWidget);
-    expect(find.textContaining('Account linking and deletion are not connected yet.'), findsOneWidget);
+    expect(find.textContaining('Linking and deleting accounts isn\'t live yet.'), findsOneWidget);
     Navigator.of(tester.element(find.text('Connect an account'))).pop();
     await tester.pumpAndSettle();
 

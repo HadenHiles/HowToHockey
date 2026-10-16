@@ -20,13 +20,13 @@ class WelcomePage extends StatelessWidget {
         const SizedBox(height: AppSpacing.xl),
         const ArenaPanel(child: DrillMediaPlaceholder(title: 'Coach Jeremy')),
         const SizedBox(height: AppSpacing.xl),
-        Text('Train like it matters.', style: theme.textTheme.headlineLarge),
+        Text('Feel more confident in your next game.', style: theme.textTheme.headlineLarge),
         const SizedBox(height: AppSpacing.sm),
-        const Text('Guided off-ice workouts, real progress, and your team in one place.'),
+        const Text('Off-ice workouts with clear instruction, your progress, and your team in one place.'),
         const SizedBox(height: AppSpacing.xl),
         FilledButton(onPressed: () => context.go('/signup'), child: const Text('Get started')),
         const SizedBox(height: AppSpacing.sm),
-        OutlinedButton(onPressed: () => showFeatureMessage(context, 'Sign-in is not connected yet.'), child: const Text('I already have an account')),
+        OutlinedButton(onPressed: () => showFeatureMessage(context, 'Sign-in isn\'t live yet. Nothing was changed.'), child: const Text('I already have an account')),
         TextButton(onPressed: () => context.go('/train'), child: const Text('Look around first')),
       ],
     );
@@ -54,8 +54,8 @@ class _SignupPageState extends State<SignupPage> {
     final needsParent = year != null && now - year < 14;
     return AppPage(
       title: 'Create account',
-      subtitle: 'Pick your birth year. It is only used to protect young players.',
-      actions: [IconButton(tooltip: 'Back to Welcome', icon: const Icon(Icons.close), onPressed: () => context.go('/welcome'))],
+      subtitle: 'Pick your birth year. We only use it to keep young players safe.',
+      actions: [IconButton(tooltip: 'Back to welcome', icon: const Icon(Icons.close), onPressed: () => context.go('/welcome'))],
       children: [
         DropdownButtonFormField<int>(
           initialValue: year,
@@ -77,23 +77,35 @@ class _SignupPageState extends State<SignupPage> {
                   ],
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                const Text('Players under 13 cannot create their own account. A parent creates a child profile from their own account, then pairs this device.'),
+                const Text('Players under 13 can\'t create their own account. A parent creates a child profile from their account, then pairs this device.'),
                 const SizedBox(height: AppSpacing.md),
                 OutlinedButton(onPressed: () => context.go('/welcome'), child: const Text('Back')),
               ],
             ),
           )
         else if (year != null) ...[
-          FilledButton.icon(onPressed: () => showFeatureMessage(context, 'Sign in with Apple is not connected yet.'), icon: const Icon(Icons.apple), label: const Text('Continue with Apple')),
+          FilledButton.icon(
+            onPressed: () => showFeatureMessage(context, 'Apple sign-in isn\'t live yet. Nothing was changed.'),
+            icon: const Icon(Icons.apple),
+            label: const Text('Continue with Apple'),
+          ),
           const SizedBox(height: AppSpacing.sm),
-          OutlinedButton.icon(onPressed: () => showFeatureMessage(context, 'Google sign-in is not connected yet.'), icon: const Icon(Icons.g_mobiledata), label: const Text('Continue with Google')),
+          OutlinedButton.icon(
+            onPressed: () => showFeatureMessage(context, 'Google sign-in isn\'t live yet. Nothing was changed.'),
+            icon: const Icon(Icons.g_mobiledata),
+            label: const Text('Continue with Google'),
+          ),
           const SizedBox(height: AppSpacing.sm),
-          OutlinedButton.icon(onPressed: () => showFeatureMessage(context, 'Email sign-up is not connected yet.'), icon: const Icon(Icons.mail_outline), label: const Text('Continue with email')),
+          OutlinedButton.icon(
+            onPressed: () => showFeatureMessage(context, 'Email sign-up isn\'t live yet. Nothing was changed.'),
+            icon: const Icon(Icons.mail_outline),
+            label: const Text('Continue with email'),
+          ),
           const SizedBox(height: AppSpacing.lg),
-          TextButton(onPressed: () => context.go('/onboarding/role'), child: const Text('Skip for now (preview only)')),
+          TextButton(onPressed: () => context.go('/onboarding/role'), child: const Text('Skip for now (look around)')),
         ],
         const SizedBox(height: AppSpacing.lg),
-        const Text('Accounts are not connected yet. Nothing here creates an account.'),
+        const Text('Accounts aren\'t live yet. Nothing here creates an account.'),
       ],
     );
   }
@@ -110,9 +122,9 @@ class _RoleOnboardingPageState extends State<RoleOnboardingPage> {
   final _roles = <String>{'player'};
 
   static const _options = [
-    (id: 'player', icon: Icons.sports_hockey, title: 'Player', detail: 'Train, track progress, and join a team', route: '/train'),
-    (id: 'parent', icon: Icons.family_restroom, title: 'Parent', detail: 'Manage kids, approvals, and verification', route: '/parent/kids'),
-    (id: 'coach', icon: Icons.groups, title: 'Coach', detail: 'Run a roster, assign homework, see compliance', route: '/coach/roster'),
+    (id: 'player', icon: Icons.sports_hockey, title: 'Player', detail: 'Train, track your progress, and join a team', route: '/train'),
+    (id: 'parent', icon: Icons.family_restroom, title: 'Parent', detail: 'Set up your kids, approve activity, and verify', route: '/parent/kids'),
+    (id: 'coach', icon: Icons.groups, title: 'Coach', detail: 'Run your roster, assign homework, see who\'s on track', route: '/coach/roster'),
   ];
 
   @override
@@ -121,7 +133,7 @@ class _RoleOnboardingPageState extends State<RoleOnboardingPage> {
     final first = _options.firstWhere((o) => _roles.contains(o.id), orElse: () => _options.first);
     return AppPage(
       title: 'How will you use it?',
-      subtitle: 'Choose every role that fits. You can switch any time from Me or Account.',
+      subtitle: 'Pick every role that fits. You can switch any time from Me or Account.',
       action: FilledButton(onPressed: _roles.isEmpty ? null : () => context.go(first.route), child: Text('Continue as ${first.title}')),
       children: [
         for (final option in _options) ...[
@@ -150,7 +162,7 @@ class _RoleOnboardingPageState extends State<RoleOnboardingPage> {
           const SizedBox(height: AppSpacing.sm),
         ],
         const SizedBox(height: AppSpacing.sm),
-        const Text('Role choices are not saved yet.'),
+        const Text('Role choices aren\'t saved yet.'),
       ],
     );
   }

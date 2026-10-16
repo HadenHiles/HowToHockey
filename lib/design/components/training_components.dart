@@ -506,7 +506,7 @@ class DrillMediaPlaceholder extends StatelessWidget {
     final colors = Theme.of(context).extension<AppColors>()!;
     final pillars = Theme.of(context).extension<PillarColors>()!;
     return Semantics(
-      label: 'Illustrated placeholder for $title. No video is available.',
+      label: 'Illustration for $title. Video is coming soon.',
       image: true,
       child: ClipRRect(
         borderRadius: BorderRadius.circular(AppRadii.card),
@@ -520,7 +520,7 @@ class DrillMediaPlaceholder extends StatelessWidget {
                 children: [
                   Icon(Icons.sports_hockey_outlined, size: 40, color: colors.brandCream),
                   const SizedBox(height: AppSpacing.xs),
-                  Text('DEMO MEDIA', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.dark.textSecondary)),
+                  Text('VIDEO SOON', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppColors.dark.textSecondary)),
                 ],
               ),
             ),

@@ -39,9 +39,9 @@ class AppearanceSettingsPage extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Train with purpose.', style: textTheme.headlineLarge),
+                    Text('Make every rep count.', style: textTheme.headlineLarge),
                     const SizedBox(height: AppSpacing.sm),
-                    Text('Build your game with focused, measurable training.', style: textTheme.bodyLarge?.copyWith(color: colors.textSecondary)),
+                    Text('Build your game with clear, step-by-step training.', style: textTheme.bodyLarge?.copyWith(color: colors.textSecondary)),
                     const SizedBox(height: AppSpacing.xxl),
                     Card(
                       child: Padding(
@@ -51,7 +51,7 @@ class AppearanceSettingsPage extends ConsumerWidget {
                           children: [
                             Text('Appearance', style: textTheme.titleLarge),
                             const SizedBox(height: AppSpacing.xs),
-                            Text('Choose how How To Hockey looks on this device.', style: textTheme.bodyMedium?.copyWith(color: colors.textSecondary)),
+                            Text('Pick how How To Hockey looks on this device.', style: textTheme.bodyMedium?.copyWith(color: colors.textSecondary)),
                             const SizedBox(height: AppSpacing.md),
                             SegmentedButton<AppAppearance>(
                               segments: AppAppearance.values.map((appearance) => ButtonSegment(value: appearance, label: Text(appearance.label))).toList(growable: false),

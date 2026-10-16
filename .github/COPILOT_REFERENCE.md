@@ -7,6 +7,25 @@ the roadmap remains the source of truth for scope and decisions.
 
 ## Development Notes
 
+### Voice and tone
+
+All user-facing copy follows the How To Hockey / The Pond / TenThousandShotChallenge voice.
+
+- Talk like a warm, confident coach: second person ("you/your"), short sentences, concrete benefits over jargon.
+- Use hockey flavor sparingly ("Keep grinding", "small win", "Make it count"). No emoji, nothing childish.
+- Sentence case for titles and buttons. Empty states are positive: "No routines yet. Create one and it shows up here."
+- Keep text short; layouts are tested at 320px width and 200% text scale.
+- Never use developer phrasing in the UI: "sample content", "not connected", "placeholder", "fixtures", "UX", "slice".
+- Honesty rule (locked): an action that isn't implemented must say so and never claim success. Say what did NOT happen: "Nothing was sent.", "You weren't charged."
+- Genuinely fake data (example names, the "NOT VALID" join code, example standings) may still be called "example" or "preview".
+- Keep safety copy intact: under-13 parent setup, parent approvals, verification, and account deletion warnings.
+
+Before and after:
+
+- "Purchases are not connected yet. Nothing was charged." becomes "Purchases aren't live yet. You weren't charged."
+- "Profiles, roles, accounts, and subscriptions use representative local screens. They are not connected yet." becomes "You're looking at a preview with example data. Accounts, profiles and plans go live soon."
+- "No saved routines yet. Create one to get started." becomes "No routines yet. Create one and it shows up here."
+
 ### UX-first app development
 
 The normal app now opens the Player shell (Train, Progress, Team, Me), not the

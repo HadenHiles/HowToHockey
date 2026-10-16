@@ -27,7 +27,7 @@ class DrillRestSettingsNotifier extends Notifier<Map<String, DrillRestSettings>>
     if (settings.seconds < 15 || settings.seconds > 600) throw RangeError.range(settings.seconds, 15, 600);
     final preferences = ref.read(sharedPreferencesProvider);
     if (!await preferences.setString('drillRest.$id', '${settings.enabled ? 'on' : 'off'}:${settings.seconds}')) {
-      throw StateError('Could not save drill rest settings.');
+      throw StateError('Couldn\'t save drill settings.');
     }
     state = Map.unmodifiable({...state, id: settings});
   }

@@ -51,3 +51,6 @@ app.*.map.json
 
 # Widget Preview related
 .widget_preview/
+
+# Placeholder drill media (members-only Pond footage); never commit
+tool/seed/media/

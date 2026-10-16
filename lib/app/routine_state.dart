@@ -66,7 +66,7 @@ class RoutineLibrary extends Notifier<List<RoutinePlan>> {
   Future<void> _persist(List<RoutinePlan> routines) async {
     final preferences = ref.read(sharedPreferencesProvider);
     final saved = await preferences.setString(_storageKey, jsonEncode(routines.map((routine) => routine.toJson()).toList()));
-    if (!saved) throw StateError('Could not save routines on this device.');
+    if (!saved) throw StateError('Couldn\'t save routines on this device.');
   }
 }
 
@@ -83,7 +83,7 @@ Drill createTemplateDrill(SkillPillar pillar, {required int sets, required int r
     SkillPillar.endurance => 'Custom conditioning circuit',
   },
   mediaAssetPath: 'placeholder/custom-${pillar.name}',
-  formCues: const ['Set a clear target before each rep.', 'Keep your movement controlled and repeatable.'],
+  formCues: const ['Pick a clear target before each rep.', 'Stay in control and repeat the same motion.'],
   trackingType: TrackingType.volume,
   allowedLocations: LocationOption.values,
   minPuckInventory: PuckInventory.low,

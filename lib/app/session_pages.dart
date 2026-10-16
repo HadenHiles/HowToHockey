@@ -335,7 +335,7 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> {
                                   children: [
                                     const SectionHeading(title: 'Workout overview'),
                                     const SizedBox(height: AppSpacing.md),
-                                    const Text('Training time is what counts toward your total: logged sets, not rest. A ~ means some untimed sets use estimates. Elapsed includes rest.'),
+                                    const Text('Training time counts your logged sets, not rest. A ~ means some untimed sets are estimated. Elapsed includes rest.'),
                                     const SizedBox(height: AppSpacing.md),
                                     for (final (index, drill) in session.drills.indexed) ...[
                                       TrainingCard(
@@ -568,7 +568,7 @@ class _DrillRestSheetState extends ConsumerState<_DrillRestSheet> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = 'Could not save settings: ${error.message ?? error.code}';
+          _error = 'Couldn\'t save settings: ${error.message ?? error.code}';
         });
       }
     }
@@ -588,13 +588,13 @@ class _DrillRestSheetState extends ConsumerState<_DrillRestSheet> {
           SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Rest timer'),
-            subtitle: const Text('Start an optional inline countdown after each logged set. You can still swipe and train.'),
+            subtitle: const Text('Start a countdown after each logged set. You can still swipe and keep training.'),
             value: _enabled,
             onChanged: _saving ? null : (value) => setState(() => _enabled = value),
           ),
           Text('Rest duration: $_seconds seconds'),
           Slider(value: _seconds.toDouble(), min: 15, max: 600, divisions: 39, label: '${_seconds}s', onChanged: _saving ? null : (value) => setState(() => _seconds = value.round())),
-          const Text('Saved per drill on this device. Disabling rest affects future sets; use Skip rest to dismiss a current countdown.'),
+          const Text('Saved per drill on this device. Turning rest off applies to future sets. Tap Skip rest to end a countdown now.'),
           if (_error != null)
             Row(
               children: [
@@ -759,7 +759,7 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> with AutomaticKeepAl
           ),
           const SizedBox(height: AppSpacing.md),
           if (_drillComplete)
-            const TrainingCard(child: Text('Drill complete. Swipe to another drill or open the workout overview.'))
+            const TrainingCard(child: Text('Drill done. Swipe to the next drill or open the workout overview.'))
           else if (_timed) ...[
             Center(
               child: TrainingProgressRing(
@@ -775,7 +775,7 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> with AutomaticKeepAl
             SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
               title: const Text('Drill completed'),
-              subtitle: const Text('Mark whether you finished this set.'),
+              subtitle: const Text('Mark it when you finish this set.'),
               value: _completed,
               onChanged: (value) => setState(() => _completed = value),
             )
@@ -895,9 +895,9 @@ class SummaryPage extends ConsumerWidget {
     final theme = Theme.of(context);
     if (!session.finished) {
       return AppPage(
-        title: 'No completed workout',
+        title: 'No finished workout yet',
         action: FilledButton(onPressed: () => context.go('/train'), child: const Text('Back to Train')),
-        children: const [Text('Complete a workout to see its summary.')],
+        children: const [Text('Finish a workout and your summary shows up here.')],
       );
     }
     final shots = session.logs
@@ -908,7 +908,7 @@ class SummaryPage extends ConsumerWidget {
         .fold(0, (total, entry) => total + (entry.log.reps ?? 0));
     return AppPage(
       title: 'You showed up.',
-      subtitle: 'That’s how better happens.',
+      subtitle: 'That’s how you get better.',
       action: FilledButton(onPressed: () => context.go('/train'), child: const Text('Back to Train')),
       children: [
         Icon(Icons.check_circle_outline, size: 64, color: theme.colorScheme.primary),
@@ -941,7 +941,7 @@ class SummaryPage extends ConsumerWidget {
           const SizedBox(height: AppSpacing.sm),
         ],
         const SizedBox(height: AppSpacing.md),
-        const Text('Results are held in memory only. Workout history, lifetime stats, and team updates are not connected yet.'),
+        const Text('Results stay on this device until you close the app. History, lifetime stats and team updates aren\'t live yet.'),
       ],
     );
   }

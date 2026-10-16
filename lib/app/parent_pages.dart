@@ -21,7 +21,7 @@ class ParentKid {
       ParentKid(id: id, initials: initials, name: name, team: team, age: age, hiddenFromLeaderboards: hiddenFromLeaderboards ?? this.hiddenFromLeaderboards, pendingVerification: pendingVerification);
 }
 
-// Local sample children; replaced by profile data when Phase 4 is built.
+// Local example children; replaced by profile data when Phase 4 is built.
 class ParentKids extends Notifier<List<ParentKid>> {
   @override
   List<ParentKid> build() => const [
@@ -106,9 +106,9 @@ class ParentKidsPage extends ConsumerWidget {
     return AppPage(
       title: 'Kids',
       children: [
-        const _SampleNotice('Parent screens use representative local sample data. Approvals, pairing, and profile changes are not connected yet.'),
+        const _SampleNotice('You\'re looking at a preview with example data. Approvals, pairing and profile changes go live soon.'),
         const SizedBox(height: AppSpacing.xl),
-        SectionHeading(title: 'Your players', action: 'Add child', onAction: () => showFeatureMessage(context, 'Creating child profiles is not connected yet.')),
+        SectionHeading(title: 'Your players', action: 'Add child', onAction: () => showFeatureMessage(context, 'Child profiles aren\'t live yet. Nothing was created.')),
         const SizedBox(height: AppSpacing.md),
         for (final kid in kids) ...[
           TrainingCard(
@@ -162,12 +162,12 @@ class ParentChildPage extends ConsumerWidget {
       return AppPage(
         title: 'Child not found',
         action: FilledButton(onPressed: () => context.go('/parent/kids'), child: const Text('Back to Kids')),
-        children: const [Text('This child profile is unavailable.')],
+        children: const [Text('We can\'t find this child profile.')],
       );
     }
     return AppPage(
       title: kid.name,
-      subtitle: '${kid.age} · Child profile · sample',
+      subtitle: '${kid.age} · Child profile · example',
       actions: [IconButton(tooltip: 'Back to Kids', icon: const Icon(Icons.close), onPressed: () => context.go('/parent/kids'))],
       children: [
         ArenaPanel(
@@ -198,7 +198,7 @@ class ParentChildPage extends ConsumerWidget {
           detail: 'Opens Player mode',
           onTap: () {
             context.go('/train');
-            showFeatureMessage(context, 'Player mode opened with the sample profile. Child profile switching is not connected yet.');
+            showFeatureMessage(context, 'Switching to a child profile isn\'t live yet. You\'re seeing the example profile.');
           },
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -210,7 +210,7 @@ class ParentChildPage extends ConsumerWidget {
           child: SwitchListTile(
             contentPadding: EdgeInsets.zero,
             title: const Text('Hide from leaderboards'),
-            subtitle: const Text('Team results will not show this player. Saved only until restart.'),
+            subtitle: const Text('Team results won\'t show this player. Only kept until you restart the app.'),
             value: kid.hiddenFromLeaderboards,
             onChanged: (value) => ref.read(parentKidsProvider.notifier).setHidden(kid.id, value),
           ),
@@ -230,14 +230,14 @@ class ParentChildPage extends ConsumerWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: Text('Remove ${kid.name} from the team?'),
-        content: const Text('They will lose access to team homework and the locker room.'),
+        content: const Text('They\'ll lose access to team homework and the locker room.'),
         actions: [
           TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Cancel')),
           FilledButton(onPressed: () => Navigator.of(dialogContext).pop(true), child: const Text('Remove')),
         ],
       ),
     );
-    if (confirmed == true && context.mounted) showFeatureMessage(context, 'Team membership changes are not connected yet. Nothing was removed.');
+    if (confirmed == true && context.mounted) showFeatureMessage(context, 'Team changes aren\'t live yet. Nothing was removed.');
   }
 }
 
@@ -247,7 +247,7 @@ class ParentApprovalsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) => AppPage(
     title: 'Join approvals',
-    subtitle: 'Children cannot join a team or sign in on a new device until you approve.',
+    subtitle: 'Kids can\'t join a team or sign in on a new device until you approve.',
     actions: [IconButton(tooltip: 'Back to Kids', icon: const Icon(Icons.close), onPressed: () => context.go('/parent/kids'))],
     children: [
       for (final request in _sampleRequests) ...[
@@ -262,8 +262,8 @@ class ParentApprovalsPage extends StatelessWidget {
                 spacing: AppSpacing.sm,
                 runSpacing: AppSpacing.sm,
                 children: [
-                  FilledButton(onPressed: () => showFeatureMessage(context, 'Approvals are not connected yet. Nothing was approved.'), child: const Text('Approve')),
-                  OutlinedButton(onPressed: () => showFeatureMessage(context, 'Declining is not connected yet. Nothing was declined.'), child: const Text('Decline')),
+                  FilledButton(onPressed: () => showFeatureMessage(context, 'Approvals aren\'t live yet. Nothing was approved.'), child: const Text('Approve')),
+                  OutlinedButton(onPressed: () => showFeatureMessage(context, 'Declining isn\'t live yet. Nothing was declined.'), child: const Text('Decline')),
                 ],
               ),
             ],
@@ -295,20 +295,20 @@ class KidPairingPage extends ConsumerWidget {
               return Column(
                 children: [
                   Semantics(
-                    label: 'Sample pairing code 4 8 2 9 1 7, not valid',
+                    label: 'Example pairing code 4 8 2 9 1 7, not valid',
                     child: ExcludeSemantics(child: Text('482 917', style: theme.textTheme.displaySmall)),
                   ),
                   const SizedBox(height: AppSpacing.xs),
-                  Text('SAMPLE CODE · NOT VALID', style: theme.textTheme.labelSmall),
+                  Text('EXAMPLE CODE · NOT VALID', style: theme.textTheme.labelSmall),
                 ],
               );
             },
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        const _SampleNotice('Real codes will be short-lived. The paired device will have no access to Parent, billing, or account deletion.'),
+        const _SampleNotice('Real codes will expire quickly. A paired device can\'t open Parent, billing or account deletion.'),
         const SizedBox(height: AppSpacing.xl),
-        OutlinedButton(onPressed: () => showFeatureMessage(context, 'Pairing codes are not connected yet.'), child: const Text('Generate new code')),
+        OutlinedButton(onPressed: () => showFeatureMessage(context, 'Pairing codes aren\'t live yet. Nothing was created.'), child: const Text('Generate new code')),
       ],
     );
   }
@@ -333,9 +333,9 @@ class _ParentTrainTogetherPageState extends State<ParentTrainTogetherPage> {
   @override
   Widget build(BuildContext context) => AppPage(
     title: 'Train Together',
-    subtitle: 'Pick a workout to do side by side. Each of you logs your own sets.',
+    subtitle: 'Pick a workout to do side by side. You each log your own sets.',
     actions: [IconButton(tooltip: 'Back to Kids', icon: const Icon(Icons.close), onPressed: () => context.go('/parent/kids'))],
-    action: FilledButton(onPressed: () => showFeatureMessage(context, 'Shared workouts are not connected yet.'), child: const Text('Start together')),
+    action: FilledButton(onPressed: () => showFeatureMessage(context, 'Shared workouts aren\'t live yet. Nothing was started.'), child: const Text('Start together')),
     children: [
       RadioGroup<int>(
         groupValue: _selected,
@@ -356,7 +356,7 @@ class ParentVerifyPage extends ConsumerWidget {
     final kids = {for (final kid in ref.watch(parentKidsProvider)) kid.id: kid};
     return AppPage(
       title: 'Verify',
-      subtitle: 'Confirm that your child completed these workouts. Verified work is marked on team results.',
+      subtitle: 'Confirm your child finished these workouts. Verified work is marked on team results.',
       children: [
         for (final item in _sampleVerifications) ...[
           TrainingCard(
@@ -371,8 +371,8 @@ class ParentVerifyPage extends ConsumerWidget {
                   spacing: AppSpacing.sm,
                   runSpacing: AppSpacing.sm,
                   children: [
-                    FilledButton(onPressed: () => showFeatureMessage(context, 'Verification is not connected yet. Nothing was verified.'), child: const Text('Verify')),
-                    OutlinedButton(onPressed: () => showFeatureMessage(context, 'Verification is not connected yet.'), child: const Text('Not completed')),
+                    FilledButton(onPressed: () => showFeatureMessage(context, 'Verification isn\'t live yet. Nothing was verified.'), child: const Text('Verify')),
+                    OutlinedButton(onPressed: () => showFeatureMessage(context, 'Verification isn\'t live yet. Nothing was changed.'), child: const Text('Not completed')),
                   ],
                 ),
               ],
@@ -394,7 +394,7 @@ class ParentAccountPage extends StatelessWidget {
     return AppPage(
       title: 'Account',
       children: [
-        const _SampleNotice('Account, billing, and deletion use representative local screens and are not connected yet.'),
+        const _SampleNotice('You\'re looking at a preview. Accounts, billing and deletion go live soon.'),
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Mode'),
         const SizedBox(height: AppSpacing.md),
@@ -402,15 +402,25 @@ class ParentAccountPage extends StatelessWidget {
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Account & billing'),
         const SizedBox(height: AppSpacing.md),
-        _ActionCard(icon: Icons.person_outline, title: 'Account', detail: 'Anonymous sample session', onTap: () => showFeatureMessage(context, 'Sign-in and account linking are not connected yet.')),
+        _ActionCard(
+          icon: Icons.person_outline,
+          title: 'Account',
+          detail: 'Guest session (example)',
+          onTap: () => showFeatureMessage(context, 'Sign-in and account linking aren\'t live yet. Nothing was changed.'),
+        ),
         const SizedBox(height: AppSpacing.sm),
         _ActionCard(icon: Icons.workspace_premium_outlined, title: 'Subscription', detail: 'Free plan', onTap: () => context.push('/paywall')),
         const SizedBox(height: AppSpacing.sm),
-        _ActionCard(icon: Icons.restore, title: 'Restore purchases', detail: 'Recover a previous purchase', onTap: () => showFeatureMessage(context, 'Purchase restore is not connected yet.')),
+        _ActionCard(
+          icon: Icons.restore,
+          title: 'Restore purchases',
+          detail: 'Get back a past purchase',
+          onTap: () => showFeatureMessage(context, 'Restoring purchases isn\'t live yet. You weren\'t charged.'),
+        ),
         const SizedBox(height: AppSpacing.xl),
         TextButton.icon(
           style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
-          onPressed: () => showFeatureMessage(context, 'Account deletion is not connected yet. Nothing was deleted.'),
+          onPressed: () => showFeatureMessage(context, 'Account deletion isn\'t live yet. Nothing was deleted.'),
           icon: const Icon(Icons.delete_outline),
           label: const Text('Delete account'),
         ),

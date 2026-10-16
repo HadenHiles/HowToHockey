@@ -42,7 +42,7 @@ void main() {
     await tester.tap(find.text('${DateTime.now().year - 30}').last);
     await tester.pumpAndSettle();
     expect(find.text('Continue with Apple'), findsOneWidget);
-    await tester.tap(find.text('Skip for now (preview only)'));
+    await tester.tap(find.text('Skip for now (look around)'));
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('Coach'));
@@ -64,7 +64,7 @@ void main() {
     expect(find.textContaining(r'$99.99 / year'), findsOneWidget);
     await tester.tap(find.textContaining('Start Coach Pro'));
     await tester.pump();
-    expect(find.textContaining('Nothing was charged'), findsOneWidget);
+    expect(find.textContaining('You weren\'t charged'), findsOneWidget);
 
     ScaffoldMessenger.of(tester.element(find.byType(Scaffold).first)).clearSnackBars();
     router.go('/programs/hands-21');
