@@ -338,6 +338,7 @@ void main() {
     await tapWorkoutAction(tester, 'Finish workout');
     expect(find.text('You showed up.'), findsWidgets);
     expect(find.text('Shots logged'), findsOneWidget);
+    expect(find.textContaining(RegExp(r'^\d+ (reps?|shots?) |^\d+ / \d+ hits|^Best streak|^\d+ of \d+ sets completed|of timed work')), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 

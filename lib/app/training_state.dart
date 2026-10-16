@@ -228,6 +228,33 @@ class TrainingSessionNotifier extends Notifier<TrainingSession> {
 
   void skipRest() => _update(state.copyWith(clearRest: true));
 
+  /// Starts a rest by hand, for example between drills or when a drill has automatic rest off.
+  void startRest(int seconds) {
+    if (state.finished) throw StateError('This session is already complete.');
+    if (seconds < 15 || seconds > 600) throw RangeError.range(seconds, 15, 600, 'seconds');
+    _update(state.copyWith(restEndsAt: clock.now().toUtc().add(Duration(seconds: seconds))));
+  }
+
+  /// Replaces a drill that has no logged sets yet with another one.
+  void swapDrill(int index, Drill replacement) {
+    if (index < 0 || index >= state.drills.length) throw RangeError.index(index, state.drills);
+    if (state.setsLogged(index) > 0) throw StateError('Sets are already logged for this drill, so it can\'t be swapped.');
+    if (state.drills.any((drill) => drill.id == replacement.id)) throw ArgumentError('That drill is already in this workout.');
+    final drills = [...state.drills]..[index] = replacement;
+    _update(
+      TrainingSession(
+        drills: List.unmodifiable(drills),
+        drillIndex: state.drillIndex,
+        setIndex: state.setIndex,
+        logs: state.logs,
+        startedAt: state.startedAt,
+        restEndsAt: state.restEndsAt,
+        endedAt: state.endedAt,
+        dismissed: state.dismissed,
+      ),
+    );
+  }
+
   void dismissFinishedWorkout() {
     if (!state.finished) throw StateError('Finish all sets before dismissing the workout.');
     _update(state.copyWith(dismissed: true));

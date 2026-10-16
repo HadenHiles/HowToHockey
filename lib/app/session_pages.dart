@@ -14,7 +14,11 @@ import '../design/theme/app_theme.dart';
 import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/drills/drill_media.dart';
+import '../features/drills/drill_catalog.dart';
+import '../features/drills/drill_swap.dart';
 import '../features/drills/models/drill.dart';
+import '../features/drills/set_calculations.dart';
+import '../features/drills/set_summary.dart';
 import '../features/session/rest_notifications.dart';
 import '../features/session/session_cues.dart';
 import '../features/session/set_countdown.dart';
@@ -771,6 +775,49 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> with AutomaticKeepAl
     }
   }
 
+  void _startRest() {
+    final settings = ref.read(drillRestSettingsProvider)[drill.id];
+    final seconds = settings?.enabled == true ? settings!.seconds : drill.defaultPrescription.restSeconds;
+    ref.read(trainingSessionProvider.notifier).startRest(seconds.clamp(15, 600));
+  }
+
+  Future<void> _swapDrill() async {
+    final session = widget.session;
+    final setup = ref.read(trainingSetupProvider);
+    final catalog = ref.read(drillCatalogProvider).value ?? const <Drill>[];
+    final options = swapCandidates(
+      current: drill,
+      catalog: visibleDrills(catalog, pro: ref.read(drillFiltersUnlockedProvider)),
+      alreadyInWorkout: session.drills.map((d) => d.id),
+      setup: setup,
+    );
+    final index = session.drillIndex;
+    final choice = await showModalBottomSheet<Drill>(
+      context: context,
+      useRootNavigator: true,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, AppSpacing.screen),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text('Swap drill', style: Theme.of(sheetContext).textTheme.headlineSmall),
+              const SizedBox(height: AppSpacing.xs),
+              Text(options.isEmpty ? 'No other drills fit your setup right now. Change your setup on Train to see more.' : 'Pick a drill that works the same skill and fits your setup.'),
+              const SizedBox(height: AppSpacing.md),
+              for (final option in options)
+                ListTile(contentPadding: EdgeInsets.zero, title: Text(option.title), subtitle: Text(option.prescriptionLabel), onTap: () => Navigator.of(sheetContext).pop(option)),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (choice != null && mounted) ref.read(trainingSessionProvider.notifier).swapDrill(index, choice);
+  }
+
   void _log() {
     final type = drill.trackingType;
     ref
@@ -838,6 +885,17 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> with AutomaticKeepAl
                 tooltip: ref.watch(drillRestSettingsProvider)[drill.id]?.enabled == true ? 'Drill settings · Rest on' : 'Drill settings · Rest off',
                 onPressed: () => showDrillRestSettings(context, drill),
                 icon: const Icon(Icons.tune),
+              ),
+            ],
+          ),
+          Wrap(
+            spacing: AppSpacing.xs,
+            children: [
+              if (widget.session.setsLogged(widget.session.drillIndex) == 0) TextButton.icon(onPressed: _swapDrill, icon: const Icon(Icons.swap_horiz), label: const Text('Swap drill')),
+              TextButton.icon(
+                onPressed: widget.session.restEndsAt != null && widget.session.restEndsAt!.isAfter(clock.now().toUtc()) ? null : _startRest,
+                icon: const Icon(Icons.timer_outlined),
+                label: const Text('Start rest'),
               ),
             ],
           ),
@@ -1038,24 +1096,26 @@ class SummaryPage extends ConsumerWidget {
               children: [
                 Text(drill.title, style: theme.textTheme.titleMedium),
                 const SizedBox(height: AppSpacing.xs),
-                for (final entry in session.logs.where((entry) => entry.drillId == drill.id)) Text('Set ${entry.log.setIndex + 1}: ${_logLabel(entry.log, drill.trackingType)}'),
+                Text(
+                  drillTotalsLabel(
+                    drill,
+                    summarizeDrill(drill, [
+                      for (final entry in session.logs)
+                        if (entry.drillId == drill.id) entry.log,
+                    ]),
+                  ),
+                  style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary),
+                ),
+                const SizedBox(height: AppSpacing.xs),
+                for (final entry in session.logs.where((entry) => entry.drillId == drill.id)) Text('Set ${entry.log.setIndex + 1}: ${setResultLabel(entry.log, drill.trackingType)}'),
               ],
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
         ],
         const SizedBox(height: AppSpacing.md),
-        const Text('Results stay on this device until you close the app. History, lifetime stats and team updates aren\'t live yet.'),
+        const Text('Your results are saved on this device for now. History, lifetime stats and team updates aren\'t live yet.'),
       ],
     );
   }
-
-  String _logLabel(SetLog log, TrackingType type) => switch (type) {
-    TrackingType.volume => '${log.reps} reps',
-    TrackingType.duration => '${log.seconds}s',
-    TrackingType.density => '${log.reps} shots in ${log.seconds}s',
-    TrackingType.accuracy => '${log.hits} / ${log.reps} hits',
-    TrackingType.streak => '${log.streak} consecutive',
-    TrackingType.binary => log.completed! ? 'Completed' : 'Not completed',
-  };
 }

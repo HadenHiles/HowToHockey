@@ -863,7 +863,7 @@ class _MePageState extends ConsumerState<MePage> {
             children: [
               Text('Data & services', style: theme.textTheme.titleMedium),
               const SizedBox(height: AppSpacing.sm),
-              const Text('Example data for now. Workout results stay on this device until you restart. History, team updates and purchases aren\'t live yet.'),
+              const Text('Example data for now. Workout results are saved on this device for now. History, team updates and purchases aren\'t live yet.'),
               const SizedBox(height: AppSpacing.md),
               Row(
                 children: [

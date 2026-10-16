@@ -6,8 +6,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 > Update this block at the end of every work session.
 
 - **Current phase:** Phase 3 — Active Training Engine (starting). Phase 2 is complete except for replacing the placeholder video, which is tracked as a launch-blocking item inside Phase 2. The UX-first screens (user-approved 2026-10-16) run on local sample data that later phases replace with real backends.
-- **Next task:** Phase 3 remaining: `Swap Drill` (same swap group, still matching setup) and `Rest Timer` in the action bar, wiring `summarizeDrill` totals into the session summary, and the top-bar active-time accounting; then the Phase 3 exit check (run a routine end to end, kill it mid-session, resume, and save). Also confirm rest reminders on a real iPhone.
-- **Validation:** On 2026-10-16, `flutter analyze` passes and `flutter test test` passes all 130 host-only tests. On the Android emulator a rest reminder was scheduled while backgrounded and fired on time. iOS reminder scheduling is unverified (see the Phase 3 item). Emulators cannot confirm audible sound or vibration. Physical devices were not used.
+- **Next task:** Finish Phase 3: show the looping drill demo and three form cues on the live workout card (the library detail screen already has them), confirm the manual Shot Logger and Timer meet the free-tier spec, then run the exit check (a routine end to end, killed mid-session, resumed, and saved). Also confirm rest reminders on a real iPhone.
+- **Validation:** On 2026-10-16, `flutter analyze` passes and `flutter test test` passes all 148 host-only tests. The workout action row and the per-drill summary totals were checked visually on both the iPhone 16 Plus simulator and the Android emulator. Emulators cannot confirm audible sound or vibration, and iOS rest reminders are unverified. Physical devices were not used.
 - **Blockers:** None for the next UX slice. Phase 2 content/media and later backend integrations remain paused: workout history, real team membership/feed/standings, account-wide profile switching, and purchases are not implemented. Production App Check/release setup remains deferred; no production milestone is completed by these UI changes.
 - **Last updated:** 2026-10-08
 
@@ -16,6 +16,7 @@ Detailed Copilot development notes live in [.github/COPILOT_REFERENCE.md](.githu
 ### Session Log
 | Date | Summary | Commit |
 |---|---|---|
+| 2026-10-16 | Phase 3: per-drill totals and per-set derived numbers on the summary (new `set_summary.dart`, tested); Swap Drill (same swap group, fits the setup, only before sets are logged) and a manual Start rest on the workout card, with notifier methods and tests including a 320 px / 200% text fit check; corrected two stale 'until you close the app' lines now that workouts are saved. Visually verified on both emulators (one-at-a-time runs, since two simulators plus builds caused memory-pressure ANRs) | See commit history |
 | 2026-10-16 | Phase 3 rest reminders: added a local notification when a rest ends while backgrounded (scheduled on leaving the app, cancelled on return, permission asked once at the first rest, Me switch, stopwatch status icon, Android desugaring and receiver setup) with 9 tests. The in-app rest chime now stays quiet in the background to avoid doubling. Verified on the Android emulator end to end; iOS scheduling could not be verified in the simulator | See commit history |
 | 2026-10-16 | Phase 3 cues: added a wall-clock `SetCountdown` (3-2-1 lead-in, pause/resume/cancel) with 10 unit tests, four original synthesized tones, haptics, rest-end chime, and a saved Sounds and haptics setting on Me. Session timing now uses the injectable clock so widget tests can fake time. Device runs caught two real bugs, both fixed: iOS rejects the generic mix-with-music plus respect-silent audio flags (now an explicit ambient session) and low-latency audio mode keeps a frame callback running (now the normal mode). 121 host tests pass | See commit history |
 | 2026-10-16 | Phase 3 start: added shared tracking-type calculations and entry validation (`set_calculations.dart`), persisted the active workout after every change with safe restore of corrupt data, and wired validation into `logSet`. Added screen wake lock during workouts. 27 new unit tests (calculations, persistence, state machine). Verified resume-after-kill and wake lock on the emulators. Also corrected an earlier overclaim: `flutter test` uninstalls the app, so the media-cache refresh was only unit-tested; verified it properly with a pre-seeded stale cache on both platforms | See commit history |
@@ -422,7 +423,7 @@ Work these slices in order, reviewing the visual direction between slices:
 Build as a pure-Dart `SessionController` (Riverpod Notifier) with a thin UI on top so it is unit-testable.
 
 - [x] Production session controller: independent per-drill progress, swipe/overview selection, optional concurrent rest, explicit completion → summary *(validated set entries, persisted after every change, and unit-tested; rest-end notification is a separate item)*
-- [ ] Top bar: "Drill X of N" + overall timer (wall-clock based); overview with per-drill status and production active-time accounting
+- [x] Top bar: "Drill X of N" + overall timer (wall-clock based); overview with per-drill status and production active-time accounting *(wall-clock elapsed time, active time from measured sets with estimates marked, and per-drill status in the overview)*
 - [ ] Media card with looping demo + 3 form cues
 - [ ] Dynamic Input Module, one widget per `TrackingType`:
   - [x] **Volume:** stepper + direct numeric entry per set
@@ -431,12 +432,12 @@ Build as a pure-Dart `SessionController` (Riverpod Notifier) with a thin UI on t
   - [x] **Accuracy:** hits / total → accuracy %; validate `hits ≤ total` *(enforced in the controller and the input)*
   - [x] **Streak:** single numeric entry for max consecutive
   - [x] **Binary:** large toggle per set
-- [ ] Action bar: `Log Set`, `Swap Drill` (same `swapGroup`, still matching setup), `Rest Timer`
+- [x] Action bar: `Log Set`, `Swap Drill` (same `swapGroup`, still matching setup), `Rest Timer` *(Swap Drill offers same-group drills that fit today's setup (only before a drill has logged sets); Start rest begins a manual rest for any drill)*
 - [x] Production rest mechanics: off by default, configurable enable/duration per drill; when enabled auto-start inline after Log Set except the final workout set; `+15s`, `-15s`, `Skip Rest`; chime + haptic on end *(rest-end chime and haptics added; skipping a rest stays silent)*
 - [x] Local notification when rest ends while app is backgrounded *(scheduled only when the app goes to the background and cancelled on return, so it never doubles with the in-app chime; permission is asked once, at the first rest; Me → Workout has a Rest reminders switch. Verified end to end on the Android emulator: scheduled, fired on time, correct text and icon. Not verified on iOS: the simulator cannot grant notification permission from the command line, so check on an iPhone. Android uses inexact alarms, so a locked phone in Doze may deliver it a little late)*
 - [x] Wakelock on during session; audio session mixes with user's music *(wake lock verified on both emulators; cues use an iOS `ambient` / Android no-focus audio session so music keeps playing and the silent switch is respected; the audio session is configured on both platforms without errors, but audible output could not be judged on emulators)*
 - [x] Persist session progress after every set (resume after app kill) *(verified on the Android emulator by force-stopping the app and relaunching: workout, sets and elapsed time were restored)*
-- [ ] Session summary screen with totals per drill
+- [x] Session summary screen with totals per drill *(per-set results with derived shots-per-minute and accuracy, plus a headline total per drill)*
 - [ ] **Manual loggers (free tier):** standalone Shot Logger and Timer without a routine
 - [x] Unit tests for every tracking type's calculations and the state machine
 
