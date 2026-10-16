@@ -6,8 +6,8 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 > Update this block at the end of every work session.
 
 - **Current phase:** Phase 3 — Active Training Engine (starting). Phase 2 is complete except for replacing the placeholder video, which is tracked as a launch-blocking item inside Phase 2. The UX-first screens (user-approved 2026-10-16) run on local sample data that later phases replace with real backends.
-- **Next task:** Phase 3: turn the UX session state into the production `SessionController` — persist progress after every set (resume after app kill), explicit completion to summary, wall-clock timers, and unit tests for every tracking type's calculations and the state machine.
-- **Validation:** On 2026-10-16, `flutter analyze` passes and `flutter test test` passes all 77 host-only tests. A visual pass on the iPhone 16 Plus simulator and Android API 36 emulator (light) after the copy rewrite showed no runtime errors, and the bundled catalog loads all 20 drills from the real asset bundle on both. An Android "not responding" dialog seen once during a long run came from Mac memory pressure and did not reproduce. Physical devices were not used.
+- **Next task:** Phase 3 remaining: Duration countdown with 3-2-1 lead-in and start/stop chimes plus haptics (with audio mixing alongside the user's music), local notification when rest ends while backgrounded, `Swap Drill` and `Rest Timer` in the action bar, and wiring `summarizeDrill` totals into the session summary.
+- **Validation:** On 2026-10-16, `flutter analyze` passes and `flutter test test` passes all 104 host-only tests. On the Android emulator, a workout survived a verified force-stop and relaunch (new process ID) with sets and elapsed time restored; the screen wake lock engages during a workout on both the iPhone 16 Plus simulator and Android emulator. Physical devices were not used.
 - **Blockers:** None for the next UX slice. Phase 2 content/media and later backend integrations remain paused: workout history, real team membership/feed/standings, account-wide profile switching, and purchases are not implemented. Production App Check/release setup remains deferred; no production milestone is completed by these UI changes.
 - **Last updated:** 2026-10-08
 
@@ -16,6 +16,7 @@ Detailed Copilot development notes live in [.github/COPILOT_REFERENCE.md](.githu
 ### Session Log
 | Date | Summary | Commit |
 |---|---|---|
+| 2026-10-16 | Phase 3 start: added shared tracking-type calculations and entry validation (`set_calculations.dart`), persisted the active workout after every change with safe restore of corrupt data, and wired validation into `logSet`. Added screen wake lock during workouts. 27 new unit tests (calculations, persistence, state machine). Verified resume-after-kill and wake lock on the emulators. Also corrected an earlier overclaim: `flutter test` uninstalls the app, so the media-cache refresh was only unit-tested; verified it properly with a pre-seeded stale cache on both platforms | See commit history |
 | 2026-10-16 | Closed Phase 2: ran the full seed (20 drill docs plus media in production) and verified the exit criterion on the Android emulator with the network off (library lists all 20 drills; a previously viewed demo plays). Placeholder-video replacement stays open as a launch blocker | See commit history |
 | 2026-10-16 | Per the user, filled every missing video with a shared Skills Vault clip: all 20 drills plus a shared lesson/trailer/welcome clip now carry a burned-in "PLACEHOLDER VIDEO · REPLACE BEFORE LAUNCH" banner; uploaded all 21 to Storage. Program trailer, lesson, and welcome screens now play the placeholder through the same media card. Added cache version checks so a replaced upload refreshes devices (offline keeps the cached copy). Verified on both emulators (cache refreshed to the new file); analysis clean, 77 host tests pass | See commit history |
 | 2026-10-16 | Added `video_player` drill demos hosted in Firebase Storage: deployed Storage rules (signed-in `get` on `drills/*` only) with rules tests, added a `--media-only` seed mode and uploaded the 10 placeholder clips/posters to `how-to-hockey`, a disk-cached media source with next-drill prefetch, and a looping muted DrillMediaCard with reduced-motion and placeholder fallbacks. Fixed a self-waiting future in the download dedupe (caught by tests) and made startup replace a dead anonymous session (iOS simulator had a stale user whose token could not refresh, so Storage returned unauthenticated). Verified playback and caching on both emulators; analysis clean, 75 host tests and 19 rules tests pass | See commit history |
@@ -418,24 +419,24 @@ Work these slices in order, reviewing the visual direction between slices:
 ## Phase 3 — Active Training Engine (Core Loop Step 2)
 Build as a pure-Dart `SessionController` (Riverpod Notifier) with a thin UI on top so it is unit-testable.
 
-- [ ] Production session controller: independent per-drill progress, swipe/overview selection, optional concurrent rest, explicit completion → summary
+- [x] Production session controller: independent per-drill progress, swipe/overview selection, optional concurrent rest, explicit completion → summary *(validated set entries, persisted after every change, and unit-tested; rest-end notification is a separate item)*
 - [ ] Top bar: "Drill X of N" + overall timer (wall-clock based); overview with per-drill status and production active-time accounting
 - [ ] Media card with looping demo + 3 form cues
 - [ ] Dynamic Input Module, one widget per `TrackingType`:
-  - [ ] **Volume:** stepper + direct numeric entry per set
+  - [x] **Volume:** stepper + direct numeric entry per set
   - [ ] **Duration:** countdown with start/stop chimes, 3-2-1 lead-in
-  - [ ] **Density:** timer → numeric pad → computes SPM = `reps / seconds * 60`
-  - [ ] **Accuracy:** hits / total → accuracy %; validate `hits ≤ total`
-  - [ ] **Streak:** single numeric entry for max consecutive
-  - [ ] **Binary:** large toggle per set
+  - [x] **Density:** timer → numeric pad → computes SPM = `reps / seconds * 60` *(SPM computed by the shared, unit-tested calculation)*
+  - [x] **Accuracy:** hits / total → accuracy %; validate `hits ≤ total` *(enforced in the controller and the input)*
+  - [x] **Streak:** single numeric entry for max consecutive
+  - [x] **Binary:** large toggle per set
 - [ ] Action bar: `Log Set`, `Swap Drill` (same `swapGroup`, still matching setup), `Rest Timer`
 - [ ] Production rest mechanics: off by default, configurable enable/duration per drill; when enabled auto-start inline after Log Set except the final workout set; `+15s`, `-15s`, `Skip Rest`; chime + haptic on end
 - [ ] Local notification when rest ends while app is backgrounded
-- [ ] Wakelock on during session; audio session mixes with user's music
-- [ ] Persist session progress after every set (resume after app kill)
+- [ ] Wakelock on during session; audio session mixes with user's music *(wakelock done and verified on both emulators; the audio-session mixing half waits for session chimes)*
+- [x] Persist session progress after every set (resume after app kill) *(verified on the Android emulator by force-stopping the app and relaunching: workout, sets and elapsed time were restored)*
 - [ ] Session summary screen with totals per drill
 - [ ] **Manual loggers (free tier):** standalone Shot Logger and Timer without a routine
-- [ ] Unit tests for every tracking type's calculations and the state machine
+- [x] Unit tests for every tracking type's calculations and the state machine
 
 **Exit Criteria:** A hard-coded routine can be run end to end, killed mid-session, resumed, and saved.
 

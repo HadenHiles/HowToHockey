@@ -1,6 +1,11 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/drills/models/drill.dart';
+import '../features/drills/set_calculations.dart';
 import 'sample_data.dart';
 import '../features/settings/appearance_settings_controller.dart';
 
@@ -104,7 +109,64 @@ class TrainingSession {
   bool get finished => drills.asMap().entries.every((entry) => setsLogged(entry.key) >= entry.value.defaultPrescription.sets);
   Drill get drill => drills[drillIndex];
   bool get hasEstimatedTime => logs.any((entry) => entry.log.seconds == null);
-  int get activeSeconds => logs.fold(0, (sum, entry) => sum + (entry.log.seconds ?? drills.firstWhere((drill) => drill.id == entry.drillId).estimatedSecondsPerSet));
+  int get activeSeconds => logs.fold(0, (sum, entry) => sum + activeSecondsForSet(entry.log, drills.firstWhere((drill) => drill.id == entry.drillId)));
+
+  Map<String, Object?> toJson() => {
+    'drills': drills.map((drill) => drill.toJson()).toList(),
+    'drillIndex': drillIndex,
+    'startedAt': startedAt?.toIso8601String(),
+    'restEndsAt': restEndsAt?.toIso8601String(),
+    'endedAt': endedAt?.toIso8601String(),
+    'dismissed': dismissed,
+    'logs': [
+      for (final entry in logs)
+        {
+          'drillId': entry.drillId,
+          'setIndex': entry.log.setIndex,
+          'reps': entry.log.reps,
+          'hits': entry.log.hits,
+          'seconds': entry.log.seconds,
+          'streak': entry.log.streak,
+          'completed': entry.log.completed,
+          'loggedAt': entry.log.loggedAt.toIso8601String(),
+        },
+    ],
+  };
+
+  factory TrainingSession.fromJson(Map<String, dynamic> json) {
+    final drills = [for (final drill in json['drills'] as List) Drill.fromJson(drill as Map<String, dynamic>)];
+    if (drills.isEmpty) throw const FormatException('A saved session needs at least one drill.');
+    final drillIndex = json['drillIndex'] as int;
+    if (drillIndex < 0 || drillIndex >= drills.length) throw const FormatException('Saved drill position is out of range.');
+    DateTime? time(String key) => json[key] == null ? null : DateTime.parse(json[key] as String).toUtc();
+    final logs = [
+      for (final entry in json['logs'] as List)
+        (
+          drillId: (entry as Map<String, dynamic>)['drillId'] as String,
+          log: SetLog(
+            setIndex: entry['setIndex'] as int,
+            reps: entry['reps'] as int?,
+            hits: entry['hits'] as int?,
+            seconds: entry['seconds'] as int?,
+            streak: entry['streak'] as int?,
+            completed: entry['completed'] as bool?,
+            loggedAt: DateTime.parse(entry['loggedAt'] as String).toUtc(),
+          ),
+        ),
+    ];
+    final ids = drills.map((drill) => drill.id).toSet();
+    if (logs.any((entry) => !ids.contains(entry.drillId))) throw const FormatException('A saved set belongs to a drill that is not in the session.');
+    return TrainingSession(
+      drills: List.unmodifiable(drills),
+      drillIndex: drillIndex,
+      setIndex: logs.where((entry) => entry.drillId == drills[drillIndex].id).length,
+      logs: List.unmodifiable(logs),
+      startedAt: time('startedAt'),
+      restEndsAt: time('restEndsAt'),
+      endedAt: time('endedAt'),
+      dismissed: json['dismissed'] as bool,
+    );
+  }
 
   TrainingSession copyWith({int? drillIndex, List<({String drillId, SetLog log})>? logs, DateTime? restEndsAt, DateTime? endedAt, bool clearRest = false, bool? dismissed}) => TrainingSession(
     drills: drills,
@@ -119,25 +181,55 @@ class TrainingSession {
 }
 
 class TrainingSessionNotifier extends Notifier<TrainingSession> {
+  static const storageKey = 'activeTrainingSession';
+
   @override
-  TrainingSession build() => TrainingSession(drills: sampleDrills);
+  TrainingSession build() => _restore() ?? TrainingSession(drills: sampleDrills);
+
+  /// Brings back a session that was in progress when the app was closed or killed.
+  TrainingSession? _restore() {
+    final preferences = ref.read(sharedPreferencesProvider);
+    final stored = preferences.getString(storageKey);
+    if (stored == null) return null;
+    try {
+      final session = TrainingSession.fromJson(jsonDecode(stored) as Map<String, dynamic>);
+      return session.startedAt == null || session.dismissed ? null : session;
+    } on Object catch (error, stackTrace) {
+      // Corrupt or outdated data must not block the app; start fresh and report it.
+      FlutterError.reportError(FlutterErrorDetails(exception: error, stack: stackTrace, library: 'training session', context: ErrorDescription('while restoring a saved workout')));
+      unawaited(preferences.remove(storageKey));
+      return null;
+    }
+  }
+
+  /// Every change goes through here so progress is saved after each set, rest, and drill change.
+  void _update(TrainingSession next) {
+    state = next;
+    final preferences = ref.read(sharedPreferencesProvider);
+    final Future<bool> write = next.dismissed ? preferences.remove(storageKey) : preferences.setString(storageKey, jsonEncode(next.toJson()));
+    unawaited(
+      write.then((saved) {
+        if (!saved) FlutterError.reportError(FlutterErrorDetails(exception: StateError('Couldn\'t save workout progress.'), library: 'training session'));
+      }),
+    );
+  }
 
   void start(List<Drill> drills) {
     if (drills.isEmpty) throw ArgumentError('A session needs at least one drill.');
     if (drills.map((drill) => drill.id).toSet().length != drills.length) throw ArgumentError('Session drills must have unique IDs.');
-    state = TrainingSession(drills: List.unmodifiable(drills), startedAt: DateTime.now().toUtc());
+    _update(TrainingSession(drills: List.unmodifiable(drills), startedAt: DateTime.now().toUtc()));
   }
 
   void selectDrill(int index) {
     if (index < 0 || index >= state.drills.length) throw RangeError.index(index, state.drills);
-    state = state.copyWith(drillIndex: index);
+    _update(state.copyWith(drillIndex: index));
   }
 
-  void skipRest() => state = state.copyWith(clearRest: true);
+  void skipRest() => _update(state.copyWith(clearRest: true));
 
   void dismissFinishedWorkout() {
     if (!state.finished) throw StateError('Finish all sets before dismissing the workout.');
-    state = state.copyWith(dismissed: true);
+    _update(state.copyWith(dismissed: true));
   }
 
   void adjustRest(int seconds) {
@@ -146,12 +238,14 @@ class TrainingSessionNotifier extends Notifier<TrainingSession> {
     if (deadline == null) throw StateError('There is no rest countdown to adjust.');
     final adjusted = (deadline.isBefore(now) ? now : deadline).add(Duration(seconds: seconds));
     final maximum = now.add(const Duration(minutes: 10));
-    state = state.copyWith(
-      restEndsAt: adjusted.isBefore(now)
-          ? now
-          : adjusted.isAfter(maximum)
-          ? maximum
-          : adjusted,
+    _update(
+      state.copyWith(
+        restEndsAt: adjusted.isBefore(now)
+            ? now
+            : adjusted.isAfter(maximum)
+            ? maximum
+            : adjusted,
+      ),
     );
   }
 
@@ -159,14 +253,16 @@ class TrainingSessionNotifier extends Notifier<TrainingSession> {
     if (state.finished) throw StateError('This session is already complete.');
     final drill = state.drill;
     if (state.setsLogged(state.drillIndex) >= drill.defaultPrescription.sets) throw StateError('All sets for this drill are logged.');
+    validateSetEntry(drill.trackingType, reps: reps, hits: hits, seconds: seconds, streak: streak, completed: completed);
     final log = SetLog(setIndex: state.setIndex, reps: reps, hits: hits, seconds: seconds, streak: streak, completed: completed, loggedAt: DateTime.now().toUtc());
     final settings = ref.read(drillRestSettingsProvider)[drill.id];
-    state = state.copyWith(
+    var next = state.copyWith(
       logs: List.unmodifiable([...state.logs, (drillId: drill.id, log: log)]),
       restEndsAt: settings?.enabled == true ? DateTime.now().toUtc().add(Duration(seconds: settings!.seconds)) : null,
       clearRest: settings?.enabled != true,
     );
-    if (state.finished) state = state.copyWith(clearRest: true, endedAt: DateTime.now().toUtc());
+    if (next.finished) next = next.copyWith(clearRest: true, endedAt: DateTime.now().toUtc());
+    _update(next);
   }
 }
 

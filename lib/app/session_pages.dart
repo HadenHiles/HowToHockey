@@ -6,6 +6,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../design/components/training_components.dart';
 import '../design/theme/app_theme.dart';
@@ -53,6 +54,16 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> {
     _sheet.addListener(_syncSheetProgress);
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
     _prefetchFrom(ref.read(trainingSessionProvider).drillIndex);
+    _keepScreenOn(true);
+  }
+
+  // Players are often a few feet from the phone mid-drill; keep it awake while the workout panel is open.
+  void _keepScreenOn(bool on) {
+    unawaited(
+      (on ? WakelockPlus.enable() : WakelockPlus.disable()).catchError((Object error, StackTrace stack) {
+        FlutterError.reportError(FlutterErrorDetails(exception: error, stack: stack, library: 'workout screen', context: ErrorDescription('while ${on ? 'enabling' : 'disabling'} keep-screen-on')));
+      }),
+    );
   }
 
   // Warms the cache for this drill and the next so their demos are ready when opened.
@@ -66,6 +77,7 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> {
 
   @override
   void dispose() {
+    _keepScreenOn(false);
     _ticker?.cancel();
     _sheet.removeListener(_syncSheetProgress);
     _pages.dispose();
