@@ -1,0 +1,61 @@
+{
+  "valid": [
+    {
+      "input": "Jamie H.",
+      "expected": "Jamie H."
+    },
+    {
+      "input": "Jamie H",
+      "expected": "Jamie H."
+    },
+    {
+      "input": "jamie h",
+      "expected": "Jamie H."
+    },
+    {
+      "input": "  Sam   T  ",
+      "expected": "Sam T."
+    },
+    {
+      "input": "Jean-Luc P",
+      "expected": "Jean-Luc P."
+    },
+    {
+      "input": "O'Neil R.",
+      "expected": "O'Neil R."
+    },
+    {
+      "input": "Zoë K.",
+      "expected": "Zoë K."
+    },
+    {
+      "input": "Élodie m",
+      "expected": "Élodie M."
+    },
+    {
+      "input": "Aleksandr Ж.",
+      "expected": "Aleksandr Ж."
+    },
+    {
+      "input": "Jamie\nH.",
+      "expected": "Jamie H."
+    }
+  ],
+  "invalid": [
+    "",
+    "   ",
+    "Jamie",
+    "Jamie Hiles",
+    "Jamie H. Smith",
+    "J. H.",
+    "Jamie 1.",
+    "Jam1e H.",
+    "Jamie H.!",
+    "Jamie HH.",
+    "jamie_h",
+    "😀 H.",
+    "Jamie 😀",
+    "Abcdefghijklmnopqrstuvwxyz H.",
+    "<b>Jamie</b> H."
+  ]
+}

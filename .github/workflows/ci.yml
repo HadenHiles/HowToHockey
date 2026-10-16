@@ -73,3 +73,8 @@ jobs:
           java-version: '21'
       - run: npm ci
       - run: npm test
+      - run: npm ci
+        working-directory: functions
+      - name: Profile functions against the Firestore emulator
+        run: npm run test:emulator
+        working-directory: functions

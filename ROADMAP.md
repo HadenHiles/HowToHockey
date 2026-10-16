@@ -6,7 +6,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 > Update this block at the end of every work session.
 
 - **Current phase:** Phase 3 complete except its exit criterion's cloud "saved" half (needs Phase 4 profiles and the Phase 6 session write); finished workouts are kept in a local on-device history meanwhile. Starting Phase 4 — Accounts & Profiles. The UX-first screens (user-approved 2026-10-16) run on local sample data that later phases replace with real backends.
-- **Next task:** Phase 4 — Accounts & Profiles: start with the profile/account data model and rules, then Firebase Auth providers and the real age gate; kid-device sign-in and account deletion follow. Also confirm rest reminders on a real iPhone.
+- **Next task:** Phase 4 slice 2: real accounts. Firebase Auth providers (Sign in with Apple, Google, email/password) with `linkWithCredential` upgrading the anonymous user, the real age gate wired to account creation, then wire the Kids and onboarding screens to the profile functions. Needs your Apple/Google sign-in credentials and a decision on deploying the new Functions and rules to production.
 - **Validation:** On 2026-10-16, `flutter analyze` passes and `flutter test test` passes all 170 host-only tests. Local workout history (Progress totals, recent training, saved-workout summary) was checked visually on both the iPhone 16 Plus simulator and the Android emulator. Emulators cannot confirm audible sound or vibration, and iOS rest reminders are unverified. Physical devices were not used.
 - **Blockers:** None for the next UX slice. Phase 2 content/media and later backend integrations remain paused: workout history, real team membership/feed/standings, account-wide profile switching, and purchases are not implemented. Production App Check/release setup remains deferred; no production milestone is completed by these UI changes.
 - **Last updated:** 2026-10-08
@@ -16,6 +16,7 @@ Detailed Copilot development notes live in [.github/COPILOT_REFERENCE.md](.githu
 ### Session Log
 | Date | Summary | Commit |
 |---|---|---|
+| 2026-10-16 | Phase 4 slice 1: data model and server. Added `createChildProfile` and `createOwnProfile` Cloud Functions (name and birth-year validation, non-anonymous accounts only, transactional 3-child cap, certain-minor/certain-13+ age reading), Firestore rules for users/profiles/private profile data including kid-device tokens locked to one profile, Dart models/validation/repository, and shared name test vectors used by both TypeScript and Dart. Tests: 30 function unit tests, 14 Firestore-emulator tests (incl. a simultaneous-request race), 33 rules tests, 204 Dart tests. CI now runs the emulator tests. Nothing deployed to production | See commit history |
 | 2026-10-16 | Per the user's choice, closed Phase 3's 'saved' gap with a local on-device workout history: finished workouts are saved when finished (latest 60), Progress shows real totals and recent training, and any workout opens in the same summary view; corrupt entries are skipped and reported. 170 host tests pass; checked on both emulators. Starting Phase 4 | See commit history |
 | 2026-10-16 | Phase 3: replaced the placeholder Shot logger/Timer buttons with real manual loggers (shots with optional hits; timer from 30 s to 20 min) that flow through the saved session and summary, with a confirm-before-replacing-a-workout guard; fixed a text-controller disposal bug in the number dialog found by tests; kept the drill demo behind the Drill details button per the user. 156 host tests pass; checked on both emulators. Phase 3 build items are done; the exit criterion's cloud "saved" is deferred to Phase 4/6 | See commit history |
 | 2026-10-16 | Phase 3: per-drill totals and per-set derived numbers on the summary (new `set_summary.dart`, tested); Swap Drill (same swap group, fits the setup, only before sets are logged) and a manual Start rest on the workout card, with notifier methods and tests including a 320 px / 200% text fit check; corrected two stale 'until you close the app' lines now that workouts are saved. Visually verified on both emulators (one-at-a-time runs, since two simulators plus builds caused memory-pressure ANRs) | See commit history |
@@ -450,14 +451,14 @@ Build as a pure-Dart `SessionController` (Riverpod Notifier) with a thin UI on t
 ## Phase 4 — Accounts & Profiles
 - [ ] Firebase Auth: Sign in with Apple (required on iOS when offering third-party login), Google, email/password; `linkWithCredential` upgrades the Phase 1 anonymous user
 - [ ] Age gate at signup (birth year). Under-13 users cannot create an account; they must be created as a **child profile by a parent** (COPPA / GDPR-K)
-- [ ] `users` / `profiles` split: one account can own multiple player profiles
-- [ ] **Any account tier (including Free)** can create and manage child player profiles (cap: 3, enforced in a callable Function)
-- [ ] Display name restricted to first name + last initial; server-side validation
+- [x] `users` / `profiles` split: one account can own multiple player profiles *(Firestore rules and `createOwnProfile`/`createChildProfile` Cloud Functions written and tested locally; not deployed yet)*
+- [ ] **Any account tier (including Free)** can create and manage child player profiles (cap: 3, enforced in a callable Function) *(Server side done and tested: non-anonymous account, 3-child cap held under simultaneous requests, minors only. The Kids screen is not wired to it yet; that needs real accounts first.)*
+- [x] Display name restricted to first name + last initial; server-side validation *(server-side validation in the Functions plus an identical client check, both driven by one shared set of test vectors)*
 - [ ] **Kid device sign-in:** parent generates a short-lived QR/code → Function mints a custom token with a `profileId` claim → device is locked to Player mode for that child only (no parent, billing, or account-deletion access)
 - [ ] **Shared device alternative:** on the parent's device, Player mode has a "Switch Player" picker for the parent's child profiles (optionally PIN-protected exit back to Parent/Coach mode)
 - [ ] Active profile is device-local state, so several devices on one account can run different profiles at the same time
 - [ ] Account deletion flow in-app (required by both stores) → Function cascades data deletion
-- [ ] Firestore rules: a user can only read/write their own profiles' private data
+- [x] Firestore rules: a user can only read/write their own profiles' private data *(33 rules tests cover owner, stranger, signed-out, anonymous and a kid device locked to one profile; roles, entitlements, names, and totals are server-written only; not deployed yet)*
 
 ### 4B. Role-Based App Modes (Separate Shells)
 An account can hold multiple roles (e.g., a coach who is also a parent). Each role gets its own navigation shell; a mode switcher in the account menu moves between them. Screens never mix concerns across roles.

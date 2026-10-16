@@ -2,6 +2,62 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // A kid device signs in with a custom token that carries a `profileId` claim. It can act as that
+    // one profile only: never the parent's account, billing, or the child's siblings.
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isKidDevice() {
+      return signedIn() && 'profileId' in request.auth.token;
+    }
+
+    function ownsProfile(profileId) {
+      return signedIn() && !isKidDevice() && get(/databases/$(database)/documents/profiles/$(profileId)).data.ownerUid == request.auth.uid;
+    }
+
+    function canActAs(profileId) {
+      return isKidDevice() ? request.auth.token.profileId == profileId : ownsProfile(profileId);
+    }
+
+    // Account documents (roles, entitlements) are written only by Cloud Functions.
+    match /users/{uid} {
+      allow read: if signedIn() && !isKidDevice() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // Profiles are created and edited only through Cloud Functions, which validate names and enforce
+    // the child-profile cap. Clients can read the profiles they own, or the one their kid device is locked to.
+    match /profiles/{profileId} {
+      allow read: if signedIn() && (isKidDevice() ? request.auth.token.profileId == profileId : resource.data.ownerUid == request.auth.uid);
+      allow write: if false;
+
+      match /sessions/{sessionId} {
+        allow read, create, update: if canActAs(profileId);
+        allow delete: if false;
+
+        match /drills/{index} {
+          allow read, create, update: if canActAs(profileId);
+          allow delete: if false;
+        }
+      }
+
+      // Totals and personal bests are computed by Cloud Functions.
+      match /stats/{doc} {
+        allow read: if canActAs(profileId);
+        allow write: if false;
+      }
+
+      match /prs/{prKey} {
+        allow read: if canActAs(profileId);
+        allow write: if false;
+      }
+
+      match /focusPresets/{presetId} {
+        allow read, write: if canActAs(profileId);
+      }
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

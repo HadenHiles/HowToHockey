@@ -28,7 +28,7 @@ import {
 
 const projectId = 'demo-how-to-hockey';
 const bucket = `gs://${projectId}.appspot.com`;
-const documentPaths = ['profiles/player', 'teams/team/private/details'];
+const documentPaths = ['unknown/player', 'teams/team/private/details'];
 const objectPaths = ['media/drill.bin', 'profiles/player/private/image.bin'];
 const drillMediaPath = 'drills/starter.mp4';
 const identities = [

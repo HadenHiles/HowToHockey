@@ -7,9 +7,10 @@
   },
   "scripts": {
     "build": "tsc",
-    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\"",
+    "lint": "eslint \"src/**/*.ts\" \"test/**/*.ts\" \"test-emulator/**/*.ts\"",
     "test": "vitest run && node --test ../tool/seed/upload-drills.test.mjs",
-    "seed:drills": "node ../tool/seed/upload-drills.mjs"
+    "seed:drills": "node ../tool/seed/upload-drills.mjs",
+    "test:emulator": "../rules_test/node_modules/.bin/firebase emulators:exec --config ../firebase.json --project demo-how-to-hockey --only firestore \"vitest run --config vitest.emulator.config.ts\""
   },
   "dependencies": {
     "firebase-admin": "^14.5.0",

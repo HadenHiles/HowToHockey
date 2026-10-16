@@ -174,6 +174,20 @@ turn them off in Me → Workout. Session timing reads `clock.now()` (package:clo
 tests can fake time; tests use `RecordingCues` from `test/support/test_catalog.dart`.
 Emulators cannot confirm audible sound or vibration; check on a device.
 
+### Profiles, rules, and server tests
+
+Profiles and accounts are written only by Cloud Functions (`functions/src/profiles.ts`);
+clients can read what they own. Rules are in `firestore.rules`; a kid device signs in with a
+custom token carrying a `profileId` claim and can act as that one profile only. Display names
+are a first name plus a last initial, validated identically on the server and in
+`lib/features/profiles/display_name.dart`, both driven by
+`functions/test/vectors/display-names.json`. Ages are read cautiously from the birth year
+difference: accounts need 14+ years since birth year, child profiles 17 or fewer.
+
+Tests (use JDK 21+ for the emulators): `npm --prefix functions test`, `npm --prefix functions run
+test:emulator` (transactions against the Firestore emulator), and `npm --prefix rules_test test`.
+Nothing in this slice is deployed to production yet.
+
 ### Rest reminders
 
 When a rest is running and the app moves to the background, the workout panel schedules a
