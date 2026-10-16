@@ -6,6 +6,8 @@ import 'package:how_to_hockey/features/settings/appearance_settings_controller.d
 import 'package:how_to_hockey/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../support/test_catalog.dart';
+
 const routes = [
   '/train',
   '/progress',
@@ -49,7 +51,7 @@ void main() {
     testWidgets('every screen renders at 320x568, 200% text, Reduce Motion ($appearance)', (tester) async {
       SharedPreferences.setMockInitialValues({'appearance': appearance});
       final preferences = await SharedPreferences.getInstance();
-      final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences)]);
+      final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride]);
       addTearDown(container.dispose);
       tester.view.physicalSize = const Size(640, 1136);
       tester.view.devicePixelRatio = 2;

@@ -178,6 +178,8 @@ free starter drills across the six skills and all six tracking types.
 - Coach Jeremy media is produced separately; placeholders are used in the app
   until then. Do not commit large media binaries without checking with the user.
 
+The app bundles `tool/seed/drills.json` as an asset (see `lib/features/drills/drill_catalog.dart`), so the library works offline. Widget tests inject the same file through `test/support/test_catalog.dart` because real asset I/O does not finish under fake time.
+
 Commands (run from the repo root):
 
 ```bash

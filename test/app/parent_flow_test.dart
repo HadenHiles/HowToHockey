@@ -6,10 +6,12 @@ import 'package:how_to_hockey/features/settings/appearance_settings_controller.d
 import 'package:how_to_hockey/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../support/test_catalog.dart';
+
 Future<ProviderContainer> mount(WidgetTester tester, {double scale = 1}) async {
   SharedPreferences.setMockInitialValues({});
   final preferences = await SharedPreferences.getInstance();
-  final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences)]);
+  final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride]);
   addTearDown(container.dispose);
   tester.view.physicalSize = const Size(1000, 3000);
   tester.view.devicePixelRatio = 2;

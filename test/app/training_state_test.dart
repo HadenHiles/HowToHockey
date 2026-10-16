@@ -5,13 +5,15 @@ import 'package:how_to_hockey/app/training_state.dart';
 import 'package:how_to_hockey/features/settings/appearance_settings_controller.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../support/test_catalog.dart';
+
 void main() {
   late ProviderContainer container;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     final preferences = await SharedPreferences.getInstance();
-    container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences)]);
+    container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride]);
   });
 
   tearDown(() => container.dispose());

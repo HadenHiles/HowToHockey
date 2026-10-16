@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../design/tokens/app_colors.dart';
+import '../features/drills/drill_catalog.dart';
 import '../features/drills/models/drill.dart';
 
 extension PillarPresentation on SkillPillar {
@@ -77,7 +78,7 @@ extension PasserPresentation on PasserType {
 }
 
 extension DrillPresentation on Drill {
-  SkillPillar get pillar => skillWeights.keys.first;
+  SkillPillar get pillar => primaryPillar(this);
   String get prescriptionLabel {
     final prescription = defaultPrescription;
     final target = prescription.seconds != null
@@ -93,7 +94,7 @@ extension DrillPresentation on Drill {
 
 final sampleDrills = List<Drill>.unmodifiable([
   _drill(
-    'quick-release',
+    'quick-release-wrist-shots',
     'Quick-release wrist shots',
     TrackingType.volume,
     SkillPillar.shotPower,
@@ -101,7 +102,7 @@ final sampleDrills = List<Drill>.unmodifiable([
     cues: ['Start with the puck close to your feet.', 'Load the stick, then snap your wrists.', 'Finish with your blade pointing at the target.'],
   ),
   _drill(
-    'quiet-hands',
+    'quiet-hands-quick-feet',
     'Quiet hands, quick feet',
     TrackingType.duration,
     SkillPillar.hands,
@@ -109,7 +110,7 @@ final sampleDrills = List<Drill>.unmodifiable([
     cues: ['Keep your top hand out in front of you.', 'Eyes up between touches.', 'Stay light on your feet.'],
   ),
   _drill(
-    'shot-burst',
+    'shot-burst-30',
     '30-second shot burst',
     TrackingType.density,
     SkillPillar.endurance,
@@ -117,7 +118,7 @@ final sampleDrills = List<Drill>.unmodifiable([
     cues: ['Set your pucks within easy reach.', 'Reset your feet after every shot.', 'Keep your release smooth and the same each time.'],
   ),
   _drill(
-    'pick-corners',
+    'pick-your-corner',
     'Pick your corner',
     TrackingType.accuracy,
     SkillPillar.shotAccuracy,
@@ -125,14 +126,14 @@ final sampleDrills = List<Drill>.unmodifiable([
     cues: ['Pick one corner for the whole set.', 'Look at your target before you shoot.', 'Follow through toward that corner.'],
   ),
   _drill(
-    'partner-passes',
+    'pass-and-settle',
     'Pass and settle',
     TrackingType.streak,
     SkillPillar.passing,
     cues: ['Give your partner your blade as a target.', 'Soften your hands to cushion the pass.', 'Send it back flat and on the tape.'],
   ),
   _drill(
-    'athletic-reset',
+    'athletic-stance-reset',
     'Athletic stance reset',
     TrackingType.binary,
     SkillPillar.speedStrength,

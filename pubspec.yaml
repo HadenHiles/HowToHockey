@@ -110,6 +110,7 @@ flutter:
   assets:
     - assets/fonts/OFL.txt
     - assets/brand/HTH_TEXT_ONLY.png
+    - tool/seed/drills.json
 
   fonts:
     - family: Inter

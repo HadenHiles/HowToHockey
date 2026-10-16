@@ -10,10 +10,12 @@ import 'package:how_to_hockey/app/hockey_app.dart';
 import 'package:how_to_hockey/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../support/test_catalog.dart';
+
 Future<ProviderContainer> mountApp(WidgetTester tester, {String appearance = 'light'}) async {
   SharedPreferences.setMockInitialValues({'appearance': appearance});
   final preferences = await SharedPreferences.getInstance();
-  final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences)]);
+  final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride]);
   addTearDown(container.dispose);
   await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));
   await tester.pumpAndSettle();
@@ -84,7 +86,7 @@ void main() {
 
   for (final entry in [
     (route: '/routines', label: 'Start', drills: 6),
-    (route: '/drills/quick-release', label: 'Try this drill', drills: 1),
+    (route: '/drills/quick-release-wrist-shots', label: 'Try this drill', drills: 1),
     (route: '/train', label: 'Shot logger', drills: 1),
     (route: '/train', label: 'Timer', drills: 1),
   ]) {
@@ -344,7 +346,21 @@ void main() {
         phoneSize(tester, scale: scale);
         final container = await mountApp(tester, appearance: appearance);
         final router = container.read(appRouterProvider);
-        for (final route in ['/train', '/setup', '/focus', '/routine', '/library', '/drills/quick-release', '/session', '/rest', '/progress', '/team', '/me', '/summary', '/drills/not-a-drill']) {
+        for (final route in [
+          '/train',
+          '/setup',
+          '/focus',
+          '/routine',
+          '/library',
+          '/drills/quick-release-wrist-shots',
+          '/session',
+          '/rest',
+          '/progress',
+          '/team',
+          '/me',
+          '/summary',
+          '/drills/not-a-drill',
+        ]) {
           router.go(route);
           await tester.pumpAndSettle();
           expect(tester.takeException(), isNull, reason: '$route in $appearance at $scale');

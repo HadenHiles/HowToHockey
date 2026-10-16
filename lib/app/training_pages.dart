@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../design/components/training_components.dart';
 import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_spacing.dart';
+import '../features/drills/drill_catalog.dart';
 import '../features/drills/models/drill.dart';
 import 'player_pages.dart';
 import 'sample_data.dart';
@@ -171,7 +172,7 @@ class RoutinePage extends ConsumerWidget {
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Workout plan'),
         const SizedBox(height: AppSpacing.md),
-        for (final drill in sampleDrills) ...[DrillListCard(drillId: drill.id), const SizedBox(height: AppSpacing.sm)],
+        for (final drill in sampleDrills) ...[DrillListCard(drill: drill), const SizedBox(height: AppSpacing.sm)],
       ],
     );
   }
@@ -356,17 +357,29 @@ class _RoutineBuilderPageState extends ConsumerState<RoutineBuilderPage> {
         const SizedBox(height: AppSpacing.sm),
         const SectionHeading(title: 'Add from drill library'),
         const SizedBox(height: AppSpacing.sm),
-        for (final drill in sampleDrills) ...[
-          CheckboxListTile(
-            contentPadding: EdgeInsets.zero,
-            value: _drills.any((item) => item.id == drill.id),
-            title: Text(drill.title),
-            subtitle: Text('${drill.pillar.label} · ${drill.prescriptionLabel}'),
-            secondary: Icon(drill.pillar.icon, color: drill.pillar.color(pillars)),
-            onChanged: (selected) => _toggleDrill(drill, selected ?? false),
-          ),
-          const Divider(height: 1),
-        ],
+        ...ref
+            .watch(drillCatalogProvider)
+            .when(
+              data: (catalog) => [
+                for (final drill in visibleDrills(catalog, pro: ref.watch(drillFiltersUnlockedProvider))) ...[
+                  CheckboxListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _drills.any((item) => item.id == drill.id),
+                    title: Text(drill.title),
+                    subtitle: Text('${drill.pillar.label} · ${drill.prescriptionLabel}'),
+                    secondary: Icon(drill.pillar.icon, color: drill.pillar.color(pillars)),
+                    onChanged: (selected) => _toggleDrill(drill, selected ?? false),
+                  ),
+                  const Divider(height: 1),
+                ],
+              ],
+              loading: () => const [
+                Center(
+                  child: Padding(padding: EdgeInsets.all(AppSpacing.lg), child: CircularProgressIndicator()),
+                ),
+              ],
+              error: (_, _) => const [Text('We couldn\'t load the drill library. Close this screen and try again.')],
+            ),
         if (_error != null) ...[const SizedBox(height: AppSpacing.md), Text(_error!, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error))],
         const SizedBox(height: AppSpacing.md),
         const Text('Routines and template drills are saved on this device. Cloud sync and plan checks are coming soon.'),
@@ -420,35 +433,203 @@ class _TemplateDrillSheetState extends State<_TemplateDrillSheet> {
   );
 }
 
-class LibraryPage extends StatefulWidget {
+class LibraryPage extends ConsumerStatefulWidget {
   const LibraryPage({super.key});
 
   @override
-  State<LibraryPage> createState() => _LibraryPageState();
+  ConsumerState<LibraryPage> createState() => _LibraryPageState();
 }
 
-class _LibraryPageState extends State<LibraryPage> {
-  SkillPillar? _pillar;
+class _LibraryPageState extends ConsumerState<LibraryPage> {
+  var _filters = const DrillFilters();
 
   @override
-  Widget build(BuildContext context) => AppPage(
-    title: 'Drill library',
-    subtitle: 'Six example drills. Coach Jeremy\'s video demos are coming soon.',
-    children: [
-      const Text('Example drills · Pro access isn\'t live yet.'),
-      const SizedBox(height: AppSpacing.sm),
-      Wrap(
-        spacing: AppSpacing.xs,
-        runSpacing: AppSpacing.xs,
-        children: [
-          ChoiceChip(label: const Text('All drills'), selected: _pillar == null, onSelected: (_) => setState(() => _pillar = null)),
-          for (final pillar in SkillPillar.values) ChoiceChip(label: Text(pillar.label), selected: _pillar == pillar, onSelected: (_) => setState(() => _pillar = pillar)),
-        ],
+  Widget build(BuildContext context) {
+    final catalog = ref.watch(drillCatalogProvider);
+    final pro = ref.watch(drillFiltersUnlockedProvider);
+    return AppPage(
+      title: 'Drill library',
+      subtitle: catalog.maybeWhen(
+        data: (drills) => '${visibleDrills(drills, pro: pro).length} drills to work on, on or off the ice. Coach Jeremy\'s video demos are coming soon.',
+        orElse: () => 'Drills to work on, on or off the ice.',
       ),
-      const SizedBox(height: AppSpacing.xl),
-      if (sampleDrills.where((drill) => _pillar == null || drill.pillar == _pillar).isEmpty) const TrainingCard(child: Text('No drills for this focus yet.\nTry All drills to see what\'s here.')),
-      for (final drill in sampleDrills.where((drill) => _pillar == null || drill.pillar == _pillar)) ...[DrillListCard(drillId: drill.id), const SizedBox(height: AppSpacing.sm)],
-    ],
+      children: [
+        Wrap(
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
+          children: [
+            ChoiceChip(
+              label: const Text('All drills'),
+              selected: _filters.pillar == null,
+              onSelected: (_) => setState(() => _filters = _filters.copyWith(pillar: () => null)),
+            ),
+            for (final pillar in SkillPillar.values)
+              ChoiceChip(
+                label: Text(pillar.label),
+                selected: _filters.pillar == pillar,
+                onSelected: (_) => setState(() => _filters = _filters.copyWith(pillar: () => pillar)),
+              ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(onPressed: () => _showFilters(pro), icon: Icon(pro ? Icons.tune : Icons.lock_outline), label: Text(_filters.hasDetailedFilters ? 'Filters on' : 'Filters')),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        ...catalog.when(
+          data: (drills) {
+            final shown = applyDrillFilters(
+              visibleDrills(drills, pro: pro),
+              pro ? _filters : _filters.copyWith(location: () => null, puckInventory: () => null, ball: () => null, passer: () => null, trackingType: () => null),
+            );
+            if (shown.isEmpty) {
+              return [
+                TrainingCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('No drills match yet.\nTry fewer filters to see more.'),
+                      TextButton(onPressed: () => setState(() => _filters = const DrillFilters()), child: const Text('Clear filters')),
+                    ],
+                  ),
+                ),
+              ];
+            }
+            return [
+              for (final drill in shown) ...[DrillListCard(drill: drill), const SizedBox(height: AppSpacing.sm)],
+            ];
+          },
+          loading: () => const [
+            Center(
+              child: Padding(
+                padding: EdgeInsets.all(AppSpacing.xl),
+                child: CircularProgressIndicator(semanticsLabel: 'Loading drills'),
+              ),
+            ),
+          ],
+          error: (_, _) => [
+            TrainingCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('We couldn\'t load the drill library.'),
+                  TextButton(onPressed: () => ref.invalidate(drillCatalogProvider), child: const Text('Try again')),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<void> _showFilters(bool pro) => showModalBottomSheet<void>(
+    context: context,
+    useRootNavigator: true,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (sheetContext) => StatefulBuilder(
+      builder: (sheetContext, setSheetState) {
+        void update(DrillFilters next) {
+          setState(() => _filters = next);
+          setSheetState(() {});
+        }
+
+        final theme = Theme.of(sheetContext);
+        return SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, AppSpacing.screen),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Find the right drill', style: theme.textTheme.headlineSmall),
+                const SizedBox(height: AppSpacing.xs),
+                if (!pro) ...[
+                  const Text('Filter by where you train, the pucks you have, the balls you use, and who can pass. Filters are part of Player Pro.'),
+                  const SizedBox(height: AppSpacing.lg),
+                  FilledButton(
+                    onPressed: () {
+                      Navigator.of(sheetContext).pop();
+                      context.push('/paywall');
+                    },
+                    child: const Text('See Player Pro'),
+                  ),
+                ] else ...[
+                  const Text('Show only drills that fit your setup.'),
+                  const SizedBox(height: AppSpacing.md),
+                  _FilterGroup<LocationOption>(
+                    title: 'Where you train',
+                    values: LocationOption.values,
+                    selected: _filters.location,
+                    label: (v) => v.label,
+                    onChanged: (v) => update(_filters.copyWith(location: () => v)),
+                  ),
+                  _FilterGroup<PuckInventory>(
+                    title: 'Pucks you have',
+                    values: PuckInventory.values,
+                    selected: _filters.puckInventory,
+                    label: (v) => v.label,
+                    onChanged: (v) => update(_filters.copyWith(puckInventory: () => v)),
+                  ),
+                  _FilterGroup<BallType>(
+                    title: 'Ball',
+                    values: BallType.values,
+                    selected: _filters.ball,
+                    label: (v) => v.label,
+                    onChanged: (v) => update(_filters.copyWith(ball: () => v)),
+                  ),
+                  _FilterGroup<PasserType>(
+                    title: 'Passer',
+                    values: PasserType.values,
+                    selected: _filters.passer,
+                    label: (v) => v.label,
+                    onChanged: (v) => update(_filters.copyWith(passer: () => v)),
+                  ),
+                  _FilterGroup<TrackingType>(
+                    title: 'How you track it',
+                    values: TrackingType.values,
+                    selected: _filters.trackingType,
+                    label: (v) => v.label,
+                    onChanged: (v) => update(_filters.copyWith(trackingType: () => v)),
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  OutlinedButton(onPressed: () => update(const DrillFilters()), child: const Text('Clear filters')),
+                ],
+              ],
+            ),
+          ),
+        );
+      },
+    ),
+  );
+}
+
+class _FilterGroup<T> extends StatelessWidget {
+  const _FilterGroup({required this.title, required this.values, required this.selected, required this.label, required this.onChanged});
+
+  final String title;
+  final List<T> values;
+  final T? selected;
+  final String Function(T) label;
+  final ValueChanged<T?> onChanged;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: AppSpacing.md),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(title, style: Theme.of(context).textTheme.titleSmall),
+        const SizedBox(height: AppSpacing.xs),
+        Wrap(
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
+          children: [for (final value in values) ChoiceChip(label: Text(label(value)), selected: selected == value, onSelected: (on) => onChanged(on ? value : null))],
+        ),
+      ],
+    ),
   );
 }
 
@@ -460,8 +641,14 @@ class DrillDetailPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final drills = fromSession ? ref.watch(trainingSessionProvider).drills : sampleDrills;
-    final matches = drills.where((drill) => drill.id == drillId);
+    final drills = fromSession ? ref.watch(trainingSessionProvider).drills : [...?ref.watch(drillCatalogProvider).value, ...sampleDrills];
+    if (!fromSession && ref.watch(drillCatalogProvider).isLoading) {
+      return const AppPage(
+        title: 'Drill detail',
+        children: [Center(child: CircularProgressIndicator(semanticsLabel: 'Loading drill'))],
+      );
+    }
+    final matches = drills.where((drill) => drill.id == drillId).take(1);
     if (matches.isEmpty) {
       return AppPage(
         title: 'Drill not found',
@@ -469,7 +656,7 @@ class DrillDetailPage extends ConsumerWidget {
         children: [Text(fromSession ? 'This drill is no longer in the workout.' : 'We can\'t find this drill. Head back to the library and pick another.')],
       );
     }
-    final drill = matches.single;
+    final drill = matches.first;
     final rest = ref.watch(drillRestSettingsProvider)[drill.id];
     final theme = Theme.of(context);
     return AppPage(

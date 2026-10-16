@@ -8,6 +8,7 @@ import '../design/components/training_components.dart';
 import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_shapes.dart';
 import '../design/tokens/app_spacing.dart';
+import '../features/drills/models/drill.dart';
 import '../features/settings/appearance_settings_controller.dart';
 import 'sample_data.dart';
 import 'app_page.dart';
@@ -72,7 +73,7 @@ class TrainPage extends ConsumerWidget {
         const SizedBox(height: AppSpacing.xl),
         SectionHeading(title: 'Explore drills', action: 'See all', onAction: () => context.push('/library')),
         const SizedBox(height: AppSpacing.md),
-        for (final drill in sampleDrills.take(2)) ...[DrillListCard(drillId: drill.id), const SizedBox(height: AppSpacing.sm)],
+        for (final drill in sampleDrills.take(2)) ...[DrillListCard(drill: drill), const SizedBox(height: AppSpacing.sm)],
         const SizedBox(height: AppSpacing.sm),
         Text('Just want to log some work?', style: theme.textTheme.titleLarge),
         const SizedBox(height: AppSpacing.md),
@@ -105,17 +106,16 @@ class TrainPage extends ConsumerWidget {
 }
 
 class DrillListCard extends StatelessWidget {
-  const DrillListCard({required this.drillId, super.key});
+  const DrillListCard({required this.drill, super.key});
 
-  final String drillId;
+  final Drill drill;
 
   @override
   Widget build(BuildContext context) {
-    final drill = sampleDrills.firstWhere((drill) => drill.id == drillId);
     final theme = Theme.of(context);
     final pillars = theme.extension<PillarColors>()!;
     return TrainingCard(
-      onTap: () => context.push('/drills/$drillId'),
+      onTap: () => context.push('/drills/${drill.id}'),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
