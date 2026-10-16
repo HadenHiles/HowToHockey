@@ -110,6 +110,11 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> {
     if (!_sheet.isAttached) return;
     final snaps = [_minimumSheetSize, _maximumSheetSize];
     final target = snaps.reduce((nearest, size) => (size - _sheet.size).abs() < (nearest - _sheet.size).abs() ? size : nearest);
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _sheet.jumpTo(target);
+      _syncSheetProgress();
+      return;
+    }
     _sheet.animateTo(target, duration: const Duration(milliseconds: 220), curve: Curves.easeOutCubic).whenComplete(_syncSheetProgress);
   }
 
