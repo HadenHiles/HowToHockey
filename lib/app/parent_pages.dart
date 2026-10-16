@@ -396,7 +396,7 @@ class ParentAccountPage extends StatelessWidget {
         const SizedBox(height: AppSpacing.md),
         _ActionCard(icon: Icons.person_outline, title: 'Account', detail: 'Anonymous sample session', onTap: () => showFeatureMessage(context, 'Sign-in and account linking are not connected yet.')),
         const SizedBox(height: AppSpacing.sm),
-        _ActionCard(icon: Icons.workspace_premium_outlined, title: 'Subscription', detail: 'Free plan', onTap: () => showFeatureMessage(context, 'Subscriptions are not connected yet.')),
+        _ActionCard(icon: Icons.workspace_premium_outlined, title: 'Subscription', detail: 'Free plan', onTap: () => context.push('/paywall')),
         const SizedBox(height: AppSpacing.sm),
         _ActionCard(icon: Icons.restore, title: 'Restore purchases', detail: 'Recover a previous purchase', onTap: () => showFeatureMessage(context, 'Purchase restore is not connected yet.')),
         const SizedBox(height: AppSpacing.xl),

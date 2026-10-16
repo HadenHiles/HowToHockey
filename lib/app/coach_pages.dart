@@ -365,6 +365,8 @@ class _CoachTeamPageState extends State<CoachTeamPage> {
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Mode'),
         const SizedBox(height: AppSpacing.md),
+        _Entry(icon: Icons.workspace_premium_outlined, title: 'Coach Pro', detail: 'Plans, restore, and manage', onTap: () => context.push('/paywall?plan=coach')),
+        const SizedBox(height: AppSpacing.sm),
         _Entry(icon: Icons.sports_hockey, title: 'Switch to Player', detail: 'Currently in Coach mode', onTap: () => context.go('/train')),
       ],
     );

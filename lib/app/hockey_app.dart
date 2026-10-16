@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../design/theme/app_theme.dart';
 import '../features/settings/appearance_settings_controller.dart';
 import 'coach_pages.dart';
+import 'commerce_pages.dart';
+import 'onboarding_pages.dart';
 import 'parent_pages.dart';
 import 'player_pages.dart';
 import 'app_page.dart';
@@ -103,6 +105,35 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           StatefulShellBranch(
             routes: [GoRoute(path: '/coach/team', builder: (_, _) => const CoachTeamPage())],
+          ),
+        ],
+      ),
+      GoRoute(path: '/welcome', builder: (_, _) => const WelcomePage()),
+      GoRoute(path: '/signup', builder: (_, _) => const SignupPage()),
+      GoRoute(path: '/onboarding/role', builder: (_, _) => const RoleOnboardingPage()),
+      GoRoute(
+        path: '/paywall',
+        builder: (_, state) => PaywallPage(coach: state.uri.queryParameters['plan'] == 'coach'),
+      ),
+      GoRoute(
+        path: '/programs',
+        builder: (_, _) => const ProgramsPage(),
+        routes: [
+          GoRoute(
+            path: ':id',
+            builder: (_, state) => ProgramDetailPage(programId: state.pathParameters['id']!),
+            routes: [
+              GoRoute(
+                path: 'day/:day',
+                builder: (_, state) => ProgramDayPage(programId: state.pathParameters['id']!, day: int.tryParse(state.pathParameters['day']!) ?? 0),
+                routes: [
+                  GoRoute(
+                    path: 'lesson',
+                    builder: (_, state) => ProgramLessonPage(programId: state.pathParameters['id']!, day: int.tryParse(state.pathParameters['day']!) ?? 0),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),

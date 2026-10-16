@@ -823,6 +823,10 @@ class _MePageState extends ConsumerState<MePage> {
         _MeEntryCard(icon: Icons.person_outline, title: 'Account', detail: 'Anonymous sample session', onTap: _showAccount),
         const SizedBox(height: AppSpacing.sm),
         _MeEntryCard(icon: Icons.workspace_premium_outlined, title: 'Subscription', detail: 'Free plan', onTap: _showSubscription),
+        const SizedBox(height: AppSpacing.sm),
+        _MeEntryCard(icon: Icons.school_outlined, title: 'Programs', detail: 'Signature programs from Coach Jeremy', onTap: () => context.push('/programs')),
+        const SizedBox(height: AppSpacing.sm),
+        _MeEntryCard(icon: Icons.waving_hand_outlined, title: 'Welcome & sign-up preview', detail: 'See the first-run screens', onTap: () => context.push('/welcome')),
       ],
     );
   }
@@ -946,7 +950,13 @@ class _MePageState extends ConsumerState<MePage> {
             const SizedBox(height: AppSpacing.xs),
             const Text('Player Pro purchase, restore, and subscription management will be connected through RevenueCat in the commerce slice.'),
             const SizedBox(height: AppSpacing.xl),
-            FilledButton(onPressed: () => _closeWithMessage(sheetContext, 'Player Pro purchases are not connected yet.'), child: const Text('Explore Player Pro')),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(sheetContext).pop();
+                context.push('/paywall');
+              },
+              child: const Text('Explore Player Pro'),
+            ),
             const SizedBox(height: AppSpacing.sm),
             OutlinedButton(onPressed: () => _closeWithMessage(sheetContext, 'Purchase restore is not connected yet.'), child: const Text('Restore purchases')),
           ],
