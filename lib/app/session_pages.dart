@@ -15,6 +15,7 @@ import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/drills/drill_media.dart';
 import '../features/drills/models/drill.dart';
+import '../features/session/rest_notifications.dart';
 import '../features/session/session_cues.dart';
 import '../features/session/set_countdown.dart';
 import 'sample_data.dart';
@@ -36,7 +37,7 @@ class WorkoutSessionPanel extends ConsumerStatefulWidget {
   ConsumerState<WorkoutSessionPanel> createState() => _WorkoutSessionPanelState();
 }
 
-class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> {
+class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> with WidgetsBindingObserver {
   late final PageController _pages = PageController(initialPage: ref.read(trainingSessionProvider).drillIndex);
   final ScrollController _previews = ScrollController();
   final DraggableScrollableController _sheet = DraggableScrollableController();
@@ -60,7 +61,9 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> {
       setState(() {});
     });
     _prefetchFrom(ref.read(trainingSessionProvider).drillIndex);
+    _reminders = ref.read(restNotificationsProvider);
     _keepScreenOn(true);
+    WidgetsBinding.instance.addObserver(this);
   }
 
   // Players are often a few feet from the phone mid-drill; keep it awake while the workout panel is open.
@@ -72,14 +75,33 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> {
     );
   }
 
+  late final RestNotifications _reminders;
   var _wasResting = false;
+
+  // A reminder is only needed when the phone is locked or another app is open; while the
+  // workout is on screen the in-app chime covers it, so nothing is scheduled until we leave.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final notifications = _reminders;
+    if (state == AppLifecycleState.resumed) {
+      unawaited(notifications.cancel().catchError(reportReminderError));
+    } else if (state == AppLifecycleState.paused && ref.read(restRemindersEnabledProvider)) {
+      final session = ref.read(trainingSessionProvider);
+      final deadline = session.restEndsAt;
+      if (deadline == null || !deadline.isAfter(clock.now().toUtc())) return;
+      final next = session.setsLogged(session.drillIndex) < session.drill.defaultPrescription.sets ? session.drill.title : null;
+      unawaited(notifications.scheduleRestOver(deadline, title: 'Rest\'s over', body: next == null ? 'Time for your next drill.' : 'Time for your next set of $next.').catchError(reportReminderError));
+    }
+  }
 
   // Chime when a rest countdown runs out on its own (skipping it stays silent).
   void _checkRestFinished() {
     final session = ref.read(trainingSessionProvider);
     final deadline = session.restEndsAt;
     final resting = deadline != null && deadline.isAfter(clock.now().toUtc());
-    if (_wasResting && !resting && deadline != null) ref.read(sessionCuesProvider).restFinished();
+    // In the background the rest reminder notification does this job, so don't chime twice.
+    final foreground = WidgetsBinding.instance.lifecycleState == null || WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
+    if (_wasResting && !resting && deadline != null && foreground) ref.read(sessionCuesProvider).restFinished();
     _wasResting = resting;
   }
 
@@ -94,6 +116,8 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    unawaited(_reminders.cancel().catchError(reportReminderError));
     _keepScreenOn(false);
     _ticker?.cancel();
     _sheet.removeListener(_syncSheetProgress);
@@ -185,6 +209,11 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(trainingSessionProvider.select((session) => session.restEndsAt), (previous, next) {
+      if (previous == null && next != null && ref.read(restRemindersEnabledProvider)) {
+        unawaited(ref.read(restNotificationsProvider).ensurePermission().catchError(reportReminderError));
+      }
+    });
     final session = ref.watch(trainingSessionProvider);
     final elapsed = session.elapsedSeconds;
     final remaining = session.restEndsAt == null ? 0 : (session.restEndsAt!.difference(clock.now().toUtc()).inMilliseconds / 1000).ceil().clamp(0, 600);

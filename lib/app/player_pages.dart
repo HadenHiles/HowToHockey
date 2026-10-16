@@ -9,6 +9,7 @@ import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_shapes.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/drills/models/drill.dart';
+import '../features/session/rest_notifications.dart';
 import '../features/session/session_cues.dart';
 import '../features/settings/appearance_settings_controller.dart';
 import 'sample_data.dart';
@@ -843,6 +844,16 @@ class _MePageState extends ConsumerState<MePage> {
             subtitle: const Text('Countdown beeps and rest chimes. They play alongside your music and stay quiet on silent.'),
             value: ref.watch(workoutCuesEnabledProvider),
             onChanged: (value) => unawaited(ref.read(workoutCuesEnabledProvider.notifier).set(value)),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        TrainingCard(
+          child: SwitchListTile(
+            contentPadding: EdgeInsets.zero,
+            title: const Text('Rest reminders'),
+            subtitle: const Text('Get a notification when a rest ends and the app is in the background. We ask permission the first time you rest.'),
+            value: ref.watch(restRemindersEnabledProvider),
+            onChanged: (value) => unawaited(ref.read(restRemindersEnabledProvider.notifier).set(value)),
           ),
         ),
         const SizedBox(height: AppSpacing.xl),

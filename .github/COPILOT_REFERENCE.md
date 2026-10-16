@@ -174,6 +174,17 @@ turn them off in Me → Workout. Session timing reads `clock.now()` (package:clo
 tests can fake time; tests use `RecordingCues` from `test/support/test_catalog.dart`.
 Emulators cannot confirm audible sound or vibration; check on a device.
 
+### Rest reminders
+
+When a rest is running and the app moves to the background, the workout panel schedules a
+local notification for the rest's end (`lib/features/session/rest_notifications.dart`); coming
+back cancels it, so it never doubles with the in-app chime. Notification permission is requested
+once, when the first rest starts. Android uses inexact alarms (no exact-alarm permission) and
+does not reschedule after a reboot. To test on Android: `adb shell pm grant com.howtohockey.app
+android.permission.POST_NOTIFICATIONS`, start a rest, press Home, and run `adb shell dumpsys
+notification --noredact`. The iOS simulator cannot grant notification permission from the command
+line, so iOS delivery needs a real device or a manual tap on the permission prompt.
+
 ### Drill catalog and media
 
 The starter catalog lives in [tool/seed/drills.json](../tool/seed/drills.json)

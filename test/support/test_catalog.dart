@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:how_to_hockey/features/drills/drill_catalog.dart';
 import 'package:how_to_hockey/features/drills/drill_media.dart';
+import 'package:how_to_hockey/features/session/rest_notifications.dart';
 import 'package:how_to_hockey/features/session/session_cues.dart';
 
 /// Widget tests cannot finish real asset I/O under fake time, so they read the
@@ -39,3 +40,30 @@ class RecordingCues implements SessionCues {
 
 final testCues = RecordingCues();
 final testCuesOverride = sessionCuesProvider.overrideWithValue(testCues);
+
+/// Records reminder calls so tests never touch real notifications.
+class RecordingReminders implements RestNotifications {
+  final events = <String>[];
+  DateTime? lastScheduledAt;
+  String? lastBody;
+  var permissionRequests = 0;
+
+  @override
+  Future<void> ensurePermission() async {
+    permissionRequests++;
+    events.add('permission');
+  }
+
+  @override
+  Future<void> scheduleRestOver(DateTime at, {required String title, required String body}) async {
+    lastScheduledAt = at;
+    lastBody = body;
+    events.add('schedule');
+  }
+
+  @override
+  Future<void> cancel() async => events.add('cancel');
+}
+
+final testReminders = RecordingReminders();
+final testRemindersOverride = restNotificationsProvider.overrideWithValue(testReminders);

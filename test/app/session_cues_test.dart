@@ -16,7 +16,7 @@ import '../support/test_catalog.dart';
 Future<ProviderContainer> mount(WidgetTester tester) async {
   SharedPreferences.setMockInitialValues({});
   final preferences = await SharedPreferences.getInstance();
-  final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride]);
+  final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride]);
   addTearDown(container.dispose);
   tester.view.physicalSize = const Size(640, 1400);
   tester.view.devicePixelRatio = 2;

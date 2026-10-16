@@ -16,7 +16,7 @@ void main() {
 
   testWidgets('appearance setting switches and persists the app theme', (WidgetTester tester) async {
     final preferences = await SharedPreferences.getInstance();
-    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride]);
+    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride]);
     addTearDown(container.dispose);
     await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));
     await tester.pumpAndSettle();
@@ -50,7 +50,7 @@ void main() {
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
     final preferences = await SharedPreferences.getInstance();
-    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride]);
+    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride]);
     addTearDown(container.dispose);
     await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));
     await tester.pumpAndSettle();
@@ -75,7 +75,7 @@ void main() {
 
   testWidgets('progress shows its sample skill profile and share-card preview', (WidgetTester tester) async {
     final preferences = await SharedPreferences.getInstance();
-    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride]);
+    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride]);
     addTearDown(container.dispose);
     await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));
     await tester.pumpAndSettle();
@@ -100,7 +100,7 @@ void main() {
   test('saved appearance is restored on provider startup', () async {
     SharedPreferences.setMockInitialValues({'appearance': 'light'});
     final preferences = await SharedPreferences.getInstance();
-    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride]);
+    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride]);
     addTearDown(container.dispose);
 
     expect(container.read(appearanceProvider), AppAppearance.light);
@@ -110,7 +110,7 @@ void main() {
   test('invalid saved appearance fails explicitly', () async {
     SharedPreferences.setMockInitialValues({'appearance': 'sepia'});
     final preferences = await SharedPreferences.getInstance();
-    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride]);
+    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride]);
     addTearDown(container.dispose);
 
     expect(() => container.read(appearanceProvider), throwsA(predicate<Object>((error) => error.toString().contains('Unrecognized saved appearance preference: sepia'))));
