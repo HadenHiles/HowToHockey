@@ -11,6 +11,9 @@ import '../design/tokens/app_shapes.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/drills/models/drill.dart';
 import '../features/accounts/auth_service.dart';
+import '../features/profiles/active_player.dart';
+import '../features/profiles/display_name.dart';
+import '../features/profiles/player_profile.dart';
 import '../features/session/rest_notifications.dart';
 import '../features/session/session_cues.dart';
 import '../features/settings/appearance_settings_controller.dart';
@@ -742,22 +745,24 @@ class MePage extends ConsumerStatefulWidget {
 }
 
 class _MePageState extends ConsumerState<MePage> {
-  static const _profiles = [(initials: 'JH', name: 'Jamie H.', detail: 'Player profile'), (initials: 'AH', name: 'Avery H.', detail: 'Child profile · example')];
-
-  var _activeProfile = 0;
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final appearance = ref.watch(appearanceProvider);
     final kidDevice = ref.watch(authStateProvider).value is KidDeviceSession;
-    final profile = _profiles[_activeProfile];
+    final player = ref.watch(activePlayerProvider);
+    final playerName = player?.displayName ?? 'Guest player';
+    final playerLabel = switch (player) {
+      null => 'GUEST  ·  CREATE AN ACCOUNT TO SET UP YOUR PROFILE',
+      PlayerProfile(isChild: true) => 'CHILD PROFILE',
+      _ => 'PLAYER',
+    };
     return AppPage(
       title: 'Me',
       children: [
         Semantics(
           button: true,
-          label: 'Switch player profile. Current profile ${profile.name}',
+          label: 'Switch player profile. Current profile $playerName',
           child: InkWell(
             borderRadius: BorderRadius.circular(AppRadii.card),
             onTap: _showProfileSwitcher,
@@ -771,16 +776,16 @@ class _MePageState extends ConsumerState<MePage> {
                         radius: 32,
                         backgroundColor: theme.colorScheme.primary,
                         foregroundColor: theme.colorScheme.onPrimary,
-                        child: Text(profile.initials, style: theme.textTheme.titleLarge),
+                        child: Text(player == null ? '?' : initialsOf(player.displayName), style: theme.textTheme.titleLarge),
                       ),
                       const SizedBox(width: AppSpacing.md),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(profile.name, style: theme.textTheme.headlineSmall),
+                            Text(playerName, style: theme.textTheme.headlineSmall),
                             const SizedBox(height: AppSpacing.xs),
-                            Text('PLAYER  ·  EXAMPLE PROFILE', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+                            Text(playerLabel, style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
                           ],
                         ),
                       ),
@@ -861,7 +866,7 @@ class _MePageState extends ConsumerState<MePage> {
         const SectionHeading(title: 'Profile & access'),
         const SizedBox(height: AppSpacing.md),
         if (!kidDevice) ...[
-          _MeEntryCard(icon: Icons.people_outline, title: 'Switch player', detail: 'Active: ${profile.name}', onTap: _showProfileSwitcher),
+          _MeEntryCard(icon: Icons.people_outline, title: 'Switch player', detail: 'Active: $playerName', onTap: _showProfileSwitcher),
           const SizedBox(height: AppSpacing.sm),
           _MeEntryCard(icon: Icons.switch_account_outlined, title: 'Switch role', detail: 'Player mode', onTap: _showRoleSwitcher),
           const SizedBox(height: AppSpacing.sm),
@@ -900,18 +905,27 @@ class _MePageState extends ConsumerState<MePage> {
           children: [
             Text('Switch player', style: Theme.of(sheetContext).textTheme.headlineSmall),
             const SizedBox(height: AppSpacing.xs),
-            const Text('Your choice only lasts until you close the app.'),
+            const Text('Workouts are saved on this device for now, whoever you train as.'),
             const SizedBox(height: AppSpacing.md),
-            RadioGroup<int>(
-              groupValue: _activeProfile,
-              onChanged: (value) {
-                if (value == null) return;
-                setState(() => _activeProfile = value);
-                Navigator.of(sheetContext).pop();
+            Consumer(
+              builder: (context, ref, _) {
+                final players = ref.watch(switchablePlayersProvider);
+                final active = ref.watch(activePlayerProvider);
+                if (players.isEmpty) return const Text('Create an account to set up your player profile and add your kids.');
+                return RadioGroup<String>(
+                  groupValue: active?.id,
+                  onChanged: (value) {
+                    if (value == null) return;
+                    ref.read(activePlayerIdProvider.notifier).choose(value);
+                    Navigator.of(sheetContext).pop();
+                  },
+                  child: Column(
+                    children: [
+                      for (final player in players) RadioListTile<String>(value: player.id, title: Text(player.displayName), subtitle: Text(player.isChild ? 'Child profile' : 'Player profile')),
+                    ],
+                  ),
+                );
               },
-              child: Column(
-                children: [for (final (index, profile) in _profiles.indexed) RadioListTile<int>(value: index, title: Text(profile.name), subtitle: Text(profile.detail))],
-              ),
             ),
           ],
         ),

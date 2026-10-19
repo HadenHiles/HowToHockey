@@ -48,6 +48,7 @@ describe('createPairingCode', () => {
     await expect(createPairingCode(db, parent, { profileId: 'parent-1' }, now)).rejects.toMatchObject({ code: 'permission-denied' });
     await expect(createPairingCode(db, parent, { profileId: 'missing' }, now)).rejects.toMatchObject({ code: 'permission-denied' });
     await expect(createPairingCode(db, { uid: 'g', isAnonymous: true }, { profileId: 'kid-a' }, now)).rejects.toMatchObject({ code: 'failed-precondition' });
+    await expect(createPairingCode(db, { uid: 'kid-kid-a', isAnonymous: false, isKidDevice: true }, { profileId: 'kid-a' }, now)).rejects.toMatchObject({ code: 'permission-denied' });
     await expect(createPairingCode(db, undefined, { profileId: 'kid-a' }, now)).rejects.toMatchObject({ code: 'unauthenticated' });
   });
 

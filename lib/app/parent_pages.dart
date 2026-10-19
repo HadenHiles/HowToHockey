@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../design/components/training_components.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/accounts/auth_service.dart';
+import '../features/profiles/active_player.dart';
 import '../features/profiles/display_name.dart';
 import '../features/profiles/player_profile.dart';
 import '../features/profiles/profile_repository.dart';
@@ -25,9 +26,7 @@ class ParentKid {
   final bool hiddenFromLeaderboards;
 
   factory ParentKid.fromProfile(PlayerProfile profile, {required DateTime now, bool hidden = false}) {
-    final parts = profile.displayName.split(' ');
-    final initials = '${parts.first[0]}${parts.length > 1 ? parts.last[0] : ''}'.toUpperCase();
-    return ParentKid(id: profile.id, initials: initials, name: profile.displayName, team: null, age: 'Age ${now.year - profile.birthYear}', hiddenFromLeaderboards: hidden);
+    return ParentKid(id: profile.id, initials: initialsOf(profile.displayName), name: profile.displayName, team: null, age: 'Age ${now.year - profile.birthYear}', hiddenFromLeaderboards: hidden);
   }
 }
 
@@ -206,10 +205,10 @@ class ParentChildPage extends ConsumerWidget {
         _ActionCard(
           icon: Icons.play_circle_outline,
           title: 'Train as ${kid.name}',
-          detail: 'Opens Player mode',
+          detail: 'Opens Player mode as ${kid.name}',
           onTap: () {
+            ref.read(activePlayerIdProvider.notifier).choose(kid.id);
             context.go('/train');
-            showFeatureMessage(context, 'Training as a child isn\'t live yet. You\'re seeing your own profile.');
           },
         ),
         const SizedBox(height: AppSpacing.sm),

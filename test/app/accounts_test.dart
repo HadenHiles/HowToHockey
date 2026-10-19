@@ -4,6 +4,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:how_to_hockey/app/hockey_app.dart';
 import 'package:how_to_hockey/features/accounts/auth_service.dart';
+import 'package:how_to_hockey/features/profiles/active_player.dart';
+import 'package:how_to_hockey/features/profiles/player_profile.dart';
 import 'package:how_to_hockey/features/profiles/profile_repository.dart';
 import 'package:how_to_hockey/features/settings/appearance_settings_controller.dart';
 import 'package:how_to_hockey/main.dart';
@@ -252,6 +254,47 @@ void main() {
     test('password needs at least 8 characters', () {
       expect(passwordProblem('1234567'), isNotNull);
       expect(passwordProblem('12345678'), isNull);
+    });
+  });
+
+  group('switch player', () {
+    testWidgets('lists the account\'s own profile and children, remembers the choice, and Train as child uses it', (tester) async {
+      testProfiles.own = const PlayerProfile(id: 'existing-user', ownerUid: 'existing-user', displayName: 'Pat H.', birthYear: 1985, isChild: false);
+      testProfiles.children
+        ..clear()
+        ..add(const PlayerProfile(id: 'child-1', ownerUid: 'existing-user', displayName: 'Avery H.', birthYear: 2015, isChild: true));
+      final container = await mount(
+        tester,
+        initial: const SignedInAccount(uid: 'existing-user', email: 'pat@example.com', emailVerified: true),
+      );
+      container.read(appRouterProvider).go('/me');
+      await tester.pumpAndSettle();
+      expect(find.text('Pat H.'), findsOneWidget);
+
+      await tester.tap(find.text('Pat H.'));
+      await tester.pumpAndSettle();
+      expect(find.text('Player profile'), findsOneWidget);
+      await tester.tap(find.text('Avery H.'));
+      await tester.pumpAndSettle();
+      expect(find.text('Avery H.'), findsWidgets);
+      expect(find.text('CHILD PROFILE'), findsOneWidget);
+      expect(container.read(activePlayerIdProvider), 'child-1');
+      expect((await SharedPreferences.getInstance()).getString('activePlayerId'), 'child-1');
+
+      container.read(activePlayerIdProvider.notifier).choose('gone');
+      expect(container.read(activePlayerProvider)?.displayName, 'Pat H.');
+    });
+
+    testWidgets('a kid device shows its own child and cannot switch', (tester) async {
+      testProfiles.children
+        ..clear()
+        ..add(const PlayerProfile(id: 'child-1', ownerUid: 'someone', displayName: 'Avery H.', birthYear: 2015, isChild: true));
+      final container = await mount(tester, initial: const KidDeviceSession('child-1'));
+      container.read(appRouterProvider).go('/me');
+      await tester.pumpAndSettle();
+      expect(find.text('Avery H.'), findsOneWidget);
+      expect(find.text('Switch player'), findsNothing);
+      expect(container.read(switchablePlayersProvider), hasLength(1));
     });
   });
 

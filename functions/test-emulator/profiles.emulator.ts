@@ -89,6 +89,14 @@ describe('createChildProfile', () => {
   });
 });
 
+describe('kid devices', () => {
+  it('cannot create profiles', async () => {
+    const kid = { uid: 'kid-x', isAnonymous: false, isKidDevice: true };
+    await expect(createChildProfile(db, kid, child, now)).rejects.toMatchObject({ code: 'permission-denied' });
+    await expect(createOwnProfile(db, kid, { displayName: 'Pat H.', birthYear: 1990 }, now)).rejects.toMatchObject({ code: 'permission-denied' });
+  });
+});
+
 describe('createOwnProfile', () => {
   it('creates the signed-in adult\'s profile and records their email and role', async () => {
     const result = await createOwnProfile(db, parent, { displayName: 'Pat H.', birthYear: 1985 }, now);

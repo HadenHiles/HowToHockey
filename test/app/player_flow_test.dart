@@ -445,7 +445,7 @@ void main() {
     expect(trainPosition, greaterThan(0));
     await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Me')));
     await tester.pumpAndSettle();
-    expect(find.text('Jamie H.'), findsOneWidget);
+    expect(find.text('Guest player'), findsOneWidget);
     await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Train')));
     await tester.pumpAndSettle();
     expect(tester.state<ScrollableState>(find.byType(Scrollable).first).position.pixels, trainPosition);
@@ -501,12 +501,13 @@ void main() {
     container.read(appRouterProvider).go('/me');
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Jamie H.'));
+    expect(find.text('Guest player'), findsOneWidget);
+    await tester.tap(find.text('Guest player'));
     await tester.pumpAndSettle();
     expect(find.text('Switch player'), findsWidgets);
-    await tester.tap(find.text('Avery H.'));
+    expect(find.textContaining('Create an account to set up your player profile'), findsWidgets);
+    await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
-    expect(find.text('Avery H.'), findsOneWidget);
 
     await tester.ensureVisible(find.text('Switch role'));
     await tester.pumpAndSettle();
@@ -719,7 +720,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Me')));
     await tester.pumpAndSettle();
-    expect(find.text('Jamie H.'), findsOneWidget);
+    expect(find.text('Guest player'), findsOneWidget);
     await tester.tap(find.descendant(of: find.byType(NavigationBar), matching: find.text('Train')));
     await tester.pumpAndSettle();
     expect(find.byType(DraggableScrollableSheet), findsOneWidget);

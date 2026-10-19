@@ -44,12 +44,17 @@ export function yearsSinceBirthYear(birthYear: number, now: Date): number {
 export interface CallerAuth {
   uid: string;
   isAnonymous: boolean;
+  /** Signed in with a pairing code: it can act as one child and nothing else. */
+  isKidDevice?: boolean;
   email?: string;
 }
 
-function requireAccount(auth: CallerAuth | undefined): CallerAuth {
+export function requireAccount(auth: CallerAuth | undefined): CallerAuth {
   if (!auth) {
     throw new HttpsError('unauthenticated', 'Sign in to continue.');
+  }
+  if (auth.isKidDevice) {
+    throw new HttpsError('permission-denied', 'Ask a parent to do this from their own account.');
   }
   if (auth.isAnonymous) {
     throw new HttpsError('failed-precondition', 'Create an account first so profiles are not lost.');

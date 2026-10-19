@@ -139,6 +139,13 @@ class FakeProfileRepository extends ProfileRepository {
   final children = <PlayerProfile>[];
   final _childChanges = StreamController<List<PlayerProfile>>.broadcast();
 
+  PlayerProfile? own;
+
+  @override
+  Stream<PlayerProfile?> watchProfile(String profileId) async* {
+    yield profileId == own?.id ? own : children.where((p) => p.id == profileId).firstOrNull;
+  }
+
   @override
   Stream<List<PlayerProfile>> watchChildProfiles(String ownerUid) async* {
     yield List.of(children);

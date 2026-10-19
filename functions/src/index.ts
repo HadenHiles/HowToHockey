@@ -12,10 +12,10 @@ initializeApp();
 
 export const healthCheck = onCall(() => getHealthStatus());
 
-function callerOf(request: { auth?: { uid: string; token: { email?: string; firebase?: { sign_in_provider?: string } } } }): CallerAuth | undefined {
+function callerOf(request: { auth?: { uid: string; token: { email?: string; profileId?: string; firebase?: { sign_in_provider?: string } } } }): CallerAuth | undefined {
   const auth = request.auth;
   if (!auth) return undefined;
-  return { uid: auth.uid, isAnonymous: auth.token.firebase?.sign_in_provider === 'anonymous', email: auth.token.email };
+  return { uid: auth.uid, isAnonymous: auth.token.firebase?.sign_in_provider === 'anonymous', email: auth.token.email, isKidDevice: typeof auth.token.profileId === 'string' };
 }
 
 export const createChildProfile = onCall((request) => createChildProfileFor(getFirestore(), callerOf(request), request.data ?? {}));

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:how_to_hockey/app/hockey_app.dart';
+import 'package:how_to_hockey/features/profiles/active_player.dart';
 import 'package:how_to_hockey/features/profiles/player_profile.dart';
 import 'package:how_to_hockey/features/settings/appearance_settings_controller.dart';
 import 'package:how_to_hockey/main.dart';
@@ -66,6 +67,13 @@ void main() {
     expect(find.text('Jordan P.'), findsOneWidget);
     expect(find.textContaining('most child profiles'), findsOneWidget);
     expect(find.text('Add child'), findsNothing);
+
+    await tester.tap(find.text('Jordan P.'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Train as Jordan P.'));
+    await tester.pumpAndSettle();
+    expect(container.read(activePlayerIdProvider), 'child-3');
+    expect(container.read(appRouterProvider).state.uri.path, '/train');
   });
 
   testWidgets('Me role switcher opens the Parent shell with only Parent navigation', (tester) async {

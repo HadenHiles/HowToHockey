@@ -27,3 +27,10 @@ bool canBeChildProfile(int birthYear, DateTime now) {
   final years = now.year - birthYear;
   return years >= 0 && years <= childMaxYears;
 }
+
+/// Two-letter avatar initials from a display name like "Jamie H.".
+String initialsOf(String displayName) {
+  final parts = displayName.trim().split(' ').where((part) => part.isNotEmpty).toList();
+  if (parts.isEmpty) return '?';
+  return '${String.fromCharCode(parts.first.runes.first)}${parts.length > 1 ? String.fromCharCode(parts.last.runes.first) : ''}'.toUpperCase();
+}

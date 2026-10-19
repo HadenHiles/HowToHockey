@@ -3,7 +3,7 @@ import { createHash, randomInt } from 'node:crypto';
 import { HttpsError } from 'firebase-functions/v2/https';
 import type { Firestore } from 'firebase-admin/firestore';
 
-import type { CallerAuth } from './profiles';
+import { requireAccount, type CallerAuth } from './profiles';
 
 export const PAIRING_CODE_MINUTES = 10;
 const CODE_PATTERN = /^\d{8}$/;
@@ -26,12 +26,11 @@ export function newPairingCode(): string {
  * replaces any earlier code for that child.
  */
 export async function createPairingCode(db: Firestore, caller: CallerAuth | undefined, data: { profileId?: unknown }, now: Date = new Date(), makeCode: () => string = newPairingCode) {
-  if (!caller) throw new HttpsError('unauthenticated', 'Sign in to continue.');
-  if (caller.isAnonymous) throw new HttpsError('failed-precondition', 'Create an account first.');
+  const parent = requireAccount(caller);
   if (typeof data.profileId !== 'string' || data.profileId.length === 0) throw new HttpsError('invalid-argument', 'Choose a child first.');
 
   const profile = await db.collection('profiles').doc(data.profileId).get();
-  if (!profile.exists || profile.data()?.ownerUid !== caller.uid || profile.data()?.isChild !== true) {
+  if (!profile.exists || profile.data()?.ownerUid !== parent.uid || profile.data()?.isChild !== true) {
     throw new HttpsError('permission-denied', 'You can only pair devices for your own child profiles.');
   }
 
@@ -41,7 +40,7 @@ export async function createPairingCode(db: Firestore, caller: CallerAuth | unde
   for (let attempt = 0; attempt < 5; attempt++) {
     const code = makeCode();
     try {
-      await codes.doc(hashCode(code)).create({ profileId: data.profileId, ownerUid: caller.uid, expiresAt });
+      await codes.doc(hashCode(code)).create({ profileId: data.profileId, ownerUid: parent.uid, expiresAt });
       return { code, expiresAtMillis: expiresAt.getTime() };
     } catch (error) {
       if ((error as { code?: number }).code !== 6) throw error; // 6 = ALREADY_EXISTS: another child's live code collided, pick again.
