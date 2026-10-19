@@ -109,6 +109,13 @@ describe('account and profile rules', () => {
       await assertFails(getDocs(collection(signedOut(), 'profiles')));
     });
 
+    it('keeps pairing codes server-only', async () => {
+      await assertFails(getDocs(collection(parent(), 'pairingCodes')));
+      await assertFails(getDoc(doc(parent(), 'pairingCodes/anything')));
+      await assertFails(setDoc(doc(parent(), 'pairingCodes/anything'), { profileId: 'kid-a', ownerUid: 'parent' }));
+      await assertFails(getDoc(doc(kidDevice('kid-a'), 'pairingCodes/anything')));
+    });
+
     it('lets a parent list their own children, and nobody else\'s', async () => {
       const own = (db, uid) => query(collection(db, 'profiles'), where('ownerUid', '==', uid), where('isChild', '==', true));
       await assertSucceeds(getDocs(own(parent(), 'parent')));

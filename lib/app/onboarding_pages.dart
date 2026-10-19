@@ -29,6 +29,7 @@ class WelcomePage extends StatelessWidget {
         FilledButton(onPressed: () => context.go('/signup'), child: const Text('Get started')),
         const SizedBox(height: AppSpacing.sm),
         OutlinedButton(onPressed: () => context.go('/signin'), child: const Text('I already have an account')),
+        TextButton(onPressed: () => context.go('/pair'), child: const Text('Set up a kid\'s device')),
         TextButton(onPressed: () => context.go('/train'), child: const Text('Look around first')),
       ],
     );

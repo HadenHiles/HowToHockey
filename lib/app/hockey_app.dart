@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../design/theme/app_theme.dart';
 import '../features/settings/appearance_settings_controller.dart';
+import '../features/accounts/auth_service.dart';
 import 'account_pages.dart';
 import 'coach_pages.dart';
 import 'commerce_pages.dart';
@@ -16,9 +17,18 @@ import 'session_pages.dart';
 import 'training_pages.dart';
 import 'training_state.dart';
 
+const _kidDeviceBlocked = ['/parent', '/coach', '/signup', '/signin', '/welcome', '/pair', '/onboarding', '/paywall'];
+
+/// A paired kid device only gets Player screens. Returns where to send it, or null to let it through.
+String? kidDeviceRedirect(String path) => _kidDeviceBlocked.any((prefix) => path == prefix || path.startsWith('$prefix/')) ? '/train' : null;
+
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final authChanged = ValueNotifier<int>(0);
+  ref.listen(authStateProvider, (_, _) => authChanged.value++);
   final router = GoRouter(
     initialLocation: '/train',
+    refreshListenable: authChanged,
+    redirect: (_, state) => ref.read(authStateProvider).value is KidDeviceSession ? kidDeviceRedirect(state.uri.path) : null,
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => _PlayerShell(shell: shell),
@@ -120,6 +130,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, state) => EmailSignupPage(birthYear: int.tryParse(state.uri.queryParameters['year'] ?? '')),
       ),
       GoRoute(path: '/signin', builder: (_, _) => const SignInPage()),
+      GoRoute(path: '/pair', builder: (_, _) => const PairDevicePage()),
       GoRoute(path: '/onboarding/role', builder: (_, _) => const RoleOnboardingPage()),
       GoRoute(
         path: '/paywall',
@@ -179,7 +190,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       children: [Text('We can\'t find that screen: ${state.uri.path}')],
     ),
   );
-  ref.onDispose(router.dispose);
+  ref.onDispose(() {
+    router.dispose();
+    authChanged.dispose();
+  });
   return router;
 });
 

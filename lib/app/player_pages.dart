@@ -750,6 +750,7 @@ class _MePageState extends ConsumerState<MePage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final appearance = ref.watch(appearanceProvider);
+    final kidDevice = ref.watch(authStateProvider).value is KidDeviceSession;
     final profile = _profiles[_activeProfile];
     return AppPage(
       title: 'Me',
@@ -859,15 +860,18 @@ class _MePageState extends ConsumerState<MePage> {
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Profile & access'),
         const SizedBox(height: AppSpacing.md),
-        _MeEntryCard(icon: Icons.people_outline, title: 'Switch player', detail: 'Active: ${profile.name}', onTap: _showProfileSwitcher),
-        const SizedBox(height: AppSpacing.sm),
-        _MeEntryCard(icon: Icons.switch_account_outlined, title: 'Switch role', detail: 'Player mode', onTap: _showRoleSwitcher),
-        const SizedBox(height: AppSpacing.sm),
+        if (!kidDevice) ...[
+          _MeEntryCard(icon: Icons.people_outline, title: 'Switch player', detail: 'Active: ${profile.name}', onTap: _showProfileSwitcher),
+          const SizedBox(height: AppSpacing.sm),
+          _MeEntryCard(icon: Icons.switch_account_outlined, title: 'Switch role', detail: 'Player mode', onTap: _showRoleSwitcher),
+          const SizedBox(height: AppSpacing.sm),
+        ],
         _MeEntryCard(
           icon: Icons.person_outline,
           title: 'Account',
           detail: switch (ref.watch(authStateProvider).value) {
             SignedInAccount(:final email) => email ?? 'Signed in',
+            KidDeviceSession() => 'Kid device',
             _ => 'Guest session',
           },
           onTap: _showAccount,

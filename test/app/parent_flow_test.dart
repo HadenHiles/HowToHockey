@@ -107,7 +107,14 @@ void main() {
 
     router.go('/parent/kids/child-1/pair');
     await tester.pumpAndSettle();
-    expect(find.textContaining('NOT VALID'), findsOneWidget);
+    expect(find.text('No code yet'), findsOneWidget);
+    await tester.tap(find.text('Make a code'));
+    await tester.pumpAndSettle();
+    expect(testProfiles.calls.last, 'pair:child-1');
+    expect(find.text('1234 5678'), findsOneWidget);
+    expect(find.textContaining('Expires in '), findsOneWidget);
+    await tester.pump(const Duration(minutes: 11));
+    expect(find.text('That code expired'), findsOneWidget);
 
     router.go('/parent/kids/approvals');
     await tester.pumpAndSettle();

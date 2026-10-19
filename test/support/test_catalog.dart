@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:clock/clock.dart';
+
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -115,6 +117,13 @@ class FakeAuthService implements AuthService {
   }
 
   @override
+  Future<void> signInWithKidToken(String token) async {
+    calls.add('kid:$token');
+    if (failWith != null) throw failWith!;
+    _set(KidDeviceSession(token.replaceFirst('token-', '')));
+  }
+
+  @override
   Future<void> signOut() async {
     calls.add('signout');
     _set(const GuestSession('guest-2'));
@@ -134,6 +143,21 @@ class FakeProfileRepository extends ProfileRepository {
   Stream<List<PlayerProfile>> watchChildProfiles(String ownerUid) async* {
     yield List.of(children);
     yield* _childChanges.stream;
+  }
+
+  @override
+  Future<PairingCode> createPairingCode(String profileId) async {
+    calls.add('pair:$profileId');
+    if (failWith != null) throw failWith!;
+    return PairingCode(code: '12345678', expiresAt: clock.now().add(const Duration(minutes: 10)));
+  }
+
+  @override
+  Future<KidPairing> redeemPairingCode(String code) async {
+    calls.add('redeem:$code');
+    if (failWith != null) throw failWith!;
+    if (code.replaceAll(' ', '') != '12345678') throw const ProfileException('That code didn\'t work. Ask your parent for a new one.');
+    return const KidPairing(token: 'token-child-1', profileId: 'child-1', displayName: 'Avery H.');
   }
 
   @override

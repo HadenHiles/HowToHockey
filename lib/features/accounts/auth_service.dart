@@ -19,6 +19,13 @@ class GuestSession extends AuthState {
   final String uid;
 }
 
+/// A child's device, signed in with a parent's pairing code. It can act as that one profile only.
+class KidDeviceSession extends AuthState {
+  const KidDeviceSession(this.profileId);
+
+  final String profileId;
+}
+
 class SignedInAccount extends AuthState {
   const SignedInAccount({required this.uid, required this.email, required this.emailVerified});
 
@@ -40,6 +47,8 @@ class AuthProblem implements Exception {
 
 const minPasswordLength = 8;
 
+const kidDeviceUidPrefix = 'kid-';
+
 /// Basic shape check so obvious typos are caught before asking the server.
 bool looksLikeEmail(String value) => RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]{2,}$').hasMatch(value.trim());
 
@@ -55,6 +64,9 @@ abstract class AuthService {
   Future<void> signInWithEmail({required String email, required String password});
 
   Future<void> sendPasswordReset(String email);
+
+  /// Signs this device in with the token a pairing code was traded for.
+  Future<void> signInWithKidToken(String token);
 
   Future<void> signOut();
 }
@@ -74,6 +86,8 @@ AuthProblem authProblemFor(FirebaseAuthException error) => switch (error.code) {
 AuthState authStateOf(User? user) {
   if (user == null) return const SignedOut();
   if (user.isAnonymous) return GuestSession(user.uid);
+  // Kid-device accounts are minted by the server with this prefix; real accounts can't choose their uid.
+  if (user.uid.startsWith(kidDeviceUidPrefix)) return KidDeviceSession(user.uid.substring(kidDeviceUidPrefix.length));
   return SignedInAccount(uid: user.uid, email: user.email, emailVerified: user.emailVerified);
 }
 
@@ -117,6 +131,11 @@ class FirebaseAuthService implements AuthService {
 
   @override
   Future<void> sendPasswordReset(String email) => _guard(() => _auth.sendPasswordResetEmail(email: email.trim()));
+
+  @override
+  Future<void> signInWithKidToken(String token) => _guard(() async {
+    await _auth.signInWithCustomToken(token);
+  });
 
   @override
   Future<void> signOut() async {

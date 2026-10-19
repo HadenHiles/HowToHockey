@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -262,40 +264,89 @@ class ParentApprovalsPage extends StatelessWidget {
   );
 }
 
-class KidPairingPage extends ConsumerWidget {
+class KidPairingPage extends ConsumerStatefulWidget {
   const KidPairingPage({required this.kidId, super.key});
 
   final String kidId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final kid = ref.watch(parentKidsProvider).where((k) => k.id == kidId).firstOrNull;
+  ConsumerState<KidPairingPage> createState() => _KidPairingPageState();
+}
+
+class _KidPairingPageState extends ConsumerState<KidPairingPage> {
+  PairingCode? _code;
+  var _busy = false;
+  String? _error;
+  Timer? _tick;
+
+  @override
+  void dispose() {
+    _tick?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _generate() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final code = await ref.read(profileRepositoryProvider).createPairingCode(widget.kidId);
+      _tick?.cancel();
+      _tick = Timer.periodic(const Duration(seconds: 1), (_) => setState(() {}));
+      if (mounted) setState(() => _code = code);
+    } on ProfileException catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final kid = ref.watch(parentKidsProvider).where((k) => k.id == widget.kidId).firstOrNull;
+    final code = _code;
+    final remaining = code?.expiresAt.difference(clock.now());
+    final live = code != null && remaining != null && !remaining.isNegative;
     return AppPage(
       title: 'Pair a kid device',
       subtitle: kid == null ? null : 'This device will open Player mode for ${kid.name} only.',
       actions: [IconButton(tooltip: 'Back', icon: const Icon(Icons.close), onPressed: () => context.go(kid == null ? '/parent/kids' : '/parent/kids/${kid.id}'))],
       children: [
-        ArenaPanel(
-          child: Builder(
-            builder: (context) {
-              final theme = Theme.of(context);
-              return Column(
-                children: [
-                  Semantics(
-                    label: 'Example pairing code 4 8 2 9 1 7, not valid',
-                    child: ExcludeSemantics(child: Text('482 917', style: theme.textTheme.displaySmall)),
-                  ),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text('EXAMPLE CODE · NOT VALID', style: theme.textTheme.labelSmall),
-                ],
-              );
-            },
-          ),
-        ),
+        if (kid != null)
+          ArenaPanel(
+            child: Builder(
+              builder: (context) {
+                final theme = Theme.of(context);
+                return Column(
+                  children: [
+                    if (live) ...[
+                      Semantics(
+                        label: 'Pairing code ${code.code.split('').join(' ')}',
+                        child: ExcludeSemantics(child: Text(code.spaced, style: theme.textTheme.displaySmall)),
+                      ),
+                      const SizedBox(height: AppSpacing.xs),
+                      Text('Works once. Expires in ${remaining.inMinutes}:${(remaining.inSeconds % 60).toString().padLeft(2, '0')}', style: theme.textTheme.labelSmall),
+                    ] else
+                      Text(code == null ? 'No code yet' : 'That code expired', style: theme.textTheme.titleMedium),
+                  ],
+                );
+              },
+            ),
+          )
+        else
+          const Text('We can\'t find this child profile.'),
         const SizedBox(height: AppSpacing.md),
-        const _SampleNotice('Real codes will expire quickly. A paired device can\'t open Parent, billing or account deletion.'),
+        const _SampleNotice('On your child\'s device, open How To Hockey and choose "Set up a kid\'s device". A paired device only opens Player mode for this child.'),
+        if (_error != null) ...[
+          const SizedBox(height: AppSpacing.md),
+          Semantics(
+            liveRegion: true,
+            child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          ),
+        ],
         const SizedBox(height: AppSpacing.xl),
-        OutlinedButton(onPressed: () => showFeatureMessage(context, 'Pairing codes aren\'t live yet. Nothing was created.'), child: const Text('Generate new code')),
+        if (kid != null) FilledButton(onPressed: _busy ? null : _generate, child: Text(_busy ? 'Making a code…' : (code == null ? 'Make a code' : 'Make a new code'))),
       ],
     );
   }

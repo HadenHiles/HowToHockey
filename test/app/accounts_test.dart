@@ -254,4 +254,55 @@ void main() {
       expect(passwordProblem('12345678'), isNull);
     });
   });
+
+  group('kid device', () {
+    testWidgets('a parent\'s code pairs the device and locks it to Player screens', (tester) async {
+      final container = await mount(tester);
+      container.read(appRouterProvider).go('/pair');
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byType(TextField), '1111 2222');
+      await tester.tap(find.text('Pair this device'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('That code didn\'t work'), findsOneWidget);
+      expect(find.byType(TextField), findsOneWidget);
+
+      await tester.enterText(find.byType(TextField), '1234 5678');
+      await tester.tap(find.text('Pair this device'));
+      await tester.pumpAndSettle();
+      expect(_auth.current, isA<KidDeviceSession>());
+      expect((_auth.current as KidDeviceSession).profileId, 'child-1');
+      expect(container.read(appRouterProvider).state.uri.path, '/train');
+
+      for (final path in ['/parent/kids', '/coach/roster', '/signup', '/pair', '/paywall']) {
+        container.read(appRouterProvider).go(path);
+        await tester.pumpAndSettle();
+        expect(container.read(appRouterProvider).state.uri.path, '/train', reason: path);
+      }
+      container.read(appRouterProvider).go('/me');
+      await tester.pumpAndSettle();
+      expect(find.text('Switch role'), findsNothing);
+      expect(find.text('Kid device'), findsOneWidget);
+    });
+
+    test('only parent, coach and sign-in screens are blocked', () {
+      expect(kidDeviceRedirect('/parent/kids/x/pair'), '/train');
+      expect(kidDeviceRedirect('/coach'), '/train');
+      expect(kidDeviceRedirect('/train/session'), isNull);
+      expect(kidDeviceRedirect('/library'), isNull);
+      expect(kidDeviceRedirect('/parentage'), isNull);
+    });
+
+    testWidgets('unpairing returns the device to a guest session', (tester) async {
+      final container = await mount(tester, initial: const KidDeviceSession('child-1'));
+      container.read(appRouterProvider).go('/me');
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Kid device'));
+      await tester.tap(find.text('Kid device'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Unpair this device'));
+      await tester.pumpAndSettle();
+      expect(_auth.current, isA<GuestSession>());
+    });
+  });
 }

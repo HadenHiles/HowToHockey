@@ -259,6 +259,68 @@ class _AddChildPageState extends ConsumerState<AddChildPage> {
   }
 }
 
+/// A child's device: type in the code from a parent's phone and this device opens Player mode for that child.
+class PairDevicePage extends ConsumerStatefulWidget {
+  const PairDevicePage({super.key});
+
+  @override
+  ConsumerState<PairDevicePage> createState() => _PairDevicePageState();
+}
+
+class _PairDevicePageState extends ConsumerState<PairDevicePage> {
+  final _code = TextEditingController();
+  var _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _code.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final pairing = await ref.read(profileRepositoryProvider).redeemPairingCode(_code.text);
+      await ref.read(authServiceProvider).signInWithKidToken(pairing.token);
+      if (mounted) context.go('/train');
+    } on ProfileException catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } on AuthProblem catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => AppPage(
+    title: 'Set up a kid\'s device',
+    subtitle: 'Ask a parent to open Kids, pick you, and tap Pair a kid device. Then type the code here.',
+    actions: [IconButton(tooltip: 'Back', icon: const Icon(Icons.close), onPressed: () => context.go('/welcome'))],
+    action: FilledButton(onPressed: _busy ? null : _submit, child: Text(_busy ? 'Checking…' : 'Pair this device')),
+    children: [
+      TextField(
+        controller: _code,
+        keyboardType: TextInputType.number,
+        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9 ]')), LengthLimitingTextInputFormatter(9)],
+        decoration: const InputDecoration(labelText: '8-digit code'),
+        onSubmitted: (_) => _submit(),
+      ),
+      if (_error != null) ...[
+        const SizedBox(height: AppSpacing.md),
+        Semantics(
+          liveRegion: true,
+          child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        ),
+      ],
+    ],
+  );
+}
+
 class SignInPage extends ConsumerStatefulWidget {
   const SignInPage({super.key});
 
@@ -382,6 +444,13 @@ class AccountSummary extends ConsumerWidget {
           if (!emailVerified) ...[const SizedBox(height: AppSpacing.xs), Text('Check your email to confirm your address.', style: theme.textTheme.bodySmall)],
           const SizedBox(height: AppSpacing.xl),
           OutlinedButton.icon(onPressed: () => unawaited(ref.read(authServiceProvider).signOut()), icon: const Icon(Icons.logout), label: const Text('Sign out')),
+        ],
+        KidDeviceSession() => [
+          Text('Kid device', style: theme.textTheme.headlineSmall),
+          const SizedBox(height: AppSpacing.xs),
+          const Text('A parent paired this device. It opens Player mode for one child only.'),
+          const SizedBox(height: AppSpacing.xl),
+          OutlinedButton.icon(onPressed: () => unawaited(ref.read(authServiceProvider).signOut()), icon: const Icon(Icons.link_off), label: const Text('Unpair this device')),
         ],
         _ => [
           Text('Account', style: theme.textTheme.headlineSmall),
