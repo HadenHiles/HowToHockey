@@ -13,7 +13,9 @@ void main() {
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     final preferences = await SharedPreferences.getInstance();
-    container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride]);
+    container = ProviderContainer(
+      overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
+    );
   });
 
   tearDown(() => container.dispose());

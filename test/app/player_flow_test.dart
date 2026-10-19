@@ -15,7 +15,9 @@ import '../support/test_catalog.dart';
 Future<ProviderContainer> mountApp(WidgetTester tester, {String appearance = 'light'}) async {
   SharedPreferences.setMockInitialValues({'appearance': appearance});
   final preferences = await SharedPreferences.getInstance();
-  final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride]);
+  final container = ProviderContainer(
+    overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
+  );
   addTearDown(container.dispose);
   await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));
   await tester.pumpAndSettle();
@@ -212,7 +214,7 @@ void main() {
     await tester.tap(find.text('Account'));
     await tester.pumpAndSettle();
     expect(header.hitTestable(), findsNothing);
-    Navigator.of(tester.element(find.text('Connect an account'))).pop();
+    Navigator.of(tester.element(find.text('Create an account'))).pop();
     await tester.pumpAndSettle();
     expect(header.hitTestable(), findsOneWidget);
     await tester.drag(handle, const Offset(0, -900));
@@ -519,9 +521,10 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Account'));
     await tester.pumpAndSettle();
-    expect(find.text('Connect an account'), findsOneWidget);
-    expect(find.textContaining('Linking and deleting accounts isn\'t live yet.'), findsOneWidget);
-    Navigator.of(tester.element(find.text('Connect an account'))).pop();
+    expect(find.text('Create an account'), findsOneWidget);
+    expect(find.textContaining('using the app as a guest'), findsOneWidget);
+    expect(find.text('Sign in'), findsOneWidget);
+    Navigator.of(tester.element(find.text('Create an account'))).pop();
     await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.text('Subscription'));

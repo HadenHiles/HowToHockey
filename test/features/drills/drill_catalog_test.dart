@@ -63,6 +63,8 @@ void main() {
         testMediaOverride,
         testCuesOverride,
         testRemindersOverride,
+        testAuthOverride,
+        testProfilesOverride,
         drillFiltersUnlockedProvider.overrideWithValue(pro),
       ],
     );

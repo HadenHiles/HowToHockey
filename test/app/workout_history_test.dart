@@ -27,7 +27,9 @@ TrainingSession finished(DateTime startedAt, {List<Drill>? drills, int reps = 10
 }
 
 Future<ProviderContainer> open(SharedPreferences preferences) async {
-  final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride]);
+  final container = ProviderContainer(
+    overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
+  );
   addTearDown(container.dispose);
   return container;
 }

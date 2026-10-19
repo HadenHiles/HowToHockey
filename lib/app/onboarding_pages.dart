@@ -28,7 +28,7 @@ class WelcomePage extends StatelessWidget {
         const SizedBox(height: AppSpacing.xl),
         FilledButton(onPressed: () => context.go('/signup'), child: const Text('Get started')),
         const SizedBox(height: AppSpacing.sm),
-        OutlinedButton(onPressed: () => showFeatureMessage(context, 'Sign-in isn\'t live yet. Nothing was changed.'), child: const Text('I already have an account')),
+        OutlinedButton(onPressed: () => context.go('/signin'), child: const Text('I already have an account')),
         TextButton(onPressed: () => context.go('/train'), child: const Text('Look around first')),
       ],
     );
@@ -87,22 +87,18 @@ class _SignupPageState extends State<SignupPage> {
           )
         else if (year != null) ...[
           FilledButton.icon(
-            onPressed: () => showFeatureMessage(context, 'Apple sign-in isn\'t live yet. Nothing was changed.'),
+            onPressed: () => showFeatureMessage(context, 'Sign in with Apple isn\'t set up yet. Use email for now.'),
             icon: const Icon(Icons.apple),
             label: const Text('Continue with Apple'),
           ),
           const SizedBox(height: AppSpacing.sm),
           OutlinedButton.icon(
-            onPressed: () => showFeatureMessage(context, 'Google sign-in isn\'t live yet. Nothing was changed.'),
+            onPressed: () => showFeatureMessage(context, 'Google sign-in isn\'t set up yet. Use email for now.'),
             icon: const Icon(Icons.g_mobiledata),
             label: const Text('Continue with Google'),
           ),
           const SizedBox(height: AppSpacing.sm),
-          OutlinedButton.icon(
-            onPressed: () => showFeatureMessage(context, 'Email sign-up isn\'t live yet. Nothing was changed.'),
-            icon: const Icon(Icons.mail_outline),
-            label: const Text('Continue with email'),
-          ),
+          OutlinedButton.icon(onPressed: () => context.go('/signup/email?year=$year'), icon: const Icon(Icons.mail_outline), label: const Text('Continue with email')),
           const SizedBox(height: AppSpacing.lg),
           TextButton(onPressed: () => context.go('/onboarding/role'), child: const Text('Skip for now (look around)')),
         ],

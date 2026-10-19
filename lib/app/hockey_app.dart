@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../design/theme/app_theme.dart';
 import '../features/settings/appearance_settings_controller.dart';
+import 'account_pages.dart';
 import 'coach_pages.dart';
 import 'commerce_pages.dart';
 import 'manual_logger_pages.dart';
@@ -113,6 +114,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/log/timer', builder: (_, _) => const TimerSetupPage()),
       GoRoute(path: '/welcome', builder: (_, _) => const WelcomePage()),
       GoRoute(path: '/signup', builder: (_, _) => const SignupPage()),
+      GoRoute(
+        path: '/signup/email',
+        builder: (_, state) => EmailSignupPage(birthYear: int.tryParse(state.uri.queryParameters['year'] ?? '')),
+      ),
+      GoRoute(path: '/signin', builder: (_, _) => const SignInPage()),
       GoRoute(path: '/onboarding/role', builder: (_, _) => const RoleOnboardingPage()),
       GoRoute(
         path: '/paywall',

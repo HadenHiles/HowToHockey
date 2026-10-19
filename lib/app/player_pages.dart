@@ -10,11 +10,13 @@ import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_shapes.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/drills/models/drill.dart';
+import '../features/accounts/auth_service.dart';
 import '../features/session/rest_notifications.dart';
 import '../features/session/session_cues.dart';
 import '../features/settings/appearance_settings_controller.dart';
 import 'sample_data.dart';
 import 'app_page.dart';
+import 'account_pages.dart';
 import 'training_state.dart';
 import 'workout_history.dart';
 
@@ -861,7 +863,15 @@ class _MePageState extends ConsumerState<MePage> {
         const SizedBox(height: AppSpacing.sm),
         _MeEntryCard(icon: Icons.switch_account_outlined, title: 'Switch role', detail: 'Player mode', onTap: _showRoleSwitcher),
         const SizedBox(height: AppSpacing.sm),
-        _MeEntryCard(icon: Icons.person_outline, title: 'Account', detail: 'Guest session (example)', onTap: _showAccount),
+        _MeEntryCard(
+          icon: Icons.person_outline,
+          title: 'Account',
+          detail: switch (ref.watch(authStateProvider).value) {
+            SignedInAccount(:final email) => email ?? 'Signed in',
+            _ => 'Guest session',
+          },
+          onTap: _showAccount,
+        ),
         const SizedBox(height: AppSpacing.sm),
         _MeEntryCard(icon: Icons.workspace_premium_outlined, title: 'Subscription', detail: 'Free plan', onTap: _showSubscription),
         const SizedBox(height: AppSpacing.sm),
@@ -958,14 +968,11 @@ class _MePageState extends ConsumerState<MePage> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Account', style: Theme.of(sheetContext).textTheme.headlineSmall),
-            const SizedBox(height: AppSpacing.xs),
-            const Text('You\'re using a guest session. Linking and deleting accounts isn\'t live yet.'),
-            const SizedBox(height: AppSpacing.xl),
-            FilledButton.icon(
-              onPressed: () => _closeWithMessage(sheetContext, 'Account sign-in isn\'t live yet. Nothing was changed.'),
-              icon: const Icon(Icons.login),
-              label: const Text('Connect an account'),
+            AccountSummary(
+              onNavigate: (route) {
+                Navigator.of(sheetContext).pop();
+                context.push(route);
+              },
             ),
             const SizedBox(height: AppSpacing.sm),
             OutlinedButton.icon(

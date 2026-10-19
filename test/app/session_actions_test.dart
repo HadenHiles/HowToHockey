@@ -64,7 +64,9 @@ void main() {
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
       final preferences = await SharedPreferences.getInstance();
-      container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride]);
+      container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
+      );
       addTearDown(container.dispose);
     });
 
@@ -106,7 +108,9 @@ void main() {
     Future<ProviderContainer> mount(WidgetTester tester) async {
       SharedPreferences.setMockInitialValues({});
       final preferences = await SharedPreferences.getInstance();
-      final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride]);
+      final container = ProviderContainer(
+        overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
+      );
       addTearDown(container.dispose);
       tester.view.physicalSize = const Size(1000, 3000);
       tester.view.devicePixelRatio = 2;

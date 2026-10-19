@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:how_to_hockey/features/drills/drill_catalog.dart';
 import 'package:how_to_hockey/features/drills/drill_media.dart';
+import 'package:how_to_hockey/features/accounts/auth_service.dart';
+import 'package:how_to_hockey/features/profiles/profile_repository.dart';
 import 'package:how_to_hockey/features/session/rest_notifications.dart';
 import 'package:how_to_hockey/features/session/session_cues.dart';
 
@@ -67,3 +71,77 @@ class RecordingReminders implements RestNotifications {
 
 final testReminders = RecordingReminders();
 final testRemindersOverride = restNotificationsProvider.overrideWithValue(testReminders);
+
+/// A stand-in for sign-in that records calls and can be told to fail.
+class FakeAuthService implements AuthService {
+  FakeAuthService([AuthState initial = const GuestSession('guest-1')]) : _state = initial;
+
+  AuthState _state;
+  final _controller = StreamController<AuthState>.broadcast();
+  final calls = <String>[];
+  AuthProblem? failWith;
+
+  void _set(AuthState next) {
+    _state = next;
+    _controller.add(next);
+  }
+
+  @override
+  AuthState get current => _state;
+
+  @override
+  Stream<AuthState> get changes => _controller.stream;
+
+  @override
+  Future<void> createEmailAccount({required String email, required String password}) async {
+    calls.add('create:$email');
+    if (failWith != null) throw failWith!;
+    _set(SignedInAccount(uid: current is GuestSession ? (current as GuestSession).uid : 'new-user', email: email.trim(), emailVerified: false));
+  }
+
+  @override
+  Future<void> signInWithEmail({required String email, required String password}) async {
+    calls.add('signin:$email');
+    if (failWith != null) throw failWith!;
+    _set(SignedInAccount(uid: 'existing-user', email: email.trim(), emailVerified: true));
+  }
+
+  @override
+  Future<void> sendPasswordReset(String email) async {
+    calls.add('reset:$email');
+    if (failWith != null) throw failWith!;
+  }
+
+  @override
+  Future<void> signOut() async {
+    calls.add('signout');
+    _set(const GuestSession('guest-2'));
+  }
+}
+
+/// Records profile calls and can be told to fail.
+class FakeProfileRepository extends ProfileRepository {
+  FakeProfileRepository() : super(call: (_, _) async => {'profileId': 'p'});
+
+  final calls = <String>[];
+  ProfileException? failWith;
+
+  @override
+  Future<String> createOwnProfile({required String displayName, required int birthYear, required DateTime now}) async {
+    calls.add('own:$displayName:$birthYear');
+    if (failWith != null) throw failWith!;
+    return 'profile-1';
+  }
+
+  @override
+  Future<String> createChildProfile({required String displayName, required int birthYear, required DateTime now}) async {
+    calls.add('child:$displayName:$birthYear');
+    if (failWith != null) throw failWith!;
+    return 'child-1';
+  }
+}
+
+final testAuth = FakeAuthService();
+final testProfiles = FakeProfileRepository();
+final testAuthOverride = authServiceProvider.overrideWithValue(testAuth);
+final testProfilesOverride = profileRepositoryProvider.overrideWithValue(testProfiles);

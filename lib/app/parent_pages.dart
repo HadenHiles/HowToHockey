@@ -4,6 +4,8 @@ import 'package:go_router/go_router.dart';
 
 import '../design/components/training_components.dart';
 import '../design/tokens/app_spacing.dart';
+import '../features/accounts/auth_service.dart';
+import 'account_pages.dart';
 import 'app_page.dart';
 
 class ParentKid {
@@ -385,11 +387,11 @@ class ParentVerifyPage extends ConsumerWidget {
   }
 }
 
-class ParentAccountPage extends StatelessWidget {
+class ParentAccountPage extends ConsumerWidget {
   const ParentAccountPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     return AppPage(
       title: 'Account',
@@ -405,8 +407,27 @@ class ParentAccountPage extends StatelessWidget {
         _ActionCard(
           icon: Icons.person_outline,
           title: 'Account',
-          detail: 'Guest session (example)',
-          onTap: () => showFeatureMessage(context, 'Sign-in and account linking aren\'t live yet. Nothing was changed.'),
+          detail: switch (ref.watch(authStateProvider).value) {
+            SignedInAccount(:final email) => email ?? 'Signed in',
+            _ => 'Guest session',
+          },
+          onTap: () => showModalBottomSheet<void>(
+            context: context,
+            useRootNavigator: true,
+            showDragHandle: true,
+            isScrollControlled: true,
+            builder: (sheetContext) => SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, AppSpacing.screen),
+                child: AccountSummary(
+                  onNavigate: (route) {
+                    Navigator.of(sheetContext).pop();
+                    context.push(route);
+                  },
+                ),
+              ),
+            ),
+          ),
         ),
         const SizedBox(height: AppSpacing.sm),
         _ActionCard(icon: Icons.workspace_premium_outlined, title: 'Subscription', detail: 'Free plan', onTap: () => context.push('/paywall')),
