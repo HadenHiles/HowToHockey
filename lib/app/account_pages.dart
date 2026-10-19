@@ -111,6 +111,7 @@ class _EmailSignupPageState extends ConsumerState<EmailSignupPage> {
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
+              flex: 2,
               child: TextField(
                 controller: _initial,
                 textCapitalization: TextCapitalization.characters,
@@ -232,6 +233,7 @@ class _AddChildPageState extends ConsumerState<AddChildPage> {
             ),
             const SizedBox(width: AppSpacing.sm),
             Expanded(
+              flex: 2,
               child: TextField(
                 controller: _initial,
                 textCapitalization: TextCapitalization.characters,

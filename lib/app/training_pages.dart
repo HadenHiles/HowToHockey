@@ -681,7 +681,7 @@ class DrillDetailPage extends ConsumerWidget {
           runSpacing: AppSpacing.xs,
           children: [
             PillarTag(label: drill.pillar.label, color: drill.pillar.color(theme.extension<PillarColors>()!)),
-            PillarTag(label: drill.trackingType.label, color: theme.extension<AppColors>()!.textSecondary),
+            if (drill.trackingType.label != drill.pillar.label) PillarTag(label: drill.trackingType.label, color: theme.extension<AppColors>()!.textSecondary),
           ],
         ),
         const SizedBox(height: AppSpacing.xl),

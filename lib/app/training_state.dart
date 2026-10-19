@@ -5,6 +5,7 @@ import 'package:clock/clock.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/accounts/auth_service.dart';
 import '../features/drills/models/drill.dart';
 import '../features/drills/set_calculations.dart';
 import 'sample_data.dart';
@@ -186,7 +187,21 @@ class TrainingSessionNotifier extends Notifier<TrainingSession> {
   static const storageKey = 'activeTrainingSession';
 
   @override
-  TrainingSession build() => _restore() ?? TrainingSession(drills: sampleDrills);
+  TrainingSession build() {
+    // A workout belongs to whoever started it: signing out, switching accounts or pairing a kid's
+    // device must not hand it to the next person.
+    ref.listen(authStateProvider, (previous, next) {
+      final before = previous?.value;
+      final after = next.value;
+      if (before == null || after == null) return;
+      if (identityOf(before) == identityOf(after)) return;
+      // A guest who signs in to an existing account keeps the workout they were doing.
+      if (before is GuestSession && after is SignedInAccount) return;
+      state = TrainingSession(drills: sampleDrills);
+      unawaited(ref.read(sharedPreferencesProvider).remove(storageKey));
+    });
+    return _restore() ?? TrainingSession(drills: sampleDrills);
+  }
 
   /// Brings back a session that was in progress when the app was closed or killed.
   TrainingSession? _restore() {

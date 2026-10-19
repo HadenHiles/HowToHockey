@@ -79,6 +79,12 @@ extension PasserPresentation on PasserType {
 
 extension DrillPresentation on Drill {
   SkillPillar get pillar => primaryPillar(this);
+
+  /// How the drill is tracked, when that says something the skill label and prescription don't.
+  String? get trackingNote => switch (trackingType) {
+    TrackingType.volume || TrackingType.duration => null,
+    _ => trackingType.label == pillar.label ? null : trackingType.label,
+  };
   String get prescriptionLabel {
     final prescription = defaultPrescription;
     final target = prescription.seconds != null

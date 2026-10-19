@@ -152,3 +152,10 @@ final authStateProvider = StreamProvider<AuthState>((ref) async* {
   yield service.current;
   yield* service.changes;
 });
+
+/// Who this device is signed in as. A guest who creates an account keeps the same value.
+String? identityOf(AuthState state) => switch (state) {
+  GuestSession(:final uid) || SignedInAccount(:final uid) => uid,
+  KidDeviceSession(:final profileId) => 'kid-$profileId',
+  SignedOut() => null,
+};

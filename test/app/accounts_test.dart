@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:how_to_hockey/app/hockey_app.dart';
+import 'package:how_to_hockey/app/sample_data.dart';
+import 'package:how_to_hockey/app/training_state.dart';
 import 'package:how_to_hockey/features/accounts/auth_service.dart';
 import 'package:how_to_hockey/features/profiles/active_player.dart';
 import 'package:how_to_hockey/features/profiles/player_profile.dart';
@@ -319,6 +321,27 @@ void main() {
       }
       expect(roleRedirect(guest, '/train'), isNull);
       expect(roleRedirect(guest, '/parentage'), isNull);
+    });
+  });
+
+  group('workout ownership', () {
+    testWidgets('signing out or pairing a kid device ends the previous person\'s workout, but a guest keeps theirs when signing in', (tester) async {
+      final container = await mount(tester);
+      container.read(trainingSessionProvider.notifier).start(sampleDrills);
+      expect(container.read(trainingSessionProvider).startedAt, isNotNull);
+
+      await _auth.signInWithEmail(email: 'pat@example.com', password: 'password1');
+      await tester.pumpAndSettle();
+      expect(container.read(trainingSessionProvider).startedAt, isNotNull, reason: 'guest signing in keeps the workout');
+
+      await _auth.signOut();
+      await tester.pumpAndSettle();
+      expect(container.read(trainingSessionProvider).startedAt, isNull, reason: 'sign out ends the account\'s workout');
+
+      container.read(trainingSessionProvider.notifier).start(sampleDrills);
+      await _auth.signInWithKidToken('token-child-1');
+      await tester.pumpAndSettle();
+      expect(container.read(trainingSessionProvider).startedAt, isNull, reason: 'a kid device never inherits a workout');
     });
   });
 

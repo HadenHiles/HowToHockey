@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:how_to_hockey/app/hockey_app.dart';
+import 'package:how_to_hockey/features/profiles/player_profile.dart';
 import 'package:how_to_hockey/features/settings/appearance_settings_controller.dart';
 import 'package:how_to_hockey/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,8 +24,8 @@ const routes = [
   '/log/timer',
   '/summary',
   '/parent/kids',
-  '/parent/kids/avery',
-  '/parent/kids/avery/pair',
+  '/parent/kids/child-1',
+  '/parent/kids/child-1/pair',
   '/parent/kids/approvals',
   '/parent/kids/train-together',
   '/parent/verify',
@@ -55,6 +56,9 @@ void main() {
       final preferences = await SharedPreferences.getInstance();
       // Parent and Coach screens need a signed-in account.
       await testAuth.signInWithEmail(email: 'pat@example.com', password: 'password1');
+      testProfiles.children
+        ..clear()
+        ..add(const PlayerProfile(id: 'child-1', ownerUid: 'u', displayName: 'Avery H.', birthYear: 2015, isChild: true));
       final container = ProviderContainer(
         overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
       );

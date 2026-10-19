@@ -103,8 +103,6 @@ class _SignupPageState extends State<SignupPage> {
           const SizedBox(height: AppSpacing.lg),
           TextButton(onPressed: () => context.go('/onboarding/role'), child: const Text('Skip for now (look around)')),
         ],
-        const SizedBox(height: AppSpacing.lg),
-        const Text('Accounts aren\'t live yet. Nothing here creates an account.'),
       ],
     );
   }

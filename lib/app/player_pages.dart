@@ -129,7 +129,7 @@ class DrillListCard extends StatelessWidget {
                 const SizedBox(height: AppSpacing.xs),
                 Text(drill.title, style: theme.textTheme.titleMedium),
                 const SizedBox(height: AppSpacing.xxs),
-                Text('${drill.prescriptionLabel} · ${drill.trackingType.label}', style: theme.textTheme.bodySmall),
+                Text([drill.prescriptionLabel, ?drill.trackingNote].join(' · '), style: theme.textTheme.bodySmall),
               ],
             ),
           ),
@@ -804,7 +804,7 @@ class _MePageState extends ConsumerState<MePage> {
             children: [
               Icon(Icons.info_outline, color: theme.colorScheme.primary),
               const SizedBox(width: AppSpacing.sm),
-              const Expanded(child: Text('You\'re looking at a preview with example data. Accounts, profiles and plans go live soon.')),
+              const Expanded(child: Text('Accounts and profiles are live. Teams, leaderboards and plans still show example data while we build them.')),
             ],
           ),
         ),
@@ -850,7 +850,7 @@ class _MePageState extends ConsumerState<MePage> {
             children: [
               Text('Data & services', style: theme.textTheme.titleMedium),
               const SizedBox(height: AppSpacing.sm),
-              const Text('Example data for now. Workout results are saved on this device for now. History, team updates and purchases aren\'t live yet.'),
+              const Text('Workout results are saved on this device for now. Cloud history, team updates and purchases aren\'t live yet.'),
               const SizedBox(height: AppSpacing.md),
               Row(
                 children: [
@@ -885,8 +885,10 @@ class _MePageState extends ConsumerState<MePage> {
         _MeEntryCard(icon: Icons.workspace_premium_outlined, title: 'Subscription', detail: 'Free plan', onTap: _showSubscription),
         const SizedBox(height: AppSpacing.sm),
         _MeEntryCard(icon: Icons.school_outlined, title: 'Programs', detail: 'Signature programs from Coach Jeremy', onTap: () => context.push('/programs')),
-        const SizedBox(height: AppSpacing.sm),
-        _MeEntryCard(icon: Icons.waving_hand_outlined, title: 'Welcome & sign-up preview', detail: 'See the first-run screens', onTap: () => context.push('/welcome')),
+        if (ref.watch(authStateProvider).value is! SignedInAccount && !kidDevice) ...[
+          const SizedBox(height: AppSpacing.sm),
+          _MeEntryCard(icon: Icons.waving_hand_outlined, title: 'Welcome & sign-up preview', detail: 'See the first-run screens', onTap: () => context.push('/welcome')),
+        ],
       ],
     );
   }
@@ -933,7 +935,12 @@ class _MePageState extends ConsumerState<MePage> {
     ),
   );
 
-  Future<void> _showRoleSwitcher() => showModalBottomSheet<void>(
+  Future<void> _showRoleSwitcher() {
+    final signedIn = ref.read(authStateProvider).value is SignedInAccount;
+    return _showRoleSheet(signedIn);
+  }
+
+  Future<void> _showRoleSheet(bool signedIn) => showModalBottomSheet<void>(
     context: context,
     useRootNavigator: true,
     showDragHandle: true,
@@ -947,13 +954,13 @@ class _MePageState extends ConsumerState<MePage> {
           children: [
             Text('Switch role', style: Theme.of(sheetContext).textTheme.headlineSmall),
             const SizedBox(height: AppSpacing.xs),
-            const Text('Parent and Coach views are example previews.'),
+            Text(signedIn ? 'Coach view is an example preview.' : 'Parent and Coach need an account.'),
             const SizedBox(height: AppSpacing.md),
             const ListTile(leading: Icon(Icons.sports_hockey), title: Text('Player'), subtitle: Text('Current role'), trailing: Icon(Icons.check)),
             ListTile(
               leading: const Icon(Icons.family_restroom),
               title: const Text('Parent'),
-              subtitle: const Text('Example preview'),
+              subtitle: Text(signedIn ? 'Add and manage your kids' : 'Needs an account'),
               onTap: () {
                 Navigator.of(sheetContext).pop();
                 context.go('/parent/kids');
@@ -962,7 +969,7 @@ class _MePageState extends ConsumerState<MePage> {
             ListTile(
               leading: const Icon(Icons.groups_outlined),
               title: const Text('Coach'),
-              subtitle: const Text('Example preview'),
+              subtitle: Text(signedIn ? 'Example preview' : 'Needs an account'),
               onTap: () {
                 Navigator.of(sheetContext).pop();
                 context.go('/coach/roster');

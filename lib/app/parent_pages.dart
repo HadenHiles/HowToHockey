@@ -119,7 +119,7 @@ class ParentKidsPage extends ConsumerWidget {
           const Center(child: CircularProgressIndicator())
         else if (kids.isEmpty)
           const TrainingCard(child: Text('No child profiles yet. Tap Add child to set up your first player.')),
-        if (kids.length >= maxChildProfiles) const _SampleNotice('You\'ve added the most child profiles an account can have ($maxChildProfiles).'),
+        if (kids.length >= maxChildProfiles) ...[const _SampleNotice('You\'ve added the most child profiles an account can have ($maxChildProfiles).'), const SizedBox(height: AppSpacing.sm)],
         for (final kid in kids) ...[
           TrainingCard(
             onTap: () => context.go('/parent/kids/${kid.id}'),
