@@ -6,6 +6,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:how_to_hockey/features/drills/drill_catalog.dart';
 import 'package:how_to_hockey/features/drills/drill_media.dart';
 import 'package:how_to_hockey/features/accounts/auth_service.dart';
+import 'package:how_to_hockey/features/profiles/display_name.dart';
+import 'package:how_to_hockey/features/profiles/player_profile.dart';
 import 'package:how_to_hockey/features/profiles/profile_repository.dart';
 import 'package:how_to_hockey/features/session/rest_notifications.dart';
 import 'package:how_to_hockey/features/session/session_cues.dart';
@@ -125,6 +127,14 @@ class FakeProfileRepository extends ProfileRepository {
 
   final calls = <String>[];
   ProfileException? failWith;
+  final children = <PlayerProfile>[];
+  final _childChanges = StreamController<List<PlayerProfile>>.broadcast();
+
+  @override
+  Stream<List<PlayerProfile>> watchChildProfiles(String ownerUid) async* {
+    yield List.of(children);
+    yield* _childChanges.stream;
+  }
 
   @override
   Future<String> createOwnProfile({required String displayName, required int birthYear, required DateTime now}) async {
@@ -135,9 +145,13 @@ class FakeProfileRepository extends ProfileRepository {
 
   @override
   Future<String> createChildProfile({required String displayName, required int birthYear, required DateTime now}) async {
+    displayName = normalizeDisplayName(displayName)!;
     calls.add('child:$displayName:$birthYear');
     if (failWith != null) throw failWith!;
-    return 'child-1';
+    final id = 'child-${children.length + 1}';
+    children.add(PlayerProfile(id: id, ownerUid: 'u', displayName: displayName, birthYear: birthYear, isChild: true));
+    _childChanges.add(List.of(children));
+    return id;
   }
 }
 

@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,11 +6,14 @@ import 'package:go_router/go_router.dart';
 import '../design/components/training_components.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/accounts/auth_service.dart';
+import '../features/profiles/display_name.dart';
+import '../features/profiles/player_profile.dart';
+import '../features/profiles/profile_repository.dart';
 import 'account_pages.dart';
 import 'app_page.dart';
 
 class ParentKid {
-  const ParentKid({required this.id, required this.initials, required this.name, required this.team, required this.age, this.hiddenFromLeaderboards = false, this.pendingVerification = 0});
+  const ParentKid({required this.id, required this.initials, required this.name, required this.team, required this.age, this.hiddenFromLeaderboards = false});
 
   final String id;
   final String initials;
@@ -17,35 +21,29 @@ class ParentKid {
   final String? team;
   final String age;
   final bool hiddenFromLeaderboards;
-  final int pendingVerification;
 
-  ParentKid copyWith({bool? hiddenFromLeaderboards}) =>
-      ParentKid(id: id, initials: initials, name: name, team: team, age: age, hiddenFromLeaderboards: hiddenFromLeaderboards ?? this.hiddenFromLeaderboards, pendingVerification: pendingVerification);
+  factory ParentKid.fromProfile(PlayerProfile profile, {required DateTime now, bool hidden = false}) {
+    final parts = profile.displayName.split(' ');
+    final initials = '${parts.first[0]}${parts.length > 1 ? parts.last[0] : ''}'.toUpperCase();
+    return ParentKid(id: profile.id, initials: initials, name: profile.displayName, team: null, age: 'Age ${now.year - profile.birthYear}', hiddenFromLeaderboards: hidden);
+  }
 }
 
-// Local example children; replaced by profile data when Phase 4 is built.
-class ParentKids extends Notifier<List<ParentKid>> {
+// Kept until you restart the app; saving this to the account comes with team settings.
+class HiddenKids extends Notifier<Set<String>> {
   @override
-  List<ParentKid> build() => const [
-    ParentKid(id: 'avery', initials: 'AH', name: 'Avery H.', team: 'Northside Novas · U12', age: 'Age 11', pendingVerification: 2),
-    ParentKid(id: 'riley', initials: 'RH', name: 'Riley H.', team: null, age: 'Age 9', pendingVerification: 1),
-  ];
+  Set<String> build() => const {};
 
-  void setHidden(String id, bool hidden) => state = [
-    for (final kid in state)
-      if (kid.id == id) kid.copyWith(hiddenFromLeaderboards: hidden) else kid,
-  ];
+  void setHidden(String id, bool hidden) => state = hidden ? {...state, id} : ({...state}..remove(id));
 }
 
-final parentKidsProvider = NotifierProvider<ParentKids, List<ParentKid>>(ParentKids.new);
+final hiddenKidsProvider = NotifierProvider<HiddenKids, Set<String>>(HiddenKids.new);
 
-const _sampleRequests = [(name: 'Riley H.', detail: 'Wants to join Westside Wolves · U10'), (name: 'Avery H.', detail: 'New device sign-in request · Kid tablet')];
-
-const _sampleVerifications = [
-  (kidId: 'avery', title: 'Wrist Shot Ladder', detail: 'Today · 20 min · 60 shots'),
-  (kidId: 'avery', title: 'Stickhandling Box', detail: 'Yesterday · 15 min'),
-  (kidId: 'riley', title: 'Edge Control Circuit', detail: 'Tuesday · 25 min'),
-];
+final parentKidsProvider = Provider<List<ParentKid>>((ref) {
+  final hidden = ref.watch(hiddenKidsProvider);
+  final profiles = ref.watch(childProfilesProvider).value ?? const <PlayerProfile>[];
+  return [for (final profile in profiles) ParentKid.fromProfile(profile, now: clock.now(), hidden: hidden.contains(profile.id))];
+});
 
 class _SampleNotice extends StatelessWidget {
   const _SampleNotice(this.text);
@@ -105,13 +103,22 @@ class ParentKidsPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final kids = ref.watch(parentKidsProvider);
+    final profiles = ref.watch(childProfilesProvider);
+    final signedIn = ref.watch(authStateProvider).value is SignedInAccount;
     return AppPage(
       title: 'Kids',
       children: [
-        const _SampleNotice('You\'re looking at a preview with example data. Approvals, pairing and profile changes go live soon.'),
-        const SizedBox(height: AppSpacing.xl),
-        SectionHeading(title: 'Your players', action: 'Add child', onAction: () => showFeatureMessage(context, 'Child profiles aren\'t live yet. Nothing was created.')),
+        SectionHeading(title: 'Your players', action: kids.length >= maxChildProfiles ? null : 'Add child', onAction: () => context.go('/parent/kids/add')),
         const SizedBox(height: AppSpacing.md),
+        if (!signedIn)
+          const _SampleNotice('Create an account to add child profiles. Guests can\'t manage kids.')
+        else if (profiles.hasError)
+          const _SampleNotice('We couldn\'t load your kids. Check your connection and try again.')
+        else if (profiles.isLoading && kids.isEmpty)
+          const Center(child: CircularProgressIndicator())
+        else if (kids.isEmpty)
+          const TrainingCard(child: Text('No child profiles yet. Tap Add child to set up your first player.')),
+        if (kids.length >= maxChildProfiles) const _SampleNotice('You\'ve added the most child profiles an account can have ($maxChildProfiles).'),
         for (final kid in kids) ...[
           TrainingCard(
             onTap: () => context.go('/parent/kids/${kid.id}'),
@@ -144,7 +151,7 @@ class ParentKidsPage extends ConsumerWidget {
           const SizedBox(height: AppSpacing.sm),
         ],
         const SizedBox(height: AppSpacing.md),
-        _ActionCard(icon: Icons.how_to_reg_outlined, title: 'Join approvals', detail: '${_sampleRequests.length} requests waiting', onTap: () => context.go('/parent/kids/approvals')),
+        _ActionCard(icon: Icons.how_to_reg_outlined, title: 'Join approvals', detail: 'Team joins and new devices', onTap: () => context.go('/parent/kids/approvals')),
         const SizedBox(height: AppSpacing.sm),
         _ActionCard(icon: Icons.sports_hockey, title: 'Train Together', detail: 'Do a workout alongside your child', onTap: () => context.go('/parent/kids/train-together')),
       ],
@@ -169,7 +176,7 @@ class ParentChildPage extends ConsumerWidget {
     }
     return AppPage(
       title: kid.name,
-      subtitle: '${kid.age} · Child profile · example',
+      subtitle: '${kid.age} · Child profile',
       actions: [IconButton(tooltip: 'Back to Kids', icon: const Icon(Icons.close), onPressed: () => context.go('/parent/kids'))],
       children: [
         ArenaPanel(
@@ -200,11 +207,11 @@ class ParentChildPage extends ConsumerWidget {
           detail: 'Opens Player mode',
           onTap: () {
             context.go('/train');
-            showFeatureMessage(context, 'Switching to a child profile isn\'t live yet. You\'re seeing the example profile.');
+            showFeatureMessage(context, 'Training as a child isn\'t live yet. You\'re seeing your own profile.');
           },
         ),
         const SizedBox(height: AppSpacing.sm),
-        _ActionCard(icon: Icons.verified_outlined, title: 'Verify workouts', detail: '${kid.pendingVerification} waiting', onTap: () => context.go('/parent/verify')),
+        _ActionCard(icon: Icons.verified_outlined, title: 'Verify workouts', detail: 'Confirm finished workouts', onTap: () => context.go('/parent/verify')),
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Controls'),
         const SizedBox(height: AppSpacing.md),
@@ -214,7 +221,7 @@ class ParentChildPage extends ConsumerWidget {
             title: const Text('Hide from leaderboards'),
             subtitle: const Text('Team results won\'t show this player. Only kept until you restart the app.'),
             value: kid.hiddenFromLeaderboards,
-            onChanged: (value) => ref.read(parentKidsProvider.notifier).setHidden(kid.id, value),
+            onChanged: (value) => ref.read(hiddenKidsProvider.notifier).setHidden(kid.id, value),
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -251,29 +258,7 @@ class ParentApprovalsPage extends StatelessWidget {
     title: 'Join approvals',
     subtitle: 'Kids can\'t join a team or sign in on a new device until you approve.',
     actions: [IconButton(tooltip: 'Back to Kids', icon: const Icon(Icons.close), onPressed: () => context.go('/parent/kids'))],
-    children: [
-      for (final request in _sampleRequests) ...[
-        TrainingCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(request.name, style: Theme.of(context).textTheme.titleMedium),
-              Text(request.detail),
-              const SizedBox(height: AppSpacing.md),
-              Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
-                children: [
-                  FilledButton(onPressed: () => showFeatureMessage(context, 'Approvals aren\'t live yet. Nothing was approved.'), child: const Text('Approve')),
-                  OutlinedButton(onPressed: () => showFeatureMessage(context, 'Declining isn\'t live yet. Nothing was declined.'), child: const Text('Decline')),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-      ],
-    ],
+    children: const [TrainingCard(child: Text('No requests waiting. Team joins and device sign-ins will show up here for you to approve.'))],
   );
 }
 
@@ -350,41 +335,15 @@ class _ParentTrainTogetherPageState extends State<ParentTrainTogetherPage> {
   );
 }
 
-class ParentVerifyPage extends ConsumerWidget {
+class ParentVerifyPage extends StatelessWidget {
   const ParentVerifyPage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final kids = {for (final kid in ref.watch(parentKidsProvider)) kid.id: kid};
-    return AppPage(
-      title: 'Verify',
-      subtitle: 'Confirm your child finished these workouts. Verified work is marked on team results.',
-      children: [
-        for (final item in _sampleVerifications) ...[
-          TrainingCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(kids[item.kidId]?.name ?? 'Child', style: Theme.of(context).textTheme.labelSmall),
-                Text(item.title, style: Theme.of(context).textTheme.titleMedium),
-                Text(item.detail),
-                const SizedBox(height: AppSpacing.md),
-                Wrap(
-                  spacing: AppSpacing.sm,
-                  runSpacing: AppSpacing.sm,
-                  children: [
-                    FilledButton(onPressed: () => showFeatureMessage(context, 'Verification isn\'t live yet. Nothing was verified.'), child: const Text('Verify')),
-                    OutlinedButton(onPressed: () => showFeatureMessage(context, 'Verification isn\'t live yet. Nothing was changed.'), child: const Text('Not completed')),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-        ],
-      ],
-    );
-  }
+  Widget build(BuildContext context) => const AppPage(
+    title: 'Verify',
+    subtitle: 'Confirm your child finished their workouts. Verified work is marked on team results.',
+    children: [TrainingCard(child: Text('Nothing to verify yet. Finished workouts will show up here once your child trains on their own device.'))],
+  );
 }
 
 class ParentAccountPage extends ConsumerWidget {

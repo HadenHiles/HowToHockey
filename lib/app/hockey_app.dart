@@ -57,6 +57,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/parent/kids',
                 builder: (_, _) => const ParentKidsPage(),
                 routes: [
+                  GoRoute(path: 'add', builder: (_, _) => const AddChildPage()),
                   GoRoute(path: 'approvals', builder: (_, _) => const ParentApprovalsPage()),
                   GoRoute(path: 'train-together', builder: (_, _) => const ParentTrainTogetherPage()),
                   GoRoute(

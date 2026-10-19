@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { after, before, beforeEach, describe, it } from 'node:test';
 
 import { assertFails, assertSucceeds, initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { collection, deleteDoc, doc, getDoc, getDocs, setDoc, updateDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
 
 const projectId = 'demo-how-to-hockey';
 
@@ -107,6 +107,13 @@ describe('account and profile rules', () => {
     it('cannot be listed or queried broadly', async () => {
       await assertFails(getDocs(collection(parent(), 'profiles')));
       await assertFails(getDocs(collection(signedOut(), 'profiles')));
+    });
+
+    it('lets a parent list their own children, and nobody else\'s', async () => {
+      const own = (db, uid) => query(collection(db, 'profiles'), where('ownerUid', '==', uid), where('isChild', '==', true));
+      await assertSucceeds(getDocs(own(parent(), 'parent')));
+      await assertFails(getDocs(own(stranger(), 'parent')));
+      await assertFails(getDocs(own(kidDevice('kid-a'), 'parent')));
     });
   });
 

@@ -1,7 +1,10 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../accounts/auth_service.dart';
 import 'display_name.dart';
+import 'player_profile.dart';
 
 /// Something went wrong creating a profile, with wording that is safe to show the player or parent.
 class ProfileException implements Exception {
@@ -25,6 +28,18 @@ class ProfileRepository {
     final result = await FirebaseFunctions.instance.httpsCallable(name).call<Map<Object?, Object?>>(data);
     return Map<String, dynamic>.from(result.data);
   }
+
+  /// The child profiles an account manages, newest last. Updates as profiles are added.
+  Stream<List<PlayerProfile>> watchChildProfiles(String ownerUid) => FirebaseFirestore.instance
+      .collection('profiles')
+      .where('ownerUid', isEqualTo: ownerUid)
+      .where('isChild', isEqualTo: true)
+      .snapshots()
+      .map(
+        (snapshot) => [
+          for (final doc in snapshot.docs) PlayerProfile.fromJson({...doc.data(), 'id': doc.id}),
+        ]..sort((a, b) => a.displayName.compareTo(b.displayName)),
+      );
 
   /// A parent adds a child. Returns the new profile's id.
   Future<String> createChildProfile({required String displayName, required int birthYear, required DateTime now}) async {
@@ -60,3 +75,10 @@ class ProfileRepository {
 }
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) => ProfileRepository());
+
+/// The signed-in account's child profiles. Empty for guests and signed-out visitors.
+final childProfilesProvider = StreamProvider<List<PlayerProfile>>((ref) {
+  final auth = ref.watch(authStateProvider).value;
+  if (auth is! SignedInAccount) return Stream.value(const <PlayerProfile>[]);
+  return ref.watch(profileRepositoryProvider).watchChildProfiles(auth.uid);
+});

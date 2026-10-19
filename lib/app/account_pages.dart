@@ -163,6 +163,102 @@ class _EmailSignupPageState extends ConsumerState<EmailSignupPage> {
   }
 }
 
+/// A parent adds a child profile: first name, last initial and birth year.
+class AddChildPage extends ConsumerStatefulWidget {
+  const AddChildPage({super.key});
+
+  @override
+  ConsumerState<AddChildPage> createState() => _AddChildPageState();
+}
+
+class _AddChildPageState extends ConsumerState<AddChildPage> {
+  final _first = TextEditingController();
+  final _initial = TextEditingController();
+  int? _year;
+  var _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _first.dispose();
+    _initial.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (normalizeDisplayName('${_first.text.trim()} ${_initial.text.trim()}') == null) {
+      setState(() => _error = 'Enter your child\'s first name and the first letter of their last name.');
+      return;
+    }
+    if (_year == null) {
+      setState(() => _error = 'Pick your child\'s birth year.');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(profileRepositoryProvider).createChildProfile(displayName: '${_first.text.trim()} ${_initial.text.trim()}', birthYear: _year!, now: clock.now());
+      if (mounted) context.go('/parent/kids');
+    } on ProfileException catch (error) {
+      if (mounted) setState(() => _error = error.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final thisYear = clock.now().year;
+    return AppPage(
+      title: 'Add a child',
+      subtitle: 'Kids show as a first name and last initial, like Jamie H. No photos or free-text profiles.',
+      actions: [IconButton(tooltip: 'Back to Kids', icon: const Icon(Icons.close), onPressed: () => context.go('/parent/kids'))],
+      action: FilledButton(onPressed: _busy ? null : _submit, child: Text(_busy ? 'Adding…' : 'Add child')),
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 3,
+              child: TextField(
+                controller: _first,
+                textCapitalization: TextCapitalization.words,
+                inputFormatters: [_nameCharacters, LengthLimitingTextInputFormatter(24)],
+                decoration: const InputDecoration(labelText: 'First name'),
+              ),
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: TextField(
+                controller: _initial,
+                textCapitalization: TextCapitalization.characters,
+                inputFormatters: [_initialCharacter, LengthLimitingTextInputFormatter(1)],
+                decoration: const InputDecoration(labelText: 'Last initial'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        DropdownButtonFormField<int>(
+          initialValue: _year,
+          decoration: const InputDecoration(labelText: 'Birth year'),
+          items: [for (var year = thisYear; year >= thisYear - childMaxYears; year--) DropdownMenuItem(value: year, child: Text('$year'))],
+          onChanged: (value) => setState(() => _year = value),
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: AppSpacing.md),
+          Semantics(
+            liveRegion: true,
+            child: Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
 class SignInPage extends ConsumerStatefulWidget {
   const SignInPage({super.key});
 

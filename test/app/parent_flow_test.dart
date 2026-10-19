@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:how_to_hockey/app/hockey_app.dart';
+import 'package:how_to_hockey/features/profiles/player_profile.dart';
 import 'package:how_to_hockey/features/settings/appearance_settings_controller.dart';
 import 'package:how_to_hockey/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -26,7 +27,47 @@ Future<ProviderContainer> mount(WidgetTester tester, {double scale = 1}) async {
   return container;
 }
 
+Future<void> signedInWithKids() async {
+  await testAuth.signInWithEmail(email: 'parent@example.com', password: 'password1');
+  testProfiles.children
+    ..clear()
+    ..addAll(const [
+      PlayerProfile(id: 'child-1', ownerUid: 'u', displayName: 'Avery H.', birthYear: 2015, isChild: true),
+      PlayerProfile(id: 'child-2', ownerUid: 'u', displayName: 'Riley H.', birthYear: 2017, isChild: true),
+    ]);
+}
+
 void main() {
+  testWidgets('Kids lists real child profiles and adds one with the cap enforced', (tester) async {
+    await signedInWithKids();
+    final container = await mount(tester);
+    container.read(appRouterProvider).go('/parent/kids');
+    await tester.pumpAndSettle();
+    expect(find.text('Avery H.'), findsOneWidget);
+    expect(find.text('Riley H.'), findsOneWidget);
+
+    await tester.tap(find.text('Add child'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add child').last);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('first name'), findsWidgets);
+
+    await tester.enterText(find.widgetWithText(TextField, 'First name'), 'jordan');
+    await tester.enterText(find.widgetWithText(TextField, 'Last initial'), 'p');
+    await tester.tap(find.text('Add child').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Pick your child\'s birth year.'), findsOneWidget);
+
+    tester.widget<DropdownButtonFormField<int>>(find.byType(DropdownButtonFormField<int>)).onChanged!(2014);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add child').last);
+    await tester.pumpAndSettle();
+    expect(testProfiles.calls.last, 'child:Jordan P.:2014');
+    expect(find.text('Jordan P.'), findsOneWidget);
+    expect(find.textContaining('most child profiles'), findsOneWidget);
+    expect(find.text('Add child'), findsNothing);
+  });
+
   testWidgets('Me role switcher opens the Parent shell with only Parent navigation', (tester) async {
     final container = await mount(tester);
     container.read(appRouterProvider).go('/me');
@@ -49,6 +90,7 @@ void main() {
   });
 
   testWidgets('child detail controls, pairing, approvals, and Train Together', (tester) async {
+    await signedInWithKids();
     final container = await mount(tester, scale: 2);
     final router = container.read(appRouterProvider);
     router.go('/parent/kids');
@@ -61,24 +103,15 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
 
-    await tester.ensureVisible(find.text('Remove from team'));
-    await tester.tap(find.text('Remove from team'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Remove'));
-    await tester.pumpAndSettle();
-    expect(find.textContaining('Nothing was removed'), findsOneWidget);
-    await tester.pump(const Duration(seconds: 5));
-    await tester.pumpAndSettle();
+    expect(find.text('Remove from team'), findsNothing);
 
-    router.go('/parent/kids/avery/pair');
+    router.go('/parent/kids/child-1/pair');
     await tester.pumpAndSettle();
     expect(find.textContaining('NOT VALID'), findsOneWidget);
 
     router.go('/parent/kids/approvals');
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Approve').first);
-    await tester.pump();
-    expect(find.textContaining('Nothing was approved'), findsOneWidget);
+    expect(find.textContaining('No requests waiting'), findsOneWidget);
 
     router.go('/parent/kids/train-together');
     await tester.pumpAndSettle();
