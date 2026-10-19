@@ -10,7 +10,7 @@ import 'package:how_to_hockey/features/profiles/profile_repository.dart';
 /// Runs the whole account flow against the local Auth, Firestore and Functions emulators:
 ///   npm --prefix functions run build
 ///   firebase emulators:start --only auth,functions,firestore --project how-to-hockey
-///   flutter test integration_test/accounts_emulator_test.dart -d <android-or-ios-emulator> --dart-define=USE_EMULATORS=true
+///   flutter test integration_test/accounts_emulator_test.dart -d EMULATOR_ID --dart-define=USE_EMULATORS=true
 /// It prints `E2E ...` lines and fails if any `UNEXPECTED` line appears.
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
