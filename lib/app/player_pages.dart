@@ -9,6 +9,7 @@ import '../design/components/training_components.dart';
 import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_shapes.dart';
 import '../design/tokens/app_spacing.dart';
+import '../features/drills/drill_catalog.dart';
 import '../features/drills/models/drill.dart';
 import '../features/accounts/auth_service.dart';
 import '../features/profiles/active_player.dart';
@@ -20,6 +21,7 @@ import '../features/settings/appearance_settings_controller.dart';
 import 'sample_data.dart';
 import 'app_page.dart';
 import 'account_pages.dart';
+import 'coach_state.dart';
 import 'training_state.dart';
 import 'workout_history.dart';
 
@@ -35,14 +37,7 @@ class TrainPage extends ConsumerWidget {
       appBarTitle: const BrandWordmark(),
       centerAppBarTitle: true,
       children: [
-        TrainingHeroCard(
-          eyebrow: 'Today\'s workout',
-          title: 'Build your\nfoundation',
-          detail: 'Start with a small win.',
-          metrics: const [('20', 'minutes'), ('06', 'drills'), ('12', 'sets')],
-          actionLabel: 'View workout',
-          onTap: () => context.push('/routine'),
-        ),
+        _TodayWorkoutCard(),
         const SizedBox(height: AppSpacing.xl),
         SectionHeading(title: 'Your setup', action: 'Edit', onAction: () => context.push('/setup')),
         const SizedBox(height: AppSpacing.sm),
@@ -1071,4 +1066,48 @@ class _MeEntryCard extends StatelessWidget {
       ],
     ),
   );
+}
+
+class _TodayWorkoutCard extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final focus = ref.watch(trainingFocusProvider);
+    return switch (ref.watch(generatedRoutineProvider)) {
+      AsyncData(:final value) when value.drills.isNotEmpty => TrainingHeroCard(
+        eyebrow: 'Today\'s workout',
+        title: routineTitle(focus),
+        detail: routineDetail(focus),
+        metrics: [('${value.estimatedMinutes}', 'minutes'), (value.drills.length.toString().padLeft(2, '0'), 'drills'), ('${value.totalSets}', 'sets')],
+        actionLabel: 'View workout',
+        onTap: () => context.push('/routine'),
+      ),
+      AsyncData() => TrainingCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Let\'s set up your workout', style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: AppSpacing.xs),
+            const Text('No drills fit this setup yet. Try another place, more pucks, or a ball or passer.'),
+            const SizedBox(height: AppSpacing.md),
+            FilledButton(onPressed: () => context.push('/setup'), child: const Text('Change my setup')),
+          ],
+        ),
+      ),
+      AsyncError() => TrainingCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('We couldn\'t load today\'s workout. Check your connection and try again.'),
+            const SizedBox(height: AppSpacing.md),
+            OutlinedButton(onPressed: () => ref.invalidate(drillCatalogProvider), child: const Text('Try again')),
+          ],
+        ),
+      ),
+      _ => const TrainingCard(
+        child: Center(
+          child: Padding(padding: EdgeInsets.all(AppSpacing.xl), child: CircularProgressIndicator()),
+        ),
+      ),
+    };
+  }
 }

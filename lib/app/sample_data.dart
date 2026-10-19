@@ -82,7 +82,7 @@ extension DrillPresentation on Drill {
 
   /// How the drill is tracked, when that says something the skill label and prescription don't.
   String? get trackingNote => switch (trackingType) {
-    TrackingType.volume || TrackingType.duration => null,
+    TrackingType.volume || TrackingType.duration || TrackingType.streak || TrackingType.binary => null,
     _ => trackingType.label == pillar.label ? null : trackingType.label,
   };
   String get prescriptionLabel {

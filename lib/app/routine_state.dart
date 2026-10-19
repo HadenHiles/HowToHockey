@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/drills/drill_catalog.dart';
 import '../features/drills/models/drill.dart';
 import '../features/settings/appearance_settings_controller.dart';
 import 'sample_data.dart';
@@ -50,9 +51,24 @@ class RoutineLibrary extends Notifier<List<RoutinePlan>> {
     );
   }
 
+  static const freeRoutineLimit = 3;
+
+  bool get atLimit => !ref.read(drillFiltersUnlockedProvider) && state.length >= freeRoutineLimit;
+
   Future<void> save(RoutinePlan routine) async {
     if (routine.drills.isEmpty) throw ArgumentError('A routine must contain at least one drill.');
+    if (atLimit && !state.any((item) => item.id == routine.id)) {
+      throw StateError('You can keep up to $freeRoutineLimit saved routines. Delete one to save another.');
+    }
     final next = [...state.where((item) => item.id != routine.id), routine];
+    await _persist(next);
+    state = List.unmodifiable(next);
+  }
+
+  /// Swaps a saved routine for a new one when the free limit is reached.
+  Future<void> replace(String oldId, RoutinePlan routine) async {
+    if (routine.drills.isEmpty) throw ArgumentError('A routine must contain at least one drill.');
+    final next = [...state.where((item) => item.id != oldId && item.id != routine.id), routine];
     await _persist(next);
     state = List.unmodifiable(next);
   }

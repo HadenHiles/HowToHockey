@@ -120,8 +120,9 @@ void main() {
     expect(sampleDrills.map((drill) => drill.pillar).toSet(), SkillPillar.values.toSet());
   });
 
-  test('focus sliders rebalance to exactly 100 including all-zero remainder', () {
-    final container = ProviderContainer();
+  test('focus sliders rebalance to exactly 100 including all-zero remainder', () async {
+    SharedPreferences.setMockInitialValues({});
+    final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(await SharedPreferences.getInstance())]);
     addTearDown(container.dispose);
     final controller = container.read(trainingFocusProvider.notifier);
     for (final pillar in SkillPillar.values) {

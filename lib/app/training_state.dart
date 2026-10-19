@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/accounts/auth_service.dart';
+import '../features/coach/routine_generator.dart';
 import '../features/drills/models/drill.dart';
 import '../features/drills/set_calculations.dart';
 import 'sample_data.dart';
@@ -43,34 +44,109 @@ class DrillRestSettingsNotifier extends Notifier<Map<String, DrillRestSettings>>
 
 final drillRestSettingsProvider = NotifierProvider<DrillRestSettingsNotifier, Map<String, DrillRestSettings>>(DrillRestSettingsNotifier.new);
 
-// Back these providers with persistence when the session-engine milestone resumes.
 typedef TrainingSetupState = ({LocationOption location, PuckInventory inventory, BallType? ball, PasserType? passer});
 
+const defaultTrainingSetup = (location: LocationOption.drivewayGarage, inventory: PuckInventory.low, ball: null, passer: null);
+
+const defaultTrainingFocus = {SkillPillar.shotAccuracy: 25, SkillPillar.hands: 20, SkillPillar.shotPower: 20, SkillPillar.passing: 15, SkillPillar.speedStrength: 10, SkillPillar.endurance: 10};
+
+T? _byName<T extends Enum>(List<T> values, String? name) => values.where((value) => value.name == name).firstOrNull;
+
+Map<String, Object?> setupToJson(TrainingSetupState setup) => {'location': setup.location.name, 'inventory': setup.inventory.name, 'ball': setup.ball?.name, 'passer': setup.passer?.name};
+
+TrainingSetupState setupFromJson(Map<String, dynamic> json) => (
+  location: _byName(LocationOption.values, json['location'] as String?) ?? defaultTrainingSetup.location,
+  inventory: _byName(PuckInventory.values, json['inventory'] as String?) ?? defaultTrainingSetup.inventory,
+  ball: _byName(BallType.values, json['ball'] as String?),
+  passer: _byName(PasserType.values, json['passer'] as String?),
+);
+
+/// Focus points that add up to exactly 100, or the defaults if what was saved doesn't.
+Map<SkillPillar, int> focusFromJson(Object? json) {
+  if (json is! Map) return defaultTrainingFocus;
+  final result = <SkillPillar, int>{};
+  for (final pillar in SkillPillar.values) {
+    final value = json[pillar.name];
+    if (value is! int || value < 0 || value > 100) return defaultTrainingFocus;
+    result[pillar] = value;
+  }
+  return result.values.fold(0, (a, b) => a + b) == 100 ? Map.unmodifiable(result) : defaultTrainingFocus;
+}
+
+Map<String, Object?> focusToJson(Map<SkillPillar, int> focus) => {for (final entry in focus.entries) entry.key.name: entry.value};
+
+/// What the player has to train with. Remembered on the device so the next workout starts from it.
 class TrainingSetup extends Notifier<TrainingSetupState> {
+  static const storageKey = 'trainingSetup';
+
   @override
-  TrainingSetupState build() => (location: LocationOption.drivewayGarage, inventory: PuckInventory.low, ball: null, passer: PasserType.partner);
+  TrainingSetupState build() {
+    final stored = ref.read(sharedPreferencesProvider).getString(storageKey);
+    if (stored == null) return defaultTrainingSetup;
+    try {
+      return setupFromJson(jsonDecode(stored) as Map<String, dynamic>);
+    } on Object {
+      return defaultTrainingSetup;
+    }
+  }
 
-  void selectLocation(LocationOption location) => state = (location: location, inventory: state.inventory, ball: state.ball, passer: state.passer);
+  void _set(TrainingSetupState next) {
+    state = next;
+    unawaited(ref.read(sharedPreferencesProvider).setString(storageKey, jsonEncode(setupToJson(next))));
+  }
 
-  void selectInventory(PuckInventory inventory) => state = (location: state.location, inventory: inventory, ball: state.ball, passer: state.passer);
+  void apply(TrainingSetupState setup) => _set(setup);
 
-  void selectBall(BallType? ball) => state = (location: state.location, inventory: state.inventory, ball: ball, passer: state.passer);
+  void selectLocation(LocationOption location) => _set((location: location, inventory: state.inventory, ball: state.ball, passer: state.passer));
 
-  void selectPasser(PasserType? passer) => state = (location: state.location, inventory: state.inventory, ball: state.ball, passer: passer);
+  void selectInventory(PuckInventory inventory) => _set((location: state.location, inventory: inventory, ball: state.ball, passer: state.passer));
+
+  void selectBall(BallType? ball) => _set((location: state.location, inventory: state.inventory, ball: ball, passer: state.passer));
+
+  void selectPasser(PasserType? passer) => _set((location: state.location, inventory: state.inventory, ball: state.ball, passer: passer));
 }
 
 final trainingSetupProvider = NotifierProvider<TrainingSetup, TrainingSetupState>(TrainingSetup.new);
 
-class TrainingFocus extends Notifier<Map<SkillPillar, int>> {
+/// How long the player wants to train, in minutes.
+class TrainingLength extends Notifier<int> {
+  static const storageKey = 'trainingMinutes';
+
   @override
-  Map<SkillPillar, int> build() => const {
-    SkillPillar.shotAccuracy: 25,
-    SkillPillar.hands: 20,
-    SkillPillar.shotPower: 20,
-    SkillPillar.passing: 15,
-    SkillPillar.speedStrength: 10,
-    SkillPillar.endurance: 10,
-  };
+  int build() {
+    final stored = ref.read(sharedPreferencesProvider).getInt(storageKey);
+    return stored != null && routineLengthOptions.contains(stored) ? stored : 20;
+  }
+
+  void select(int minutes) {
+    if (!routineLengthOptions.contains(minutes)) throw RangeError.value(minutes, 'minutes', 'Not an offered length.');
+    state = minutes;
+    unawaited(ref.read(sharedPreferencesProvider).setInt(storageKey, minutes));
+  }
+}
+
+final trainingLengthProvider = NotifierProvider<TrainingLength, int>(TrainingLength.new);
+
+class TrainingFocus extends Notifier<Map<SkillPillar, int>> {
+  static const storageKey = 'trainingFocus';
+
+  @override
+  Map<SkillPillar, int> build() {
+    final stored = ref.read(sharedPreferencesProvider).getString(storageKey);
+    if (stored == null) return defaultTrainingFocus;
+    try {
+      return focusFromJson(jsonDecode(stored));
+    } on Object {
+      return defaultTrainingFocus;
+    }
+  }
+
+  void apply(Map<SkillPillar, int> focus) => _store(focusFromJson(focusToJson(focus)));
+
+  void _store(Map<SkillPillar, int> focus) {
+    state = focus;
+    unawaited(ref.read(sharedPreferencesProvider).setString(storageKey, jsonEncode(focusToJson(focus))));
+  }
 
   void select(SkillPillar pillar, int value) {
     if (value < 0 || value > 100) {
@@ -89,7 +165,7 @@ class TrainingFocus extends Notifier<Map<SkillPillar, int>> {
     for (var index = 0; index < remainder; index++) {
       next[others[index]] = next[others[index]]! + 1;
     }
-    state = Map.unmodifiable(next);
+    _store(Map.unmodifiable(next));
   }
 }
 

@@ -5,17 +5,18 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 ## 📍 Current Status
 > Update this block at the end of every work session.
 
-- **Current phase:** Phase 3 complete except its exit criterion's cloud "saved" half (needs Phase 4 profiles and the Phase 6 session write); finished workouts are kept in a local on-device history meanwhile. Starting Phase 4 — Accounts & Profiles. The UX-first screens (user-approved 2026-10-16) run on local sample data that later phases replace with real backends.
-- **Next task:** Phase 4 is done except Sign in with Apple and Google. Waiting on you for their console setup (see the Copilot reference); the roadmap's next buildable phase is Phase 5 (Onboarding & Smart Coach Engine). Waiting on you for Sign in with Apple and Google console setup (see the Copilot reference).
-- **Validation:** On 2026-10-19, `flutter analyze` passes and `flutter test test` passes all 218 host-only tests. The account flow was run end to end on the Android emulator against local Auth, Firestore and Functions emulators (upgrade keeps the user ID, profile creation, duplicate and 3-child-cap refusals, direct client writes denied, sign-out/in, stranger denied). The profile functions and Firestore rules are deployed to production. Emulators cannot confirm audible sound or vibration, and iOS rest reminders are unverified. Physical devices were not used.
+- **Current phase:** Phase 5 — Onboarding & Smart Coach Engine: the generator, setup/focus/length memory, saved setups and the generated workout are built and wired. Phase 4 is done except Sign in with Apple and Google (waiting on your console setup). Phase 3's cloud "saved" half still waits on the Phase 6 session write; finished workouts are kept in a local history meanwhile.
+- **Next task:** Finish Phase 5: scale prescriptions by recent performance (needs per-set history), enforce the 3-saved-routine cap server-side with the Player Pro entitlement (Phase 8), then start Phase 6 (Analytics & Progression), which also replaces the placeholder streak and weekly numbers on Train and Progress. Waiting on you for Sign in with Apple and Google console setup.
+- **Validation:** On 2026-10-19, `flutter analyze` passes and `flutter test test` passes all 261 host-only tests (including 20 generator tests with known-setup goldens). The generated workout, saved setups and Try another were checked on the iPhone 16 Plus simulator against local emulators. Earlier validation (accounts, kid-device pairing, deletion, the full visual pass on both devices) still stands.
 - **Blockers:** None for the next UX slice. Phase 2 content/media and later backend integrations remain paused: workout history, real team membership/feed/standings, account-wide profile switching, and purchases are not implemented. Production App Check/release setup remains deferred; no production milestone is completed by these UI changes.
-- **Last updated:** 2026-10-08
+- **Last updated:** 2026-10-19
 
 Detailed Copilot development notes live in [.github/COPILOT_REFERENCE.md](.github/COPILOT_REFERENCE.md); keep the public README focused on the app's purpose and high-level setup.
 
 ### Session Log
 | Date | Summary | Commit |
 |---|---|---|
+| 2026-10-19 | Phase 5: the Smart Coach engine. Pure-Dart generator (`lib/features/coach/routine_generator.dart`): hard filters (location, pucks with a ball standing in, passer type, tier), focus-weighted scoring with a seeded nudge and a penalty for recent drills, slot quotas by largest remainder, tracking-type variety, swap groups (one per workout, a second only when a skill's quota would otherwise go unfilled, because the accuracy drills all share one group), pick-up time added for low puck counts, order warm-up then main then finishers then recovery, sets nudged to land near the chosen time (15/20/30/45 min). Setup, focus and length are remembered; named setups (max 5) can be saved and applied; the workout page, Train home and Focus page now show the generated workout with Try another and Save workout (free cap of 3 saved routines with a replace prompt). Removed the "example plan" copy. Default passer is now "training solo". Known: prescriptions are not yet scaled by recent performance, and the saved-routine cap is enforced on the device only until the server/entitlement work in Phase 8. 261 host tests | See commit history |
 | 2026-10-19 | Full visual and behavior assessment from every perspective (new player, parent, kid device, coach, guest) on the iPhone 16 Plus simulator and the Android API 36 emulator, against local Auth/Firestore/Functions/Storage emulators (about 80 screens each, scripted tour, screenshots reviewed). Fixed: oversized empty header on every screen (large titles kept, now compact: title directly under a 56 pt toolbar, 40 pt on tab pages, content starts about 60 pt higher); **primary buttons hidden behind the on-screen keyboard** on every form (now pinned above it, and dragging dismisses the keyboard); a workout leaking to the next person after sign-out or kid-device pairing; stale copy ("Accounts aren't live yet", "Accounts, profiles and plans go live soon", example-data wording); truncated "Last initial" label; duplicated "Accuracy" chips and "Reps" repeated in drill lines; developer-only "Welcome & sign-up preview" shown to signed-in accounts and kid devices; Switch role now says why Parent/Coach need an account; spacing under the child-cap notice; screen sweep test used a stale child route. Known and left: Coach, Team and Progress still show clearly-labelled example data; workouts and history are saved per device, not per player, until Phase 6; the guest-to-sign-up redirect for Parent/Coach has no explanation screen. 230 host tests | See commit history |
 | 2026-10-19 | Phase 4 slice 4: in-app account deletion and role route guards. `deleteAccount` Function (deployed, verified in production) removes the account, own and child profiles with their sessions, pairing codes, paired kid-device sign-ins, then the sign-in itself last so it can be retried; kid devices and guests are refused; real confirm dialog on Me and Parent. Parent and Coach screens now need a signed-in account (guests go to sign up; kid devices to Train). 227 host tests, 26 emulator function tests. Probe data deleted (one stray kid-device sign-in record from an early probe remains in Auth; harmless) | See commit history |
 | 2026-10-19 | Phase 4 slice 3c: Switch player picker and Train as child are real. The active player (the account's own profile or one of its children) is saved on the device; Me shows the real name, a kid device shows its one child and can't switch. Granted the Functions service account Token Creator; production pairing then verified end to end, which exposed that a kid-device token could create profiles, so both profile Functions and the pairing Function now refuse kid devices (deployed and re-probed; probe data deleted). Workouts are still saved per device, not per player, until the Phase 6 session write. 224 host tests, 23 emulator function tests | See commit history |
@@ -486,17 +487,17 @@ An account can hold multiple roles (e.g., a coach who is also a parent). Each ro
 
 ## Phase 5 — Onboarding & Smart Coach Engine (Core Loop Step 1)
 ### 5A. Setup Parameters UI
-- [ ] Location picker (5 options)
-- [ ] Puck inventory (single select: Low/Medium/High)
-- [ ] Off-ice ball optional toggle (Golf Ball / Training Ball / Green Biscuit)
-- [ ] Passer optional toggle (Rebounder / Partner)
-- [ ] Remember last setup; allow saved presets ("Garage", "Rink Tuesday")
+- [x] Location picker (5 options)
+- [x] Puck inventory (single select: Low/Medium/High)
+- [x] Off-ice ball optional toggle (Golf Ball / Training Ball / Green Biscuit)
+- [x] Passer optional toggle (Rebounder / Partner)
+- [x] Remember last setup; allow saved presets ("Garage", "Rink Tuesday") *(Remembered on the device; up to 5 named setups.)*
 
 ### 5B. 100-Point Focus Scale
-- [ ] Five sliders and/or interactive radar
-- [ ] Zero-sum rebalance algorithm: when pillar *i* changes by Δ, distribute −Δ across the other pillars **proportionally to their current values**; if all others are 0, distribute evenly; clamp to [0,100]
-- [ ] Integer rounding via largest-remainder method so the total is always exactly 100
-- [ ] Unit tests: sum invariant, clamping, all-zero edge case
+- [x] Five sliders and/or interactive radar *(Six sliders, one per skill; the radar view is part of Phase 6.)*
+- [x] Zero-sum rebalance algorithm: when pillar *i* changes by Δ, distribute −Δ across the other pillars **proportionally to their current values**; if all others are 0, distribute evenly; clamp to [0,100]
+- [x] Integer rounding via largest-remainder method so the total is always exactly 100
+- [x] Unit tests: sum invariant, clamping, all-zero edge case
 
 ### 5C. Generation Algorithm (pure Dart, runs on-device)
 1. **Hard filters:** `allowedLocations ∋ location`; `minPuckInventory ≤ inventory` (off-ice ball counts as satisfying inventory if drill supports it); `requiresPasser → passer present & type matches`; tier access.
@@ -506,9 +507,9 @@ An account can hold multiple roles (e.g., a coach who is also a parent). Each ro
 5. **Puck-inventory shaping:** Low → prefer single-puck / reset-and-retrieve and add retrieval time to estimates; High → allow density drills.
 6. **Order:** warm-up (stickhandling/skating, low difficulty) → high-intensity shooting/density → finisher (streak/IQ).
 7. **Prescribe:** use `defaultPrescription`, scaled by difficulty and recent performance.
-- [ ] Deterministic seed option for tests
-- [ ] Golden tests for known setups → expected routine
-- [ ] Free tier can generate custom routines (from the 20 starter drills) but may keep **max 3 saved routines** per profile; Player Pro = unlimited saves + full 100+ drill pool
+- [x] Deterministic seed option for tests
+- [x] Golden tests for known setups → expected routine
+- [x] Free tier can generate custom routines (from the 20 starter drills) but may keep **max 3 saved routines** per profile; Player Pro = unlimited saves + full 100+ drill pool *(Generation and the 3-routine cap work on the device; Pro unlock is a stand-in until Phase 8.)*
 - [ ] Enforce the saved-routine cap server-side: `createSavedRoutine` callable Function checks entitlement + count (rules can't count docs); client shows "replace a saved routine" prompt when at cap
 - [ ] Downgrade handling: if Pro lapses with >3 saved, keep all readable but block new saves until ≤3
 

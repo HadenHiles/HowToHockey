@@ -1,3 +1,4 @@
+import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,8 +7,10 @@ import 'package:go_router/go_router.dart';
 import '../design/components/training_components.dart';
 import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_spacing.dart';
+import '../features/coach/routine_generator.dart';
 import '../features/drills/drill_catalog.dart';
 import '../features/drills/models/drill.dart';
+import 'coach_state.dart';
 import 'drill_media_card.dart';
 import 'player_pages.dart';
 import 'sample_data.dart';
@@ -23,11 +26,32 @@ class SetupPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final setup = ref.watch(trainingSetupProvider);
     final controller = ref.read(trainingSetupProvider.notifier);
+    final minutes = ref.watch(trainingLengthProvider);
+    final presets = ref.watch(setupPresetsProvider);
     return AppPage(
       title: 'Your setup',
       subtitle: 'Great training starts with what you have.',
       action: FilledButton(onPressed: () => context.push('/focus'), child: const Text('Next: choose your focus')),
       children: [
+        if (presets.isNotEmpty) ...[
+          const SectionHeading(title: 'Your saved setups'),
+          const SizedBox(height: AppSpacing.md),
+          Wrap(
+            spacing: AppSpacing.xs,
+            runSpacing: AppSpacing.xs,
+            children: [
+              for (final preset in presets)
+                InputChip(
+                  label: Text(preset.name),
+                  avatar: const Icon(Icons.bookmark_outline, size: 18),
+                  deleteButtonTooltipMessage: 'Remove ${preset.name}',
+                  onPressed: () => ref.read(setupPresetsProvider.notifier).apply(preset),
+                  onDeleted: () => ref.read(setupPresetsProvider.notifier).remove(preset.id),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xl),
+        ],
         const SectionHeading(title: 'Where are you training?'),
         const SizedBox(height: AppSpacing.md),
         Wrap(
@@ -68,10 +92,64 @@ class SetupPage extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: AppSpacing.xl),
-        const Text('For now, workouts use an example plan. Matching drills to your gear is coming soon.'),
+        const SectionHeading(title: 'How long?'),
+        const SizedBox(height: AppSpacing.md),
+        Wrap(
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
+          children: [
+            for (final option in routineLengthOptions) ChoiceChip(label: Text('$option min'), selected: option == minutes, onSelected: (_) => ref.read(trainingLengthProvider.notifier).select(option)),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        OutlinedButton.icon(onPressed: () => _savePreset(context, ref), icon: const Icon(Icons.bookmark_add_outlined), label: const Text('Save this setup')),
+        const SizedBox(height: AppSpacing.sm),
+        const Text('We remember your last setup. Save it by name to switch between places, like Garage or Rink Tuesday.'),
       ],
     );
   }
+
+  Future<void> _savePreset(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final name = await showDialog<String>(context: context, builder: (_) => const _PresetNameDialog());
+    if (name == null) return;
+    final problem = ref.read(setupPresetsProvider.notifier).save(name);
+    messenger.showSnackBar(SnackBar(content: Text(problem ?? 'Saved "${name.trim()}".')));
+  }
+}
+
+class _PresetNameDialog extends StatefulWidget {
+  const _PresetNameDialog();
+
+  @override
+  State<_PresetNameDialog> createState() => _PresetNameDialogState();
+}
+
+class _PresetNameDialogState extends State<_PresetNameDialog> {
+  final _name = TextEditingController();
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('Name this setup'),
+    content: TextField(
+      controller: _name,
+      autofocus: true,
+      maxLength: maxPresetNameLength,
+      textCapitalization: TextCapitalization.words,
+      decoration: const InputDecoration(labelText: 'Name', hintText: 'Garage'),
+      onSubmitted: (value) => Navigator.of(context).pop(value),
+    ),
+    actions: [
+      TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('Cancel')),
+      FilledButton(onPressed: () => Navigator.of(context).pop(_name.text), child: const Text('Save')),
+    ],
+  );
 }
 
 class FocusPage extends ConsumerWidget {
@@ -100,7 +178,7 @@ class FocusPage extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.xs),
                   Text('Your game.\nYour focus.', style: theme.textTheme.headlineMedium),
                   const SizedBox(height: AppSpacing.xs),
-                  Text('Set your priorities. Custom workouts are coming soon.', style: theme.textTheme.bodyMedium),
+                  Text('Move a slider and your workout changes with it.', style: theme.textTheme.bodyMedium),
                 ],
               );
             },
@@ -138,7 +216,13 @@ class FocusPage extends ConsumerWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
         ],
-        const TrainingCard(child: Text('A balanced foundation\nSoon your priorities will shape your workouts. For now, train with an example six-drill plan.')),
+        TrainingCard(
+          child: switch (ref.watch(generatedRoutineProvider)) {
+            AsyncData(:final value) when value.drills.isNotEmpty => Text('Your workout: ${value.drills.length} drills, about ${value.estimatedMinutes} minutes.'),
+            AsyncData() => const Text('No drills fit this setup yet. Try another place or more pucks.'),
+            _ => const Text('Building your workout…'),
+          },
+        ),
       ],
     );
   }
@@ -149,33 +233,87 @@ class RoutinePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final routine = ref.watch(generatedRoutineProvider);
+    final focus = ref.watch(trainingFocusProvider);
+    final setup = ref.watch(trainingSetupProvider);
     return AppPage(
       title: 'Your workout',
-      subtitle: 'Build your foundation',
-      children: [
-        TrainingHeroCard(
-          eyebrow: 'Your session',
-          title: 'Build your\nfoundation',
-          detail: 'A little shooting, a little control, and a strong finish.',
-          metrics: const [('20', 'minutes'), ('06', 'drills'), ('12', 'sets')],
-          actionLabel: 'Start workout',
-          onTap: () {
-            ref.read(trainingSessionProvider.notifier).start(sampleDrills);
-            context.go('/train/session');
-          },
-        ),
-        const SizedBox(height: AppSpacing.md),
-        OutlinedButton.icon(
-          onPressed: () => showFeatureMessage(context, 'Saving workouts isn\'t live yet. No workout was saved.'),
-          icon: const Icon(Icons.bookmark_border),
-          label: const Text('Save workout'),
-        ),
-        const SizedBox(height: AppSpacing.xl),
-        const SectionHeading(title: 'Workout plan'),
-        const SizedBox(height: AppSpacing.md),
-        for (final drill in sampleDrills) ...[DrillListCard(drill: drill), const SizedBox(height: AppSpacing.sm)],
-      ],
+      subtitle: '${setup.location.label} · ${setup.inventory.label}${setup.passer == null ? '' : ' · with a ${setup.passer!.label.toLowerCase()}'}',
+      children: switch (routine) {
+        AsyncData(:final value) when value.drills.isEmpty => [
+          const TrainingCard(child: Text('No drills fit this setup yet. Try another place, more pucks, or a ball or passer.')),
+          const SizedBox(height: AppSpacing.md),
+          FilledButton(onPressed: () => context.push('/setup'), child: const Text('Change my setup')),
+        ],
+        AsyncData(:final value) => [
+          TrainingHeroCard(
+            eyebrow: 'Your session',
+            title: routineTitle(focus),
+            detail: routineDetail(focus),
+            metrics: [('${value.estimatedMinutes}', 'minutes'), (value.drills.length.toString().padLeft(2, '0'), 'drills'), ('${value.totalSets}', 'sets')],
+            actionLabel: 'Start workout',
+            onTap: () {
+              ref.read(trainingSessionProvider.notifier).start(value.drills);
+              context.go('/train/session');
+            },
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () => ref.read(routineShuffleProvider.notifier).next([for (final d in value.drills) d.id]),
+                  icon: const Icon(Icons.shuffle),
+                  label: const Text('Try another'),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: OutlinedButton.icon(onPressed: () => _save(context, ref, value, focus), icon: const Icon(Icons.bookmark_border), label: const Text('Save workout')),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          const SectionHeading(title: 'Workout plan'),
+          const SizedBox(height: AppSpacing.md),
+          for (final drill in value.drills) ...[DrillListCard(drill: drill), const SizedBox(height: AppSpacing.sm)],
+        ],
+        AsyncError() => [
+          const TrainingCard(child: Text('We couldn\'t load the drills. Check your connection and try again.')),
+          const SizedBox(height: AppSpacing.md),
+          FilledButton(onPressed: () => ref.invalidate(drillCatalogProvider), child: const Text('Try again')),
+        ],
+        _ => const [Center(child: CircularProgressIndicator())],
+      },
     );
+  }
+
+  Future<void> _save(BuildContext context, WidgetRef ref, GeneratedRoutine routine, Map<SkillPillar, int> focus) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final library = ref.read(routineLibraryProvider.notifier);
+    final plan = RoutinePlan(id: 'workout-${clock.now().microsecondsSinceEpoch}', name: '${topPillar(focus).label} · ${routine.estimatedMinutes} min', drills: routine.drills);
+    try {
+      if (library.atLimit) {
+        final replace = await showDialog<String>(
+          context: context,
+          builder: (dialogContext) => SimpleDialog(
+            title: const Text('Replace a saved routine?'),
+            children: [
+              const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: Text('You can keep up to 3 saved routines. Pick one to replace with this workout.')),
+              for (final saved in ref.read(routineLibraryProvider)) SimpleDialogOption(onPressed: () => Navigator.of(dialogContext).pop(saved.id), child: Text(saved.name)),
+              SimpleDialogOption(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
+            ],
+          ),
+        );
+        if (replace == null) return;
+        await library.replace(replace, plan);
+      } else {
+        await library.save(plan);
+      }
+      messenger.showSnackBar(SnackBar(content: Text('Saved "${plan.name}" to My routines.')));
+    } on StateError catch (error) {
+      messenger.showSnackBar(SnackBar(content: Text(error.message)));
+    }
   }
 }
 
@@ -302,7 +440,6 @@ class _RoutineBuilderPageState extends ConsumerState<RoutineBuilderPage> {
       _error = null;
     });
     try {
-      // TODO(RevenueCat): Enforce the Phase 5 three-routine free-tier cap and Player Pro entitlement here.
       await ref.read(routineLibraryProvider.notifier).save(RoutinePlan(id: _id, name: _name, drills: _drills));
       if (mounted) context.go('/routines');
     } on StateError catch (error) {
