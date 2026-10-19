@@ -992,12 +992,6 @@ class _MePageState extends ConsumerState<MePage> {
                 context.push(route);
               },
             ),
-            const SizedBox(height: AppSpacing.sm),
-            OutlinedButton.icon(
-              onPressed: () => _closeWithMessage(sheetContext, 'Account deletion isn\'t live yet. Nothing was deleted.'),
-              icon: const Icon(Icons.delete_outline),
-              label: const Text('Delete account'),
-            ),
           ],
         ),
       ),

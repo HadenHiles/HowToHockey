@@ -22,13 +22,20 @@ const _kidDeviceBlocked = ['/parent', '/coach', '/signup', '/signin', '/welcome'
 /// A paired kid device only gets Player screens. Returns where to send it, or null to let it through.
 String? kidDeviceRedirect(String path) => _kidDeviceBlocked.any((prefix) => path == prefix || path.startsWith('$prefix/')) ? '/train' : null;
 
+/// Parent and Coach screens are for signed-in accounts. Guests are sent to sign up; kid devices back to Train.
+String? roleRedirect(AuthState? auth, String path) {
+  if (auth is KidDeviceSession) return kidDeviceRedirect(path);
+  final roleScreen = path == '/parent' || path.startsWith('/parent/') || path == '/coach' || path.startsWith('/coach/');
+  return roleScreen && auth is! SignedInAccount ? '/signup' : null;
+}
+
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authChanged = ValueNotifier<int>(0);
   ref.listen(authStateProvider, (_, _) => authChanged.value++);
   final router = GoRouter(
     initialLocation: '/train',
     refreshListenable: authChanged,
-    redirect: (_, state) => ref.read(authStateProvider).value is KidDeviceSession ? kidDeviceRedirect(state.uri.path) : null,
+    redirect: (_, state) => roleRedirect(ref.read(authStateProvider).value, state.uri.path),
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, shell) => _PlayerShell(shell: shell),

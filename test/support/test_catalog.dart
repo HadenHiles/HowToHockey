@@ -153,6 +153,12 @@ class FakeProfileRepository extends ProfileRepository {
   }
 
   @override
+  Future<void> deleteAccount() async {
+    calls.add('delete-account');
+    if (failWith != null) throw failWith!;
+  }
+
+  @override
   Future<PairingCode> createPairingCode(String profileId) async {
     calls.add('pair:$profileId');
     if (failWith != null) throw failWith!;

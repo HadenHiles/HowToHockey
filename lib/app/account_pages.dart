@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../design/components/training_components.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/accounts/auth_service.dart';
+import '../features/profiles/active_player.dart';
 import '../features/profiles/display_name.dart';
 import '../features/profiles/profile_repository.dart';
 import 'app_page.dart';
@@ -444,6 +445,13 @@ class AccountSummary extends ConsumerWidget {
           if (!emailVerified) ...[const SizedBox(height: AppSpacing.xs), Text('Check your email to confirm your address.', style: theme.textTheme.bodySmall)],
           const SizedBox(height: AppSpacing.xl),
           OutlinedButton.icon(onPressed: () => unawaited(ref.read(authServiceProvider).signOut()), icon: const Icon(Icons.logout), label: const Text('Sign out')),
+          const SizedBox(height: AppSpacing.sm),
+          TextButton.icon(
+            onPressed: () => unawaited(confirmAndDeleteAccount(context, ref)),
+            style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Delete account'),
+          ),
         ],
         KidDeviceSession() => [
           Text('Kid device', style: theme.textTheme.headlineSmall),
@@ -463,5 +471,37 @@ class AccountSummary extends ConsumerWidget {
         ],
       },
     );
+  }
+}
+
+Future<void> confirmAndDeleteAccount(BuildContext context, WidgetRef ref) async {
+  final messenger = ScaffoldMessenger.of(context);
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: const Text('Delete your account?'),
+      content: const Text(
+        'This permanently deletes your account, your player profile, every child profile you added, and their saved progress. Paired kid devices are signed out. This can\'t be undone.',
+      ),
+      actions: [
+        TextButton(onPressed: () => Navigator.of(dialogContext).pop(false), child: const Text('Keep my account')),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: Theme.of(dialogContext).colorScheme.error, foregroundColor: Theme.of(dialogContext).colorScheme.onError),
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          child: const Text('Delete everything'),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true) return;
+  try {
+    await ref.read(profileRepositoryProvider).deleteAccount();
+    ref.read(activePlayerIdProvider.notifier).clear();
+    await ref.read(authServiceProvider).signOut();
+    messenger.showSnackBar(const SnackBar(content: Text('Your account was deleted.')));
+  } on ProfileException catch (error) {
+    messenger.showSnackBar(SnackBar(content: Text(error.message)));
+  } on AuthProblem {
+    messenger.showSnackBar(const SnackBar(content: Text('Your account was deleted. Close and reopen the app to start fresh.')));
   }
 }

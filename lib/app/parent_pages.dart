@@ -405,7 +405,7 @@ class ParentAccountPage extends ConsumerWidget {
     return AppPage(
       title: 'Account',
       children: [
-        const _SampleNotice('You\'re looking at a preview. Accounts, billing and deletion go live soon.'),
+        const _SampleNotice('You\'re looking at a preview. Billing goes live soon.'),
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Mode'),
         const SizedBox(height: AppSpacing.md),
@@ -448,12 +448,13 @@ class ParentAccountPage extends ConsumerWidget {
           onTap: () => showFeatureMessage(context, 'Restoring purchases isn\'t live yet. You weren\'t charged.'),
         ),
         const SizedBox(height: AppSpacing.xl),
-        TextButton.icon(
-          style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
-          onPressed: () => showFeatureMessage(context, 'Account deletion isn\'t live yet. Nothing was deleted.'),
-          icon: const Icon(Icons.delete_outline),
-          label: const Text('Delete account'),
-        ),
+        if (ref.watch(authStateProvider).value is SignedInAccount)
+          TextButton.icon(
+            style: TextButton.styleFrom(foregroundColor: theme.colorScheme.error),
+            onPressed: () => unawaited(confirmAndDeleteAccount(context, ref)),
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Delete account'),
+          ),
       ],
     );
   }

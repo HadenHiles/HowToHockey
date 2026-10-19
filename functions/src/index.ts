@@ -6,6 +6,7 @@ import { onCall } from 'firebase-functions/v2/https';
 import { getHealthStatus } from './health';
 import { createChildProfile as createChildProfileFor, createOwnProfile as createOwnProfileFor, type CallerAuth } from './profiles';
 
+import { deleteAccount as deleteAccountFor } from './accounts';
 import { createPairingCode as createPairingCodeFor, redeemPairingCode as redeemPairingCodeFor } from './pairing';
 
 initializeApp();
@@ -25,3 +26,5 @@ export const createOwnProfile = onCall((request) => createOwnProfileFor(getFires
 export const createPairingCode = onCall((request) => createPairingCodeFor(getFirestore(), callerOf(request), request.data ?? {}));
 
 export const redeemPairingCode = onCall((request) => redeemPairingCodeFor(getFirestore(), getAuth(), request.data ?? {}));
+
+export const deleteAccount = onCall((request) => deleteAccountFor(getFirestore(), getAuth(), callerOf(request), request.data ?? {}));

@@ -53,6 +53,8 @@ void main() {
     testWidgets('every screen renders at 320x568, 200% text, Reduce Motion ($appearance)', (tester) async {
       SharedPreferences.setMockInitialValues({'appearance': appearance});
       final preferences = await SharedPreferences.getInstance();
+      // Parent and Coach screens need a signed-in account.
+      await testAuth.signInWithEmail(email: 'pat@example.com', password: 'password1');
       final container = ProviderContainer(
         overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
       );

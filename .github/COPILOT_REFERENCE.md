@@ -6,7 +6,7 @@ This roadmap turns the product spec into ordered, checkable milestones. Each pha
 > Update this block at the end of every work session.
 
 - **Current phase:** Phase 3 complete except its exit criterion's cloud "saved" half (needs Phase 4 profiles and the Phase 6 session write); finished workouts are kept in a local on-device history meanwhile. Starting Phase 4 — Accounts & Profiles. The UX-first screens (user-approved 2026-10-16) run on local sample data that later phases replace with real backends.
-- **Next task:** Phase 4 slice 4 (Kids screen, kid-device sign-in and Switch player are done): role shells with route guards (a paired kid device is already locked to Player screens), and in-app account deletion with a cascading Function. Waiting on you for Sign in with Apple and Google console setup (see the Copilot reference).
+- **Next task:** Phase 4 is done except Sign in with Apple and Google. Waiting on you for their console setup (see the Copilot reference); the roadmap's next buildable phase is Phase 5 (Onboarding & Smart Coach Engine). Waiting on you for Sign in with Apple and Google console setup (see the Copilot reference).
 - **Validation:** On 2026-10-19, `flutter analyze` passes and `flutter test test` passes all 218 host-only tests. The account flow was run end to end on the Android emulator against local Auth, Firestore and Functions emulators (upgrade keeps the user ID, profile creation, duplicate and 3-child-cap refusals, direct client writes denied, sign-out/in, stranger denied). The profile functions and Firestore rules are deployed to production. Emulators cannot confirm audible sound or vibration, and iOS rest reminders are unverified. Physical devices were not used.
 - **Blockers:** None for the next UX slice. Phase 2 content/media and later backend integrations remain paused: workout history, real team membership/feed/standings, account-wide profile switching, and purchases are not implemented. Production App Check/release setup remains deferred; no production milestone is completed by these UI changes.
 - **Last updated:** 2026-10-08
@@ -16,6 +16,7 @@ Detailed Copilot development notes live in [.github/COPILOT_REFERENCE.md](.githu
 ### Session Log
 | Date | Summary | Commit |
 |---|---|---|
+| 2026-10-19 | Phase 4 slice 4: in-app account deletion and role route guards. `deleteAccount` Function (deployed, verified in production) removes the account, own and child profiles with their sessions, pairing codes, paired kid-device sign-ins, then the sign-in itself last so it can be retried; kid devices and guests are refused; real confirm dialog on Me and Parent. Parent and Coach screens now need a signed-in account (guests go to sign up; kid devices to Train). 227 host tests, 26 emulator function tests. Probe data deleted (one stray kid-device sign-in record from an early probe remains in Auth; harmless) | See commit history |
 | 2026-10-19 | Phase 4 slice 3c: Switch player picker and Train as child are real. The active player (the account's own profile or one of its children) is saved on the device; Me shows the real name, a kid device shows its one child and can't switch. Granted the Functions service account Token Creator; production pairing then verified end to end, which exposed that a kid-device token could create profiles, so both profile Functions and the pairing Function now refuse kid devices (deployed and re-probed; probe data deleted). Workouts are still saved per device, not per player, until the Phase 6 session write. 224 host tests, 23 emulator function tests | See commit history |
 | 2026-10-19 | Phase 4 slice 3b: kid-device sign-in. `createPairingCode` (parent, 8 digits, hashed at rest, 10 min, single use, replaces the child's earlier code) and `redeemPairingCode` (code to a custom token with the `profileId` claim) Functions, deployed; a real pairing screen with a live expiry countdown; a "Set up a kid's device" screen; paired devices are routed away from Parent, Coach, sign-in and paywall screens and can unpair from Me. 22 emulator function tests, 35 rules tests (pairing codes are server-only), 224 host tests. **Token minting in production needs the function service account to have Token Creator on itself** (see the reference) | See commit history |
 | 2026-10-19 | Phase 4 slice 3a: the Kids screen now shows real child profiles (live Firestore list), an Add child form (first name, last initial, birth year; server-validated) and the 3-child cap message; guests are told to create an account. Approvals and Verify no longer show invented example data. Added a rules test for the parent's child query. Child-detail team and pairing actions still await their phases | See commit history |
@@ -460,8 +461,8 @@ Build as a pure-Dart `SessionController` (Riverpod Notifier) with a thin UI on t
 - [x] Display name restricted to first name + last initial; server-side validation *(server-side validation in the Functions plus an identical client check, both driven by one shared set of test vectors)*
 - [x] **Kid device sign-in:** parent generates a short-lived code → Function mints a custom token with a `profileId` claim → device is locked to Player mode for that child only (no parent, billing or account deletion). *(Built and verified against production: codes are 8 digits, hashed, single use, 10 minutes; kid-device tokens are refused by the profile and pairing Functions. Needs a QR option and App Check rate limiting before launch.)*
 - [ ] **Shared device alternative:** on the parent's device, Player mode has a "Switch Player" picker for the parent's child profiles (optionally PIN-protected exit back to Parent/Coach mode)
-- [ ] Active profile is device-local state, so several devices on one account can run different profiles at the same time
-- [ ] Account deletion flow in-app (required by both stores) → Function cascades data deletion
+- [x] Active profile is device-local state, so several devices on one account can run different profiles at the same time *(Saved on the device; a kid device is fixed to its one profile.)*
+- [x] Account deletion flow in-app (required by both stores) → Function cascades data deletion *(Done and verified in production: deletes profiles with sessions, codes, kid-device sign-ins, then the sign-in; Phase 9+ must extend it to teams and feed data as they are built.)*
 - [x] Firestore rules: a user can only read/write their own profiles' private data *(33 rules tests cover owner, stranger, signed-out, anonymous and a kid device locked to one profile; roles, entitlements, names, and totals are server-written only; not deployed yet)*
 
 ### 4B. Role-Based App Modes (Separate Shells)
@@ -473,10 +474,10 @@ An account can hold multiple roles (e.g., a coach who is also a parent). Each ro
 | **Parent** | Kids · Verify · Account | Child profiles CRUD, each child's teams/invites/requests, workout verification, leaderboard visibility, subscription/billing |
 | **Coach** | Roster · Homework · Compliance · Team | Team settings (visibility, join code), roster approvals, routine builder, assignments, compliance dashboard, verification |
 
-- [ ] `go_router` `StatefulShellRoute` per mode; redirect guards by role + active profile
-- [ ] Parent "Train as [Child]" shortcut jumps into Player mode for that child profile
-- [ ] Kid-device sessions only ever see Player mode
-- [ ] Widget tests asserting each shell exposes only its own routes
+- [x] `go_router` `StatefulShellRoute` per mode; redirect guards by role + active profile *(Guests can't open Parent or Coach; Coach/Parent role flags aren't required yet because a new parent has no role until their first child. Revisit with Phase 9.)*
+- [x] Parent "Train as [Child]" shortcut jumps into Player mode for that child profile
+- [x] Kid-device sessions only ever see Player mode
+- [x] Widget tests asserting each shell exposes only its own routes *(Route-redirect unit tests plus a paired-device widget test.)*
 
 **Exit Criteria:** Rules tests pass for owner/non-owner access; deletion removes all data.
 

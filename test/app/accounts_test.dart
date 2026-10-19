@@ -257,6 +257,71 @@ void main() {
     });
   });
 
+  group('account deletion and role guards', () {
+    testWidgets('deleting asks first, then removes the account and returns to a guest session', (tester) async {
+      final container = await mount(
+        tester,
+        initial: const SignedInAccount(uid: 'u1', email: 'pat@example.com', emailVerified: true),
+      );
+      container.read(appRouterProvider).go('/me');
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Account'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Account'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete account').last);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('This permanently deletes your account'), findsOneWidget);
+
+      await tester.tap(find.text('Keep my account'));
+      await tester.pumpAndSettle();
+      expect(testProfiles.calls, isNot(contains('delete-account')));
+      expect(_auth.current, isA<SignedInAccount>());
+
+      await tester.tap(find.text('Delete account').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete everything'));
+      await tester.pumpAndSettle();
+      expect(testProfiles.calls, contains('delete-account'));
+      expect(_auth.current, isA<GuestSession>());
+      expect(find.text('Your account was deleted.'), findsOneWidget);
+    });
+
+    testWidgets('a failed deletion keeps the account and says why', (tester) async {
+      final container = await mount(
+        tester,
+        initial: const SignedInAccount(uid: 'u1', email: 'pat@example.com', emailVerified: true),
+      );
+      testProfiles.failWith = const ProfileException('We couldn\'t reach the server. Check your connection and try again.');
+      container.read(appRouterProvider).go('/me');
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Account'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Account'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete account').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Delete everything'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('couldn\'t reach the server'), findsOneWidget);
+      expect(_auth.current, isA<SignedInAccount>());
+    });
+
+    test('guests can\'t open Parent or Coach; accounts can; kid devices go to Train', () {
+      const guest = GuestSession('g');
+      const account = SignedInAccount(uid: 'u', email: 'a@b.co', emailVerified: false);
+      for (final path in ['/parent', '/parent/kids', '/coach/roster', '/coach']) {
+        expect(roleRedirect(guest, path), '/signup', reason: path);
+        expect(roleRedirect(const SignedOut(), path), '/signup', reason: path);
+        expect(roleRedirect(null, path), '/signup', reason: path);
+        expect(roleRedirect(account, path), isNull, reason: path);
+        expect(roleRedirect(const KidDeviceSession('k'), path), '/train', reason: path);
+      }
+      expect(roleRedirect(guest, '/train'), isNull);
+      expect(roleRedirect(guest, '/parentage'), isNull);
+    });
+  });
+
   group('switch player', () {
     testWidgets('lists the account\'s own profile and children, remembers the choice, and Train as child uses it', (tester) async {
       testProfiles.own = const PlayerProfile(id: 'existing-user', ownerUid: 'existing-user', displayName: 'Pat H.', birthYear: 1985, isChild: false);

@@ -16,6 +16,11 @@ class ActivePlayerId extends Notifier<String?> {
     state = profileId;
     ref.read(sharedPreferencesProvider).setString(_activePlayerKey, profileId);
   }
+
+  void clear() {
+    state = null;
+    ref.read(sharedPreferencesProvider).remove(_activePlayerKey);
+  }
 }
 
 final activePlayerIdProvider = NotifierProvider<ActivePlayerId, String?>(ActivePlayerId.new);

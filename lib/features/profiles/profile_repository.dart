@@ -89,6 +89,11 @@ class ProfileRepository {
     return KidPairing(token: token, profileId: profileId, displayName: name);
   }
 
+  /// Permanently deletes the signed-in account, its profiles (including children) and their data.
+  Future<void> deleteAccount() async {
+    await _run('deleteAccount', {'confirm': true});
+  }
+
   Future<Map<String, dynamic>> _run(String function, Map<String, dynamic> data) async {
     try {
       return await _call(function, data);

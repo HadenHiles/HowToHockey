@@ -14,6 +14,8 @@ void main() {
   testWidgets('Coach shell exposes only coach navigation and disclosed actions at 200% text', (tester) async {
     SharedPreferences.setMockInitialValues({});
     final preferences = await SharedPreferences.getInstance();
+    // Parent and Coach screens need a signed-in account.
+    await testAuth.signInWithEmail(email: 'pat@example.com', password: 'password1');
     final container = ProviderContainer(
       overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
     );
