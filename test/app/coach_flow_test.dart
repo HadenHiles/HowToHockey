@@ -17,7 +17,16 @@ void main() {
     // Parent and Coach screens need a signed-in account.
     await testAuth.signInWithEmail(email: 'pat@example.com', password: 'password1');
     final container = ProviderContainer(
-      overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(preferences),
+        testCatalogOverride,
+        testMediaOverride,
+        testCuesOverride,
+        testRemindersOverride,
+        testAuthOverride,
+        testProfilesOverride,
+        testSessionsOverride,
+      ],
     );
     addTearDown(container.dispose);
     tester.view.physicalSize = const Size(1000, 3000);

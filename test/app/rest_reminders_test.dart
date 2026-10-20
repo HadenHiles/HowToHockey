@@ -18,7 +18,16 @@ Future<ProviderContainer> mount(WidgetTester tester, {Map<String, Object> prefs 
   SharedPreferences.setMockInitialValues(prefs);
   final preferences = await SharedPreferences.getInstance();
   final container = ProviderContainer(
-    overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(preferences),
+      testCatalogOverride,
+      testMediaOverride,
+      testCuesOverride,
+      testRemindersOverride,
+      testAuthOverride,
+      testProfilesOverride,
+      testSessionsOverride,
+    ],
   );
   addTearDown(container.dispose);
   tester.view.physicalSize = const Size(640, 1400);

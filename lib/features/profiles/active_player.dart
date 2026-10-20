@@ -39,7 +39,14 @@ final ownProfileProvider = StreamProvider<PlayerProfile?>((ref) {
 /// Everyone this device may train as: the account's own profile first, then its children.
 /// A kid device only ever has its one profile.
 final switchablePlayersProvider = Provider<List<PlayerProfile>>((ref) {
-  final own = ref.watch(ownProfileProvider).value;
+  final auth = ref.watch(authStateProvider).value;
+  final loaded = ref.watch(ownProfileProvider).value;
+  // While a different account's profile is still loading, the last one shown must not be treated as theirs.
+  final own = switch (auth) {
+    SignedInAccount(:final uid) when loaded?.ownerUid == uid => loaded,
+    KidDeviceSession(:final profileId) when loaded?.id == profileId => loaded,
+    _ => null,
+  };
   final children = ref.watch(authStateProvider).value is KidDeviceSession ? const <PlayerProfile>[] : (ref.watch(childProfilesProvider).value ?? const <PlayerProfile>[]);
   return [?own, ...children];
 });

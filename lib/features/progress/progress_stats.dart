@@ -116,10 +116,14 @@ class WorkoutCredit {
 
 /// A finished workout, reduced to what stats need so this file doesn't depend on the session class.
 class WorkoutRecord {
-  const WorkoutRecord({required this.id, required this.startedAt, required this.drills, required this.logs});
+  const WorkoutRecord({required this.id, required this.startedAt, required this.drills, required this.logs, this.explicitTzOffsetMinutes});
 
   final String id;
   final DateTime startedAt;
+  final int? explicitTzOffsetMinutes;
+
+  /// Minutes east of UTC on the player's phone when they trained, so a day means the same thing everywhere.
+  int get tzOffsetMinutes => explicitTzOffsetMinutes ?? startedAt.toLocal().timeZoneOffset.inMinutes;
   final List<Drill> drills;
   final List<({String drillId, SetLog log})> logs;
 }
@@ -176,10 +180,14 @@ WorkoutCredit creditFor(WorkoutRecord workout, {double daySecondsSoFar = 0}) {
   return WorkoutCredit(seconds: allowed, shots: shots, pillarSeconds: pillarSeconds, bests: bests);
 }
 
-String dayKey(DateTime when) {
-  final local = when.toLocal();
-  return '${local.year.toString().padLeft(4, '0')}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
+/// The calendar day of [when] for someone [tzOffsetMinutes] east of UTC, as `yyyy-MM-dd`.
+String dayKeyAt(DateTime when, int tzOffsetMinutes) {
+  final shifted = when.toUtc().add(Duration(minutes: tzOffsetMinutes));
+  return '${shifted.year.toString().padLeft(4, '0')}-${shifted.month.toString().padLeft(2, '0')}-${shifted.day.toString().padLeft(2, '0')}';
 }
+
+/// The calendar day of [when] on this phone.
+String dayKey(DateTime when) => dayKeyAt(when, when.toLocal().timeZoneOffset.inMinutes);
 
 DateTime _dayFromKey(String key) {
   final parts = key.split('-').map(int.parse).toList();
@@ -217,7 +225,7 @@ class LifetimeStats {
   /// Adds a finished workout. Returns the new stats and the personal bests it set.
   ({LifetimeStats stats, List<PersonalBest> newBests}) add(WorkoutRecord workout) {
     if (counted.contains(workout.id)) return (stats: this, newBests: const []);
-    final key = dayKey(workout.startedAt);
+    final key = dayKeyAt(workout.startedAt, workout.tzOffsetMinutes);
     final credit = creditFor(workout, daySecondsSoFar: days[key]?.seconds ?? 0);
 
     final nextBests = {...bests};
@@ -328,7 +336,8 @@ class LifetimeStats {
         pillarSeconds: pillars,
         bests: bests,
         days: days,
-        counted: {for (final id in json['counted'] as List) '$id'},
+        // Locally saved stats list every counted workout; the cloud copy lists only the latest few.
+        counted: {for (final id in (json['counted'] as List?) ?? (json['recent'] as List?) ?? const []) '$id'},
       );
     } on Object {
       return null;

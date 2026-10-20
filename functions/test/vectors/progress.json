@@ -1,0 +1,4961 @@
+{
+ "drills": {
+  "corner": {
+   "id": "pick-your-corner",
+   "title": "Pick your corner",
+   "tracking": "accuracy",
+   "weights": {
+    "shotAccuracy": 0.8,
+    "shotPower": 0.2
+   },
+   "estimatedSecondsPerSet": 60
+  },
+  "wrist": {
+   "id": "quick-release-wrist-shots",
+   "title": "Quick-release wrist shots",
+   "tracking": "volume",
+   "weights": {
+    "shotPower": 0.8,
+    "shotAccuracy": 0.2
+   },
+   "estimatedSecondsPerSet": 50
+  },
+  "burst": {
+   "id": "shot-burst-30",
+   "title": "30-second shot burst",
+   "tracking": "density",
+   "weights": {
+    "endurance": 0.6,
+    "shotPower": 0.4
+   },
+   "estimatedSecondsPerSet": 30
+  },
+  "quick": {
+   "id": "quiet-hands-quick-feet",
+   "title": "Quiet hands, quick feet",
+   "tracking": "duration",
+   "weights": {
+    "hands": 0.8,
+    "speedStrength": 0.2
+   },
+   "estimatedSecondsPerSet": 30
+  },
+  "bounce": {
+   "id": "ball-bounce-streak",
+   "title": "Bounce and catch streak",
+   "tracking": "streak",
+   "weights": {
+    "hands": 1
+   },
+   "estimatedSecondsPerSet": 45
+  },
+  "stance": {
+   "id": "athletic-stance-reset",
+   "title": "Athletic stance reset",
+   "tracking": "binary",
+   "weights": {
+    "speedStrength": 1
+   },
+   "estimatedSecondsPerSet": 40
+  }
+ },
+ "cases": [
+  {
+   "name": "accuracy 6 of 10",
+   "daySecondsSoFar": 0,
+   "workout": {
+    "id": "a",
+    "startedAtMs": 1792500000000,
+    "tzOffsetMinutes": 0,
+    "sets": [
+     {
+      "drill": "corner",
+      "log": {
+       "reps": 10,
+       "hits": 6,
+       "loggedAtMs": 1792500000000
+      }
+     }
+    ]
+   },
+   "expected": {
+    "seconds": 60.0,
+    "shots": 10,
+    "pillarSeconds": {
+     "shotAccuracy": 48.0,
+     "shotPower": 12.0
+    },
+    "bests": {
+     "accuracy:pick-your-corner": 60.0
+    }
+   }
+  },
+  {
+   "name": "small accuracy set is not a best",
+   "daySecondsSoFar": 0,
+   "workout": {
+    "id": "a",
+    "startedAtMs": 1792500000000,
+    "tzOffsetMinutes": 0,
+    "sets": [
+     {
+      "drill": "corner",
+      "log": {
+       "reps": 4,
+       "hits": 4,
+       "loggedAtMs": 1792500000000
+      }
+     }
+    ]
+   },
+   "expected": {
+    "seconds": 60.0,
+    "shots": 4,
+    "pillarSeconds": {
+     "shotAccuracy": 48.0,
+     "shotPower": 12.0
+    },
+    "bests": {}
+   }
+  },
+  {
+   "name": "density set",
+   "daySecondsSoFar": 0,
+   "workout": {
+    "id": "a",
+    "startedAtMs": 1792500000000,
+    "tzOffsetMinutes": 0,
+    "sets": [
+     {
+      "drill": "burst",
+      "log": {
+       "reps": 20,
+       "seconds": 30,
+       "loggedAtMs": 1792500000000
+      }
+     }
+    ]
+   },
+   "expected": {
+    "seconds": 30.0,
+    "shots": 0,
+    "pillarSeconds": {
+     "endurance": 18.0,
+     "shotPower": 12.0
+    },
+    "bests": {
+     "density:shot-burst-30": 40.0
+    }
+   }
+  },
+  {
+   "name": "too many shots too fast are dropped",
+   "daySecondsSoFar": 0,
+   "workout": {
+    "id": "a",
+    "startedAtMs": 1792500000000,
+    "tzOffsetMinutes": 0,
+    "sets": [
+     {
+      "drill": "corner",
+      "log": {
+       "reps": 10,
+       "hits": 5,
+       "seconds": 1,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "wrist",
+      "log": {
+       "reps": 500,
+       "loggedAtMs": 1792500000000
+      }
+     }
+    ]
+   },
+   "expected": {
+    "seconds": 0.0,
+    "shots": 0,
+    "pillarSeconds": {},
+    "bests": {}
+   }
+  },
+  {
+   "name": "bad seconds dropped",
+   "daySecondsSoFar": 0,
+   "workout": {
+    "id": "a",
+    "startedAtMs": 1792500000000,
+    "tzOffsetMinutes": 0,
+    "sets": [
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 5000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 0,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 20,
+       "loggedAtMs": 1792500000000
+      }
+     }
+    ]
+   },
+   "expected": {
+    "seconds": 20.0,
+    "shots": 0,
+    "pillarSeconds": {
+     "hands": 16.0,
+     "speedStrength": 4.0
+    },
+    "bests": {
+     "seconds:quiet-hands-quick-feet": 20.0
+    }
+   }
+  },
+  {
+   "name": "streak and binary and volume and duration",
+   "daySecondsSoFar": 0,
+   "workout": {
+    "id": "a",
+    "startedAtMs": 1792500000000,
+    "tzOffsetMinutes": 0,
+    "sets": [
+     {
+      "drill": "bounce",
+      "log": {
+       "streak": 30,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "bounce",
+      "log": {
+       "streak": 12,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "stance",
+      "log": {
+       "completed": true,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "wrist",
+      "log": {
+       "reps": 15,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 45,
+       "loggedAtMs": 1792500000000
+      }
+     }
+    ]
+   },
+   "expected": {
+    "seconds": 225.0,
+    "shots": 15,
+    "pillarSeconds": {
+     "hands": 126.0,
+     "speedStrength": 49.0,
+     "shotPower": 40.0,
+     "shotAccuracy": 10.0
+    },
+    "bests": {
+     "streak:ball-bounce-streak": 30.0,
+     "reps:quick-release-wrist-shots": 15.0,
+     "seconds:quiet-hands-quick-feet": 45.0
+    }
+   }
+  },
+  {
+   "name": "session cap",
+   "daySecondsSoFar": 0,
+   "workout": {
+    "id": "a",
+    "startedAtMs": 1792500000000,
+    "tzOffsetMinutes": 0,
+    "sets": [
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     }
+    ]
+   },
+   "expected": {
+    "seconds": 10800.0,
+    "shots": 0,
+    "pillarSeconds": {
+     "hands": 8640.0,
+     "speedStrength": 2160.0
+    },
+    "bests": {
+     "seconds:quiet-hands-quick-feet": 3000.0
+    }
+   }
+  },
+  {
+   "name": "day cap already mostly used",
+   "daySecondsSoFar": 14000,
+   "workout": {
+    "id": "a",
+    "startedAtMs": 1792500000000,
+    "tzOffsetMinutes": 0,
+    "sets": [
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 3000,
+       "loggedAtMs": 1792500000000
+      }
+     }
+    ]
+   },
+   "expected": {
+    "seconds": 400.0,
+    "shots": 0,
+    "pillarSeconds": {
+     "hands": 320.0,
+     "speedStrength": 80.0
+    },
+    "bests": {
+     "seconds:quiet-hands-quick-feet": 3000.0
+    }
+   }
+  },
+  {
+   "name": "best of several accuracy sets",
+   "daySecondsSoFar": 0,
+   "workout": {
+    "id": "a",
+    "startedAtMs": 1792500000000,
+    "tzOffsetMinutes": 0,
+    "sets": [
+     {
+      "drill": "corner",
+      "log": {
+       "reps": 10,
+       "hits": 6,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "corner",
+      "log": {
+       "reps": 10,
+       "hits": 8,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "corner",
+      "log": {
+       "reps": 20,
+       "hits": 15,
+       "loggedAtMs": 1792500000000
+      }
+     }
+    ]
+   },
+   "expected": {
+    "seconds": 180.0,
+    "shots": 40,
+    "pillarSeconds": {
+     "shotAccuracy": 144.0,
+     "shotPower": 36.0
+    },
+    "bests": {
+     "accuracy:pick-your-corner": 80.0
+    }
+   }
+  },
+  {
+   "name": "missing drill values are ignored",
+   "daySecondsSoFar": 0,
+   "workout": {
+    "id": "a",
+    "startedAtMs": 1792500000000,
+    "tzOffsetMinutes": 0,
+    "sets": [
+     {
+      "drill": "bounce",
+      "log": {
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "wrist",
+      "log": {
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "corner",
+      "log": {
+       "reps": 10,
+       "loggedAtMs": 1792500000000
+      }
+     }
+    ]
+   },
+   "expected": {
+    "seconds": 155.0,
+    "shots": 10,
+    "pillarSeconds": {
+     "hands": 45.0,
+     "shotPower": 52.0,
+     "shotAccuracy": 58.0
+    },
+    "bests": {}
+   }
+  }
+ ],
+ "sequences": [
+  {
+   "name": "three days with improving bests",
+   "workouts": [
+    {
+     "id": "w1",
+     "startedAtMs": 1792500000000,
+     "tzOffsetMinutes": 0,
+     "sets": [
+      {
+       "drill": "corner",
+       "log": {
+        "reps": 10,
+        "hits": 5,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "bounce",
+       "log": {
+        "streak": 10,
+        "loggedAtMs": 1792500000000
+       }
+      }
+     ]
+    },
+    {
+     "id": "w2",
+     "startedAtMs": 1792586400000,
+     "tzOffsetMinutes": 0,
+     "sets": [
+      {
+       "drill": "corner",
+       "log": {
+        "reps": 10,
+        "hits": 5,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "bounce",
+       "log": {
+        "streak": 20,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "wrist",
+       "log": {
+        "reps": 12,
+        "loggedAtMs": 1792500000000
+       }
+      }
+     ]
+    },
+    {
+     "id": "w3",
+     "startedAtMs": 1792672800000,
+     "tzOffsetMinutes": 0,
+     "sets": [
+      {
+       "drill": "corner",
+       "log": {
+        "reps": 10,
+        "hits": 9,
+        "loggedAtMs": 1792672800000
+       }
+      },
+      {
+       "drill": "bounce",
+       "log": {
+        "streak": 20,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "burst",
+       "log": {
+        "reps": 15,
+        "seconds": 30,
+        "loggedAtMs": 1792500000000
+       }
+      }
+     ]
+    }
+   ],
+   "expected": {
+    "workouts": 3,
+    "seconds": 395.0,
+    "shots": 42,
+    "pillarSeconds": {
+     "shotAccuracy": 154.0,
+     "shotPower": 88.0,
+     "hands": 135.0,
+     "endurance": 18.0
+    },
+    "bests": {
+     "accuracy:pick-your-corner": 90.0,
+     "streak:ball-bounce-streak": 20.0,
+     "reps:quick-release-wrist-shots": 12.0,
+     "density:shot-burst-30": 30.0
+    },
+    "days": {
+     "2026-10-20": [
+      105.0,
+      10
+     ],
+     "2026-10-21": [
+      155.0,
+      22
+     ],
+     "2026-10-22": [
+      135.0,
+      10
+     ]
+    },
+    "newBestKeys": [
+     [
+      "accuracy:pick-your-corner",
+      "streak:ball-bounce-streak"
+     ],
+     [
+      "reps:quick-release-wrist-shots",
+      "streak:ball-bounce-streak"
+     ],
+     [
+      "accuracy:pick-your-corner",
+      "density:shot-burst-30"
+     ]
+    ]
+   }
+  },
+  {
+   "name": "a phone west of UTC keeps its own days",
+   "workouts": [
+    {
+     "id": "w1",
+     "startedAtMs": 1792548000000,
+     "tzOffsetMinutes": -300,
+     "sets": [
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 30,
+        "loggedAtMs": 1792500000000
+       }
+      }
+     ]
+    },
+    {
+     "id": "w2",
+     "startedAtMs": 1792562400000,
+     "tzOffsetMinutes": -300,
+     "sets": [
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 30,
+        "loggedAtMs": 1792500000000
+       }
+      }
+     ]
+    },
+    {
+     "id": "w3",
+     "startedAtMs": 1792656000000,
+     "tzOffsetMinutes": -300,
+     "sets": [
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 30,
+        "loggedAtMs": 1792500000000
+       }
+      }
+     ]
+    }
+   ],
+   "expected": {
+    "workouts": 3,
+    "seconds": 90.0,
+    "shots": 0,
+    "pillarSeconds": {
+     "hands": 72.0,
+     "speedStrength": 18.0
+    },
+    "bests": {
+     "seconds:quiet-hands-quick-feet": 30.0
+    },
+    "days": {
+     "2026-10-20": [
+      30.0,
+      0
+     ],
+     "2026-10-21": [
+      30.0,
+      0
+     ],
+     "2026-10-22": [
+      30.0,
+      0
+     ]
+    },
+    "newBestKeys": [
+     [
+      "seconds:quiet-hands-quick-feet"
+     ],
+     [],
+     []
+    ]
+   }
+  },
+  {
+   "name": "daily cap across workouts",
+   "workouts": [
+    {
+     "id": "w0",
+     "startedAtMs": 1792500000000,
+     "tzOffsetMinutes": 0,
+     "sets": [
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      }
+     ]
+    },
+    {
+     "id": "w1",
+     "startedAtMs": 1792500060000,
+     "tzOffsetMinutes": 0,
+     "sets": [
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      }
+     ]
+    },
+    {
+     "id": "w2",
+     "startedAtMs": 1792500120000,
+     "tzOffsetMinutes": 0,
+     "sets": [
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      }
+     ]
+    },
+    {
+     "id": "w3",
+     "startedAtMs": 1792500180000,
+     "tzOffsetMinutes": 0,
+     "sets": [
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      },
+      {
+       "drill": "quick",
+       "log": {
+        "seconds": 3500,
+        "loggedAtMs": 1792500000000
+       }
+      }
+     ]
+    }
+   ],
+   "expected": {
+    "workouts": 4,
+    "seconds": 14400.0,
+    "shots": 0,
+    "pillarSeconds": {
+     "hands": 11520.0,
+     "speedStrength": 2880.0
+    },
+    "bests": {
+     "seconds:quiet-hands-quick-feet": 3500.0
+    },
+    "days": {
+     "2026-10-20": [
+      14400.0,
+      0
+     ]
+    },
+    "newBestKeys": [
+     [
+      "seconds:quiet-hands-quick-feet"
+     ],
+     [],
+     [],
+     []
+    ]
+   }
+  }
+ ]
+}

@@ -25,6 +25,7 @@ Future<(ProviderContainer, SharedPreferences)> mount(WidgetTester tester, {Map<S
       testRemindersOverride,
       testAuthOverride,
       testProfilesOverride,
+      testSessionsOverride,
     ],
   );
   addTearDown(container.dispose);

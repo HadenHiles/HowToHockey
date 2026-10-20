@@ -14,7 +14,16 @@ Future<ProviderContainer> mount(WidgetTester tester, {double scale = 1}) async {
   SharedPreferences.setMockInitialValues({});
   final preferences = await SharedPreferences.getInstance();
   final container = ProviderContainer(
-    overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(preferences),
+      testCatalogOverride,
+      testMediaOverride,
+      testCuesOverride,
+      testRemindersOverride,
+      testAuthOverride,
+      testProfilesOverride,
+      testSessionsOverride,
+    ],
   );
   addTearDown(container.dispose);
   tester.view.physicalSize = const Size(1000, 3000);
@@ -77,6 +86,7 @@ void main() {
   });
 
   testWidgets('Me role switcher opens the Parent shell with only Parent navigation', (tester) async {
+    await signedInWithKids();
     final container = await mount(tester);
     container.read(appRouterProvider).go('/me');
     await tester.pumpAndSettle();

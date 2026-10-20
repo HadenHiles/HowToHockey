@@ -60,7 +60,16 @@ void main() {
         ..clear()
         ..add(const PlayerProfile(id: 'child-1', ownerUid: 'u', displayName: 'Avery H.', birthYear: 2015, isChild: true));
       final container = ProviderContainer(
-        overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(preferences),
+          testCatalogOverride,
+          testMediaOverride,
+          testCuesOverride,
+          testRemindersOverride,
+          testAuthOverride,
+          testProfilesOverride,
+          testSessionsOverride,
+        ],
       );
       addTearDown(container.dispose);
       tester.view.physicalSize = const Size(640, 1136);

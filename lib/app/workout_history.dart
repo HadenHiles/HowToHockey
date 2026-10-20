@@ -8,6 +8,7 @@ import '../features/drills/models/drill.dart';
 import '../features/settings/appearance_settings_controller.dart';
 import 'progress_state.dart';
 import 'sample_data.dart';
+import 'workout_sync.dart';
 import 'training_state.dart';
 
 /// Shots logged in a workout: reps from the shooting skills (accuracy and power).
@@ -94,6 +95,7 @@ class WorkoutHistory extends Notifier<List<TrainingSession>> {
     final next = [session, ...state.where((existing) => workoutId(existing) != id)].take(maxWorkouts).toList();
     state = List.unmodifiable(next);
     ref.read(lifetimeStatsProvider.notifier).record(session);
+    ref.read(workoutSyncProvider.notifier).enqueue(session);
     final write = ref.read(sharedPreferencesProvider).setString(storageKey, jsonEncode([for (final workout in next) workout.toJson()]));
     unawaited(
       write.then((saved) {

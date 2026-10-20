@@ -43,6 +43,7 @@ Future<ProviderContainer> mount(WidgetTester tester, {Map<String, Object> saved 
       testRemindersOverride,
       testAuthOverride,
       testProfilesOverride,
+      testSessionsOverride,
       if (pro) drillFiltersUnlockedProvider.overrideWithValue(true),
     ],
   );

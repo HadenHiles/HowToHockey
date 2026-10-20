@@ -16,6 +16,7 @@ import 'app_page.dart';
 import 'session_pages.dart';
 import 'training_pages.dart';
 import 'training_state.dart';
+import 'workout_sync.dart';
 
 const _kidDeviceBlocked = ['/parent', '/coach', '/signup', '/signin', '/welcome', '/pair', '/onboarding', '/paywall'];
 
@@ -208,14 +209,18 @@ class HockeyApp extends ConsumerWidget {
   const HockeyApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) => MaterialApp.router(
-    title: 'How To Hockey',
-    debugShowCheckedModeBanner: false,
-    theme: HockeyTheme.light,
-    darkTheme: HockeyTheme.dark,
-    themeMode: ref.watch(appearanceProvider).themeMode,
-    routerConfig: ref.watch(appRouterProvider),
-  );
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Keeps finished workouts flowing to the player's account for as long as the app is open.
+    ref.listen(workoutSyncProvider, (_, _) {});
+    return MaterialApp.router(
+      title: 'How To Hockey',
+      debugShowCheckedModeBanner: false,
+      theme: HockeyTheme.light,
+      darkTheme: HockeyTheme.dark,
+      themeMode: ref.watch(appearanceProvider).themeMode,
+      routerConfig: ref.watch(appRouterProvider),
+    );
+  }
 }
 
 class _PlayerShell extends ConsumerWidget {

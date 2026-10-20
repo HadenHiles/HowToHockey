@@ -65,6 +65,7 @@ void main() {
         testRemindersOverride,
         testAuthOverride,
         testProfilesOverride,
+        testSessionsOverride,
         drillFiltersUnlockedProvider.overrideWithValue(pro),
       ],
     );

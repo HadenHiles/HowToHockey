@@ -11,7 +11,9 @@ import 'package:how_to_hockey/features/accounts/auth_service.dart';
 import 'package:how_to_hockey/features/profiles/display_name.dart';
 import 'package:how_to_hockey/features/profiles/player_profile.dart';
 import 'package:how_to_hockey/features/profiles/profile_repository.dart';
+import 'package:how_to_hockey/features/progress/progress_stats.dart';
 import 'package:how_to_hockey/features/session/rest_notifications.dart';
+import 'package:how_to_hockey/features/sessions/session_repository.dart';
 import 'package:how_to_hockey/features/session/session_cues.dart';
 
 /// Widget tests cannot finish real asset I/O under fake time, so they read the
@@ -116,6 +118,11 @@ class FakeAuthService implements AuthService {
     if (failWith != null) throw failWith!;
   }
 
+  /// Changes who is signed in without recording a call, for setting a test up.
+  void signOutSilently(AuthState state) => _set(state);
+
+  void signInSilently(AuthState state) => _set(state);
+
   @override
   Future<void> signInWithKidToken(String token) async {
     calls.add('kid:$token');
@@ -196,3 +203,33 @@ final testAuth = FakeAuthService();
 final testProfiles = FakeProfileRepository();
 final testAuthOverride = authServiceProvider.overrideWithValue(testAuth);
 final testProfilesOverride = profileRepositoryProvider.overrideWithValue(testProfiles);
+
+/// Keeps widget tests off Firestore: uploads are recorded, and stats come from whatever a test puts in [stats].
+class FakeSessionRepository extends SessionRepository {
+  final uploads = <(String, String)>[];
+  final stats = <String, LifetimeStats>{};
+  final _changes = StreamController<String>.broadcast();
+  Object? failWith;
+
+  void setStats(String profileId, LifetimeStats value) {
+    stats[profileId] = value;
+    _changes.add(profileId);
+  }
+
+  @override
+  Future<void> upload(String profileId, SessionUpload upload) async {
+    if (failWith != null) throw failWith!;
+    uploads.add((profileId, upload.record.id));
+  }
+
+  @override
+  Stream<LifetimeStats?> watchStats(String profileId) async* {
+    yield stats[profileId];
+    await for (final changed in _changes.stream) {
+      if (changed == profileId) yield stats[profileId];
+    }
+  }
+}
+
+final testSessions = FakeSessionRepository();
+final testSessionsOverride = sessionRepositoryProvider.overrideWithValue(testSessions);

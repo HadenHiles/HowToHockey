@@ -26,6 +26,7 @@ import 'sample_data.dart';
 import 'workout_history.dart';
 import 'app_page.dart';
 import 'progress_state.dart';
+import 'workout_sync.dart';
 import 'training_state.dart';
 
 class WorkoutSessionPanel extends ConsumerStatefulWidget {
@@ -1051,7 +1052,7 @@ class _CountDialogState extends State<_CountDialog> {
 }
 
 List<Widget> _personalBests(BuildContext context, WidgetRef ref, TrainingSession session, bool saved) {
-  final bests = bestsSetBy(ref.watch(lifetimeStatsProvider), session);
+  final bests = bestsSetBy(ref.watch(progressStatsProvider), session);
   if (bests.isEmpty) return const [];
   final theme = Theme.of(context);
   return [

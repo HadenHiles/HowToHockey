@@ -16,7 +16,16 @@ Future<ProviderContainer> mountApp(WidgetTester tester, {String appearance = 'li
   SharedPreferences.setMockInitialValues({'appearance': appearance});
   final preferences = await SharedPreferences.getInstance();
   final container = ProviderContainer(
-    overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(preferences),
+      testCatalogOverride,
+      testMediaOverride,
+      testCuesOverride,
+      testRemindersOverride,
+      testAuthOverride,
+      testProfilesOverride,
+      testSessionsOverride,
+    ],
   );
   addTearDown(container.dispose);
   await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));

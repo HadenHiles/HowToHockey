@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { after, before, beforeEach, describe, it } from 'node:test';
 
 import { assertFails, assertSucceeds, initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
+import { Timestamp, collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
 
 const projectId = 'demo-how-to-hockey';
 
@@ -45,6 +45,9 @@ describe('account and profile rules', () => {
       }
     });
   });
+
+  const finishedSession = (extra = {}) => ({ status: 'completed', startedAt: Timestamp.now(), endedAt: Timestamp.now(), tzOffsetMinutes: -240, ...extra });
+  const sessionDrill = (extra = {}) => ({ drillId: 'pick-your-corner', sets: [{ reps: 10, hits: 6, loggedAt: Timestamp.now() }], ...extra });
 
   const parent = () => environment.authenticatedContext('parent', { firebase: { sign_in_provider: 'password' } }).firestore();
   const stranger = () => environment.authenticatedContext('stranger', { firebase: { sign_in_provider: 'password' } }).firestore();
@@ -116,6 +119,15 @@ describe('account and profile rules', () => {
       await assertFails(getDoc(doc(kidDevice('kid-a'), 'pairingCodes/anything')));
     });
 
+    it('lets an account watch its own profile before it exists, but nobody else\'s', async () => {
+      await assertSucceeds(getDoc(doc(parent(), 'profiles/parent')));
+      await assertSucceeds(getDoc(doc(stranger(), 'profiles/stranger')));
+      await assertFails(getDoc(doc(parent(), 'profiles/someone-new')));
+      await assertFails(getDoc(doc(stranger(), 'profiles/parent')));
+      await assertFails(getDoc(doc(kidDevice('kid-a'), 'profiles/parent')));
+      await assertFails(getDoc(doc(anonymous(), 'profiles/stranger')));
+    });
+
     it('lets a parent list their own children, and nobody else\'s', async () => {
       const own = (db, uid) => query(collection(db, 'profiles'), where('ownerUid', '==', uid), where('isChild', '==', true));
       await assertSucceeds(getDocs(own(parent(), 'parent')));
@@ -139,15 +151,50 @@ describe('account and profile rules', () => {
       }
     });
 
-    it('lets the owner save sessions and presets, but not the totals Functions compute', async () => {
+    it('lets the owner save a finished workout and presets, but not the totals Functions compute', async () => {
       const p = paths('kid-a');
-      await assertSucceeds(setDoc(doc(parent(), 'profiles/kid-a/sessions/s2'), { status: 'finished' }));
-      await assertSucceeds(updateDoc(doc(parent(), p.session), { status: 'finished', activeSeconds: 100 }));
-      await assertSucceeds(setDoc(doc(parent(), 'profiles/kid-a/sessions/s2/drills/0'), { drillId: 'x' }));
+      await assertSucceeds(setDoc(doc(parent(), 'profiles/kid-a/sessions/s2'), finishedSession({ routineName: 'Garage', drillCount: 1, activeSeconds: 600 })));
+      await assertSucceeds(setDoc(doc(parent(), 'profiles/kid-a/sessions/s2/drills/0'), sessionDrill({ title: 'Pick your corner', estimatedSecondsPerSet: 60, trackingType: 'accuracy', skillWeights: { shotAccuracy: 1 } })));
       await assertSucceeds(setDoc(doc(parent(), 'profiles/kid-a/focusPresets/p2'), { name: 'Rink' }));
       await assertFails(setDoc(doc(parent(), p.stats), { totalShots: 999999 }));
       await assertFails(updateDoc(doc(parent(), p.pr), { value: 100 }));
       await assertFails(deleteDoc(doc(parent(), p.session)));
+    });
+
+    it('keeps workouts write-once: no edits, no deleting, no awarding yourself credit', async () => {
+      await assertSucceeds(setDoc(doc(parent(), 'profiles/kid-a/sessions/s2'), finishedSession()));
+      await assertFails(setDoc(doc(parent(), 'profiles/kid-a/sessions/s2'), finishedSession({ activeSeconds: 5 })));
+      await assertFails(updateDoc(doc(parent(), 'profiles/kid-a/sessions/s2'), { activeSeconds: 5 }));
+      await assertFails(deleteDoc(doc(parent(), 'profiles/kid-a/sessions/s2')));
+      await assertFails(setDoc(doc(parent(), 'profiles/kid-a/sessions/s3'), finishedSession({ processedAt: Timestamp.now() })));
+      await assertFails(setDoc(doc(parent(), 'profiles/kid-a/sessions/s3'), finishedSession({ credit: { seconds: 99999, shots: 99999 } })));
+      await assertFails(setDoc(doc(parent(), 'profiles/kid-a/sessions/s3'), finishedSession({ rejected: 'no' })));
+      await assertFails(updateDoc(doc(parent(), 'profiles/kid-a/sessions/s1/drills/0'), { drillId: 'y' }));
+    });
+
+    it('checks the shape of a workout before it is stored', async () => {
+      const bad = [
+        finishedSession({ status: 'active' }),
+        finishedSession({ startedAt: 'yesterday' }),
+        finishedSession({ tzOffsetMinutes: 5000 }),
+        finishedSession({ tzOffsetMinutes: '300' }),
+        finishedSession({ drillCount: 500 }),
+        finishedSession({ routineName: 'x'.repeat(200) }),
+        finishedSession({ surprise: true }),
+      ];
+      for (const [i, data] of bad.entries()) await assertFails(setDoc(doc(parent(), `profiles/kid-a/sessions/bad${i}`), data));
+      const { status, ...missing } = finishedSession();
+      await assertFails(setDoc(doc(parent(), 'profiles/kid-a/sessions/bad-missing'), missing));
+
+      const badDrills = [
+        sessionDrill({ sets: 'many' }),
+        sessionDrill({ drillId: '' }),
+        sessionDrill({ sets: Array.from({ length: 101 }, () => ({ reps: 1 })) }),
+        sessionDrill({ estimatedSecondsPerSet: 99999 }),
+        sessionDrill({ extra: 1 }),
+      ];
+      for (const [i, data] of badDrills.entries()) await assertFails(setDoc(doc(parent(), `profiles/kid-a/sessions/s1/drills/${i + 1}`), data));
+      await assertFails(setDoc(doc(parent(), 'profiles/kid-a/sessions/s1/drills/abc'), sessionDrill()));
     });
 
     it('blocks everyone else from another profile\'s data', async () => {
@@ -156,7 +203,7 @@ describe('account and profile rules', () => {
         await assertFails(getDoc(doc(signedOut(), path)));
         await assertFails(getDoc(doc(anonymous(), path)));
       }
-      await assertFails(setDoc(doc(stranger(), 'profiles/kid-a/sessions/evil'), { status: 'finished' }));
+      await assertFails(setDoc(doc(stranger(), 'profiles/kid-a/sessions/evil'), finishedSession()));
     });
 
     it('locks a kid device to its own profile\'s data, including siblings', async () => {
@@ -164,11 +211,11 @@ describe('account and profile rules', () => {
       for (const path of Object.values(paths('kid-a'))) {
         await assertSucceeds(getDoc(doc(kid, path)));
       }
-      await assertSucceeds(setDoc(doc(kid, 'profiles/kid-a/sessions/s2'), { status: 'finished' }));
+      await assertSucceeds(setDoc(doc(kid, 'profiles/kid-a/sessions/s2'), finishedSession()));
       for (const path of Object.values(paths('kid-b'))) {
         await assertFails(getDoc(doc(kid, path)));
       }
-      await assertFails(setDoc(doc(kid, 'profiles/kid-b/sessions/evil'), { status: 'finished' }));
+      await assertFails(setDoc(doc(kid, 'profiles/kid-b/sessions/evil'), finishedSession()));
       await assertFails(setDoc(doc(kid, 'profiles/kid-a/stats/lifetime'), { totalShots: 999999 }));
     });
 

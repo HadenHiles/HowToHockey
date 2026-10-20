@@ -20,6 +20,27 @@ service cloud.firestore {
       return isKidDevice() ? request.auth.token.profileId == profileId : ownsProfile(profileId);
     }
 
+    function validSession(data) {
+      return data.keys().hasOnly(['status', 'startedAt', 'endedAt', 'tzOffsetMinutes', 'routineName', 'setup', 'focus', 'drillCount', 'activeSeconds'])
+        && data.keys().hasAll(['status', 'startedAt', 'endedAt', 'tzOffsetMinutes'])
+        && data.status == 'completed'
+        && data.startedAt is timestamp
+        && data.endedAt is timestamp
+        && data.tzOffsetMinutes is int && data.tzOffsetMinutes >= -840 && data.tzOffsetMinutes <= 840
+        && (!('drillCount' in data) || (data.drillCount is int && data.drillCount >= 0 && data.drillCount <= 50))
+        && (!('activeSeconds' in data) || (data.activeSeconds is int && data.activeSeconds >= 0 && data.activeSeconds <= 86400))
+        && (!('routineName' in data) || (data.routineName is string && data.routineName.size() <= 80));
+    }
+
+    function validSessionDrill(data) {
+      return data.keys().hasOnly(['drillId', 'title', 'trackingType', 'skillWeights', 'estimatedSecondsPerSet', 'sets'])
+        && data.keys().hasAll(['drillId', 'sets'])
+        && data.drillId is string && data.drillId.size() > 0 && data.drillId.size() < 100
+        && data.sets is list && data.sets.size() <= 100
+        && (!('title' in data) || (data.title is string && data.title.size() <= 80))
+        && (!('estimatedSecondsPerSet' in data) || (data.estimatedSecondsPerSet is int && data.estimatedSecondsPerSet >= 1 && data.estimatedSecondsPerSet <= 600));
+    }
+
     // Account documents (roles, entitlements) are written only by Cloud Functions.
     match /users/{uid} {
       allow read: if signedIn() && !isKidDevice() && request.auth.uid == uid;
@@ -29,16 +50,24 @@ service cloud.firestore {
     // Profiles are created and edited only through Cloud Functions, which validate names and enforce
     // the child-profile cap. Clients can read the profiles they own, or the one their kid device is locked to.
     match /profiles/{profileId} {
-      allow read: if signedIn() && (isKidDevice() ? request.auth.token.profileId == profileId : resource.data.ownerUid == request.auth.uid);
+      // An account's own profile has the account's ID. It may be read before it exists, so a screen that starts
+      // watching it right after sign-up isn't cut off while the profile is still being created.
+      allow read: if signedIn() && (isKidDevice()
+        ? request.auth.token.profileId == profileId
+        : (resource == null ? request.auth.uid == profileId : resource.data.ownerUid == request.auth.uid));
       allow write: if false;
 
+      // A finished workout is written once, and never edited. The Cloud Function that credits it adds
+      // `processedAt` and `credit` itself; clients can't set those, so they can't award themselves anything.
       match /sessions/{sessionId} {
-        allow read, create, update: if canActAs(profileId);
-        allow delete: if false;
+        allow read: if canActAs(profileId);
+        allow create: if canActAs(profileId) && validSession(request.resource.data);
+        allow update, delete: if false;
 
         match /drills/{index} {
-          allow read, create, update: if canActAs(profileId);
-          allow delete: if false;
+          allow read: if canActAs(profileId);
+          allow create: if canActAs(profileId) && index.matches('[0-9]{1,2}') && validSessionDrill(request.resource.data);
+          allow update, delete: if false;
         }
       }
 

@@ -16,7 +16,7 @@ import 'workout_history.dart';
 const weeklyGoalMinutes = 120;
 
 extension WorkoutRecordOfSession on TrainingSession {
-  WorkoutRecord toRecord() => WorkoutRecord(id: workoutId(this), startedAt: startedAt!, drills: drills, logs: logs);
+  WorkoutRecord toRecord() => WorkoutRecord(id: workoutId(this), startedAt: startedAt!, drills: drills, logs: logs, explicitTzOffsetMinutes: startedAt!.toLocal().timeZoneOffset.inMinutes);
 }
 
 /// Lifetime totals, skill levels, personal bests and streaks, kept on this device and updated the moment a

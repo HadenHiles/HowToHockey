@@ -25,6 +25,7 @@ import 'account_pages.dart';
 import '../features/progress/progress_stats.dart';
 import 'coach_state.dart';
 import 'progress_state.dart';
+import 'workout_sync.dart';
 import 'training_state.dart';
 import 'workout_history.dart';
 
@@ -126,7 +127,7 @@ class ProgressPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final history = ref.watch(workoutHistoryProvider);
-    final stats = ref.watch(lifetimeStatsProvider);
+    final stats = ref.watch(progressStatsProvider);
     final pro = ref.watch(playerProProvider);
     final now = clock.now();
     final theme = Theme.of(context);
@@ -1260,7 +1261,7 @@ class _PersonalBests extends ConsumerWidget {
 }
 
 void _showSkill(BuildContext context, WidgetRef ref, SkillPillar pillar) {
-  final level = ref.read(lifetimeStatsProvider).levelOf(pillar);
+  final level = ref.read(progressStatsProvider).levelOf(pillar);
   final top = topDrillsFor(pillar, ref.read(workoutHistoryProvider));
   final nextHours = level.level >= maxLevel ? null : (secondsForLevel(level.level + 1) - level.seconds) / 3600;
   showModalBottomSheet<void>(
@@ -1311,7 +1312,7 @@ class _WeekCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final stats = ref.watch(lifetimeStatsProvider);
+    final stats = ref.watch(progressStatsProvider);
     final now = clock.now();
     final minutes = (stats.weekSeconds(now) / 60).round();
     final streak = stats.currentStreak(now);

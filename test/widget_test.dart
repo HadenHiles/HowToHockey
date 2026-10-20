@@ -17,7 +17,16 @@ void main() {
   testWidgets('appearance setting switches and persists the app theme', (WidgetTester tester) async {
     final preferences = await SharedPreferences.getInstance();
     final container = ProviderContainer(
-      overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(preferences),
+        testCatalogOverride,
+        testMediaOverride,
+        testCuesOverride,
+        testRemindersOverride,
+        testAuthOverride,
+        testProfilesOverride,
+        testSessionsOverride,
+      ],
     );
     addTearDown(container.dispose);
     await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));
@@ -53,7 +62,16 @@ void main() {
 
     final preferences = await SharedPreferences.getInstance();
     final container = ProviderContainer(
-      overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(preferences),
+        testCatalogOverride,
+        testMediaOverride,
+        testCuesOverride,
+        testRemindersOverride,
+        testAuthOverride,
+        testProfilesOverride,
+        testSessionsOverride,
+      ],
     );
     addTearDown(container.dispose);
     await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));
@@ -80,7 +98,16 @@ void main() {
   testWidgets('progress shows the skill map, personal bests, totals and share-card preview', (WidgetTester tester) async {
     final preferences = await SharedPreferences.getInstance();
     final container = ProviderContainer(
-      overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(preferences),
+        testCatalogOverride,
+        testMediaOverride,
+        testCuesOverride,
+        testRemindersOverride,
+        testAuthOverride,
+        testProfilesOverride,
+        testSessionsOverride,
+      ],
     );
     addTearDown(container.dispose);
     await tester.pumpWidget(UncontrolledProviderScope(container: container, child: const MyApp()));
@@ -107,7 +134,16 @@ void main() {
     SharedPreferences.setMockInitialValues({'appearance': 'light'});
     final preferences = await SharedPreferences.getInstance();
     final container = ProviderContainer(
-      overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(preferences),
+        testCatalogOverride,
+        testMediaOverride,
+        testCuesOverride,
+        testRemindersOverride,
+        testAuthOverride,
+        testProfilesOverride,
+        testSessionsOverride,
+      ],
     );
     addTearDown(container.dispose);
 
@@ -119,7 +155,16 @@ void main() {
     SharedPreferences.setMockInitialValues({'appearance': 'sepia'});
     final preferences = await SharedPreferences.getInstance();
     final container = ProviderContainer(
-      overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testMediaOverride, testCuesOverride, testRemindersOverride, testAuthOverride, testProfilesOverride],
+      overrides: [
+        sharedPreferencesProvider.overrideWithValue(preferences),
+        testCatalogOverride,
+        testMediaOverride,
+        testCuesOverride,
+        testRemindersOverride,
+        testAuthOverride,
+        testProfilesOverride,
+        testSessionsOverride,
+      ],
     );
     addTearDown(container.dispose);
 
