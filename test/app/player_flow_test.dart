@@ -394,9 +394,9 @@ void main() {
     container.read(trainingSessionProvider.notifier).start([drill]);
     container.read(appRouterProvider).go('/session');
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('0'));
+    await tester.ensureVisible(find.text('0').last);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('0'));
+    await tester.tap(find.text('0').last);
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextFormField), '11');
     await tester.tap(find.text('Apply'));

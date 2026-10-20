@@ -186,12 +186,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('No workouts yet. Finish one and it shows up here.'), findsNothing);
-      expect(find.text(shooting.title), findsOneWidget);
+      expect(find.text(shooting.title), findsWidgets);
       expect(find.text('workout'), findsOneWidget);
       expect(find.text('24'), findsWidgets);
-      await tester.ensureVisible(find.text(shooting.title));
+      await tester.ensureVisible(find.text(shooting.title).last);
       await tester.pumpAndSettle();
-      await tester.tap(find.text(shooting.title));
+      await tester.tap(find.text(shooting.title).last);
       await tester.pumpAndSettle();
       expect(find.text('Workout summary'), findsWidgets);
       expect(find.textContaining('Today · ${shooting.title}'), findsOneWidget);

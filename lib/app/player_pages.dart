@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show ImageFilter;
 
 import 'package:clock/clock.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +22,9 @@ import '../features/settings/appearance_settings_controller.dart';
 import 'sample_data.dart';
 import 'app_page.dart';
 import 'account_pages.dart';
+import '../features/progress/progress_stats.dart';
 import 'coach_state.dart';
+import 'progress_state.dart';
 import 'training_state.dart';
 import 'workout_history.dart';
 
@@ -54,26 +57,7 @@ class TrainPage extends ConsumerWidget {
         const SizedBox(height: AppSpacing.sm),
         OutlinedButton.icon(onPressed: () => context.push('/routines'), icon: const Icon(Icons.view_list_outlined), label: const Text('Manage routines')),
         const SizedBox(height: AppSpacing.xl),
-        TrainingCard(
-          child: Wrap(
-            spacing: AppSpacing.xl,
-            runSpacing: AppSpacing.md,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              const TrainingProgressRing(progress: .6, value: '72', label: 'of 120 min this week'),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.local_fire_department_outlined, color: theme.colorScheme.primary),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text('5-day streak', style: theme.textTheme.titleLarge),
-                  const SizedBox(height: AppSpacing.xs),
-                  const Text('Keep grinding.'),
-                ],
-              ),
-            ],
-          ),
-        ),
+        const _WeekCard(),
         const SizedBox(height: AppSpacing.xl),
         SectionHeading(title: 'Explore drills', action: 'See all', onAction: () => context.push('/library')),
         const SizedBox(height: AppSpacing.md),
@@ -142,12 +126,24 @@ class ProgressPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final history = ref.watch(workoutHistoryProvider);
-    final totals = totalsFor(history, clock.now());
+    final stats = ref.watch(lifetimeStatsProvider);
+    final pro = ref.watch(playerProProvider);
+    final now = clock.now();
     final theme = Theme.of(context);
     final pillars = theme.extension<PillarColors>()!;
+    final week = stats.lastSevenDays(now);
+    final busiest = week.fold(0.0, (most, day) => day.stats.seconds > most ? day.stats.seconds : most);
+    const weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final streak = stats.currentStreak(now);
+    final focus = ref.watch(trainingFocusProvider);
+    final scores = radarScores(stats);
+    final topScore = scores.fold(0, (most, score) => score > most ? score : most);
+    final focusTop = focus.values.fold(1, (most, points) => points > most ? points : most);
+    final plan = [for (final pillar in SkillPillar.values) ((focus[pillar] ?? 0) / focusTop * (topScore < 20 ? 60 : topScore)).round()];
+    final strongest = topScore == 0 ? null : SkillPillar.values[scores.indexOf(topScore)];
     return AppPage(
       title: 'Progress',
-      subtitle: 'Your work is adding up.',
+      subtitle: history.isEmpty && stats.workouts == 0 ? 'Finish a workout and your progress starts here.' : 'Your work is adding up.',
       children: [
         ArenaPanel(
           child: Builder(
@@ -156,14 +152,18 @@ class ProgressPage extends ConsumerWidget {
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('THIS SEASON', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary, letterSpacing: 1.2)),
+                  Text('ALL TIME', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary, letterSpacing: 1.2)),
                   const SizedBox(height: AppSpacing.sm),
-                  Text('2,480', style: theme.textTheme.displayMedium),
-                  Text('SHOTS ON GOAL', style: theme.textTheme.labelMedium),
+                  Text(_grouped(stats.shots), style: theme.textTheme.displayMedium),
+                  Text('SHOTS LOGGED', style: theme.textTheme.labelMedium),
                   const SizedBox(height: AppSpacing.xl),
-                  const WeeklyTrainingChart(),
+                  WeeklyTrainingChart(
+                    values: [for (final day in week) busiest == 0 ? 0.0 : day.stats.seconds / busiest],
+                    days: [for (final day in week) weekdays[day.day.weekday - 1]],
+                    semanticLabel: 'Training this week. ${[for (final day in week) '${workoutDateLabel(day.day, now)} ${(day.stats.seconds / 60).round()} minutes'].join(', ')}.',
+                  ),
                   const SizedBox(height: AppSpacing.md),
-                  Text('140 shots this week  ·  18.5 hours on ice', style: theme.textTheme.bodySmall),
+                  Text('${stats.weekShots(now)} shots this week  ·  ${_duration(stats.weekSeconds(now))} active', style: theme.textTheme.bodySmall),
                 ],
               );
             },
@@ -172,47 +172,65 @@ class ProgressPage extends ConsumerWidget {
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Your skill map'),
         const SizedBox(height: AppSpacing.md),
-        ArenaPanel(
-          child: Builder(
-            builder: (context) {
-              final theme = Theme.of(context);
-              return Column(
-                children: [
-                  const SkillRadar(scores: [82, 68, 74, 57, 65, 61]),
-                  const SizedBox(height: AppSpacing.md),
-                  Text('ACCURACY IS YOUR TOP SKILL', style: theme.textTheme.labelMedium?.copyWith(color: pillars.shotAccuracy, letterSpacing: .6)),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text('One more endurance session rounds out your game.', style: theme.textTheme.bodySmall, textAlign: TextAlign.center),
-                ],
-              );
-            },
+        ProLocked(
+          unlocked: pro,
+          message: 'See how every skill levels up with the time you put in.',
+          child: ArenaPanel(
+            child: Builder(
+              builder: (context) {
+                final theme = Theme.of(context);
+                return Column(
+                  children: [
+                    SkillRadar(scores: scores, plan: plan),
+                    const SizedBox(height: AppSpacing.md),
+                    Text(
+                      strongest == null ? 'YOUR MAP FILLS IN AS YOU TRAIN' : '${strongest.label.toUpperCase()} IS YOUR TOP SKILL',
+                      style: theme.textTheme.labelMedium?.copyWith(color: strongest?.color(pillars), letterSpacing: .6),
+                    ),
+                    const SizedBox(height: AppSpacing.xs),
+                    Text(
+                      'Each skill levels up with training time, 1 to 10. The grey outline is where your focus points want to put your time.',
+                      style: theme.textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Wrap(
+          spacing: AppSpacing.xs,
+          runSpacing: AppSpacing.xs,
+          children: [
+            for (final pillar in SkillPillar.values) ActionChip(label: Text('${pillar.label} · Lv ${stats.levelOf(pillar).level}'), onPressed: pro ? () => _showSkill(context, ref, pillar) : null),
+          ],
         ),
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Personal bests'),
         const SizedBox(height: AppSpacing.md),
-        Wrap(
-          spacing: AppSpacing.md,
-          runSpacing: AppSpacing.md,
-          children: [
-            MetricTile(value: '84%', label: 'Shot accuracy', detail: 'Best session', accent: pillars.shotAccuracy),
-            MetricTile(value: '47', label: 'Pass streak', detail: 'Clean touches', accent: pillars.passing),
-            MetricTile(value: '5 days', label: 'Training streak', accent: pillars.speedStrength),
-          ],
+        ProLocked(
+          unlocked: pro,
+          message: 'Keep every personal best, with the date and the workout.',
+          child: stats.bests.isEmpty
+              ? const TrainingCard(child: Text('Your bests show up here as you log sets. Accuracy needs at least 10 shots in a set.'))
+              : _PersonalBests(bests: stats.bests.values.toList()),
         ),
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Your totals'),
         const SizedBox(height: AppSpacing.sm),
-        const Text('From the workouts saved on this device.'),
+        const Text('From the workouts you\'ve finished on this device.'),
         const SizedBox(height: AppSpacing.md),
         ArenaPanel(
           child: Wrap(
             spacing: AppSpacing.xl,
             runSpacing: AppSpacing.md,
             children: [
-              _HistoryStat(value: totals.activeSeconds >= 3600 ? '${(totals.activeSeconds / 3600).toStringAsFixed(1)} h' : '${(totals.activeSeconds / 60).round()} min', label: 'active time'),
-              _HistoryStat(value: '${totals.workouts}', label: totals.workouts == 1 ? 'workout' : 'workouts'),
-              _HistoryStat(value: '${totals.shotsThisWeek}', label: 'shots this week'),
+              _HistoryStat(value: _duration(stats.seconds), label: 'active time'),
+              _HistoryStat(value: '${stats.workouts}', label: stats.workouts == 1 ? 'workout' : 'workouts'),
+              _HistoryStat(value: streak == 0 ? 'None' : '$streak ${streak == 1 ? 'day' : 'days'}', label: 'current streak'),
+              _HistoryStat(value: '${stats.longestStreak()} ${stats.longestStreak() == 1 ? 'day' : 'days'}', label: 'longest streak'),
             ],
           ),
         ),
@@ -270,7 +288,7 @@ class ProgressPage extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Text('Progress card example', style: theme.textTheme.headlineSmall),
+                      Text('Your progress card', style: theme.textTheme.headlineSmall),
                       const SizedBox(height: AppSpacing.md),
                       DecoratedBox(
                         decoration: BoxDecoration(color: theme.brightness == Brightness.dark ? colors.surface : colors.textPrimary, borderRadius: BorderRadius.circular(AppRadii.card)),
@@ -281,14 +299,17 @@ class ProgressPage extends ConsumerWidget {
                             children: [
                               Text('HOW TO HOCKEY  ·  WEEKLY RECAP', style: theme.textTheme.labelSmall?.copyWith(color: colors.brandPrimaryOnDark)),
                               const SizedBox(height: AppSpacing.xl),
-                              Text('140', style: theme.textTheme.displayMedium?.copyWith(color: theme.brightness == Brightness.dark ? colors.textPrimary : colors.brandCream)),
+                              Text(
+                                '${stats.weekShots(clock.now())}',
+                                style: theme.textTheme.displayMedium?.copyWith(color: theme.brightness == Brightness.dark ? colors.textPrimary : colors.brandCream),
+                              ),
                               Text('SHOTS THIS WEEK', style: theme.textTheme.labelMedium?.copyWith(color: theme.brightness == Brightness.dark ? colors.textPrimary : colors.brandCream)),
                             ],
                           ),
                         ),
                       ),
                       const SizedBox(height: AppSpacing.md),
-                      Text('Example data · Sharing isn\'t live yet', style: theme.textTheme.bodySmall),
+                      Text('Sharing isn\'t live yet', style: theme.textTheme.bodySmall),
                       const SizedBox(height: AppSpacing.md),
                     ],
                   ),
@@ -315,7 +336,7 @@ class ProgressPage extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.md),
-        Text('The skill map, personal bests and weekly chart are example numbers for now. Your totals and recent training above are real.', style: Theme.of(context).textTheme.bodySmall),
+        Text('Your progress is saved on this device for now. It moves to your account when workouts sync.', style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }
@@ -1109,5 +1130,217 @@ class _TodayWorkoutCard extends ConsumerWidget {
         ),
       ),
     };
+  }
+}
+
+String _grouped(int value) {
+  final digits = value.toString();
+  final out = StringBuffer();
+  for (var i = 0; i < digits.length; i++) {
+    if (i > 0 && (digits.length - i) % 3 == 0) out.write(',');
+    out.write(digits[i]);
+  }
+  return out.toString();
+}
+
+String _duration(double seconds) => seconds >= 3600 ? '${(seconds / 3600).toStringAsFixed(1)} h' : '${(seconds / 60).round()} min';
+
+/// Shows [child] normally for Player Pro, and blurred behind an unlock prompt for everyone else.
+class ProLocked extends StatelessWidget {
+  const ProLocked({required this.unlocked, required this.message, required this.child, super.key});
+
+  final bool unlocked;
+  final String message;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    if (unlocked) return child;
+    final theme = Theme.of(context);
+    // A blurred peek at the real thing, then the prompt below it where it can take whatever room it needs.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadii.card),
+          child: SizedBox(
+            height: 140,
+            child: OverflowBox(
+              alignment: Alignment.topCenter,
+              minHeight: 0,
+              maxHeight: double.infinity,
+              child: ExcludeSemantics(
+                child: IgnorePointer(
+                  child: ImageFiltered(
+                    imageFilter: ImageFilter.blur(sigmaX: 7, sigmaY: 7),
+                    child: Opacity(opacity: .55, child: child),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        TrainingCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.lock_outline, color: theme.colorScheme.primary, size: 20),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(child: Text('Player Pro', style: theme.textTheme.titleMedium)),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(message, style: theme.textTheme.bodyMedium),
+              const SizedBox(height: AppSpacing.sm),
+              FilledButton(onPressed: () => context.push('/paywall'), child: const Text('Unlock with Player Pro')),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PersonalBests extends ConsumerWidget {
+  const _PersonalBests({required this.bests});
+
+  final List<PersonalBest> bests;
+
+  static const _groups = [
+    (PersonalBestKind.accuracy, 'Accuracy'),
+    (PersonalBestKind.shotsPerMinute, 'Shots per minute'),
+    (PersonalBestKind.streak, 'Streaks'),
+    (PersonalBestKind.reps, 'Most reps in a set'),
+    (PersonalBestKind.seconds, 'Longest timed set'),
+  ];
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final history = ref.watch(workoutHistoryProvider.notifier);
+    ref.watch(workoutHistoryProvider);
+    final now = clock.now();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (final (kind, heading) in _groups)
+          if (bests.any((b) => b.kind == kind)) ...[
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+              child: Text(heading.toUpperCase(), style: theme.textTheme.labelSmall),
+            ),
+            for (final best in (bests.where((b) => b.kind == kind).toList()..sort((a, b) => b.value.compareTo(a.value)))) ...[
+              TrainingCard(
+                onTap: history.byId(best.workoutId) == null ? null : () => context.push('/history/${best.workoutId}'),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(best.title, style: theme.textTheme.titleMedium),
+                          Text(workoutDateLabel(best.achievedAt.toLocal(), now), style: theme.textTheme.bodySmall),
+                        ],
+                      ),
+                    ),
+                    Text(best.valueLabel, style: theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.primary)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xs),
+            ],
+            const SizedBox(height: AppSpacing.sm),
+          ],
+      ],
+    );
+  }
+}
+
+void _showSkill(BuildContext context, WidgetRef ref, SkillPillar pillar) {
+  final level = ref.read(lifetimeStatsProvider).levelOf(pillar);
+  final top = topDrillsFor(pillar, ref.read(workoutHistoryProvider));
+  final nextHours = level.level >= maxLevel ? null : (secondsForLevel(level.level + 1) - level.seconds) / 3600;
+  showModalBottomSheet<void>(
+    context: context,
+    useRootNavigator: true,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (sheetContext) {
+      final theme = Theme.of(sheetContext);
+      return SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, AppSpacing.screen),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(pillar.label, style: theme.textTheme.headlineSmall),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                level.level == 0 ? 'Level 0 · ${level.hours.toStringAsFixed(1)} h of training' : 'Level ${level.level} · ${level.hours.toStringAsFixed(1)} h of training',
+                style: theme.textTheme.titleMedium,
+              ),
+              const SizedBox(height: AppSpacing.md),
+              LinearProgressIndicator(value: level.level >= maxLevel ? 1 : level.progress, minHeight: 8, borderRadius: BorderRadius.circular(4)),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                nextHours == null
+                    ? 'Top level. Keep it sharp.'
+                    : nextHours < 1
+                    ? 'About ${(nextHours * 60).ceil()} min to level ${level.level + 1}.'
+                    : 'About ${nextHours.toStringAsFixed(1)} h to level ${level.level + 1}.',
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: AppSpacing.lg),
+              Text('Top drills lately', style: theme.textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.xs),
+              if (top.isEmpty) const Text('Train this skill and your top drills show up here.') else for (final drill in top) Text('${drill.title} · ${(drill.seconds / 60).round()} min'),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
+class _WeekCard extends ConsumerWidget {
+  const _WeekCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final stats = ref.watch(lifetimeStatsProvider);
+    final now = clock.now();
+    final minutes = (stats.weekSeconds(now) / 60).round();
+    final streak = stats.currentStreak(now);
+    final trainedToday = stats.days.containsKey(dayKey(now));
+    return TrainingCard(
+      child: Wrap(
+        spacing: AppSpacing.xl,
+        runSpacing: AppSpacing.md,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          TrainingProgressRing(progress: (minutes / weeklyGoalMinutes).clamp(0.0, 1.0), value: '$minutes', label: 'of $weeklyGoalMinutes min this week'),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.local_fire_department_outlined, color: theme.colorScheme.primary),
+              const SizedBox(height: AppSpacing.xs),
+              Text(streak == 0 ? 'No streak yet' : '$streak-day streak', style: theme.textTheme.titleLarge),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                streak == 0
+                    ? 'Train today to start one.'
+                    : trainedToday
+                    ? 'Keep grinding.'
+                    : 'Train today to keep it going.',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }

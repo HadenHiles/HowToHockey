@@ -203,23 +203,25 @@ class ArenaPanel extends StatelessWidget {
   }
 }
 
+/// Seven bars, one per day, oldest first with today last. [values] run from 0 to 1.
 class WeeklyTrainingChart extends StatelessWidget {
-  const WeeklyTrainingChart({super.key});
+  const WeeklyTrainingChart({required this.values, required this.days, required this.semanticLabel, super.key});
 
-  static const _values = [0.42, 0.72, 0.54, 0.9, 0.62, 0.3, 0.76];
-  static const _days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+  final List<double> values;
+  final List<String> days;
+  final String semanticLabel;
 
   @override
   Widget build(BuildContext context) => Semantics(
-    label: 'Weekly training chart. Monday 42 percent, Tuesday 72 percent, Wednesday 54 percent, Thursday 90 percent, Friday 62 percent, Saturday 30 percent, Sunday 76 percent.',
+    label: semanticLabel,
     child: ExcludeSemantics(
       child: SizedBox(
         width: double.infinity,
         height: 98,
         child: CustomPaint(
           painter: _WeeklyTrainingPainter(
-            values: _values,
-            days: _days,
+            values: values,
+            days: days,
             active: Theme.of(context).extension<PillarColors>()!.hands,
             inactive: AppColors.dark.textSecondary,
             labelStyle: Theme.of(context).textTheme.labelSmall!,
@@ -247,7 +249,7 @@ class _WeeklyTrainingPainter extends CustomPainter {
     final chartHeight = size.height - labelHeight;
     for (var index = 0; index < values.length; index++) {
       final left = index * (barWidth + gap);
-      final barHeight = chartHeight * values[index];
+      final barHeight = math.max(values[index] > 0 ? 4.0 : 2.0, chartHeight * values[index].clamp(0.0, 1.0));
       final rect = Rect.fromLTWH(left, chartHeight - barHeight, barWidth, barHeight);
       canvas.drawRRect(RRect.fromRectAndRadius(rect, const Radius.circular(5)), Paint()..color = index == values.length - 1 ? active : inactive.withValues(alpha: .3));
       final text = TextPainter(
@@ -329,9 +331,12 @@ class MetricTile extends StatelessWidget {
 }
 
 class SkillRadar extends StatelessWidget {
-  const SkillRadar({required this.scores, super.key});
+  const SkillRadar({required this.scores, this.plan, super.key});
 
   final List<int> scores;
+
+  /// Optional faint outline, such as where the player's focus points say they want to put their time.
+  final List<int>? plan;
 
   @override
   Widget build(BuildContext context) {
@@ -351,7 +356,7 @@ class SkillRadar extends StatelessWidget {
               final size = Size(constraints.maxWidth, 264);
               return CustomPaint(
                 size: size,
-                painter: _SkillRadarPainter(scores, pillarColors, colors),
+                painter: _SkillRadarPainter(scores, pillarColors, colors, plan),
                 child: Stack(
                   children: [
                     for (var index = 0; index < labels.length; index++)
@@ -404,9 +409,10 @@ class _RadarLabel extends StatelessWidget {
 }
 
 class _SkillRadarPainter extends CustomPainter {
-  const _SkillRadarPainter(this.scores, this.pillarColors, this.colors);
+  const _SkillRadarPainter(this.scores, this.pillarColors, this.colors, this.plan);
 
   final List<int> scores;
+  final List<int>? plan;
   final List<Color> pillarColors;
   final AppColors colors;
 
@@ -439,6 +445,30 @@ class _SkillRadarPainter extends CustomPainter {
 
     for (final point in points) {
       canvas.drawLine(center, point, grid);
+    }
+
+    final plan = this.plan;
+    if (plan != null) {
+      final outline = Path();
+      for (var index = 0; index < plan.length; index++) {
+        final angle = -math.pi / 2 + index * math.pi * 2 / plan.length;
+        final distance = radius * plan[index].clamp(0, 100) / 100;
+        final point = Offset(center.dx + math.cos(angle) * distance, center.dy + math.sin(angle) * distance);
+        if (index == 0) {
+          outline.moveTo(point.dx, point.dy);
+        } else {
+          outline.lineTo(point.dx, point.dy);
+        }
+      }
+      outline.close();
+      canvas.drawPath(outline, Paint()..color = colors.textSecondary.withValues(alpha: .12));
+      canvas.drawPath(
+        outline,
+        Paint()
+          ..color = colors.textSecondary.withValues(alpha: .5)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5,
+      );
     }
 
     final profile = Path();
@@ -475,7 +505,7 @@ class _SkillRadarPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_SkillRadarPainter oldDelegate) => scores != oldDelegate.scores || pillarColors != oldDelegate.pillarColors || colors != oldDelegate.colors;
+  bool shouldRepaint(_SkillRadarPainter oldDelegate) => scores != oldDelegate.scores || plan != oldDelegate.plan || pillarColors != oldDelegate.pillarColors || colors != oldDelegate.colors;
 }
 
 class PillarTag extends StatelessWidget {

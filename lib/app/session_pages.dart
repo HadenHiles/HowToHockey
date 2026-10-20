@@ -25,6 +25,7 @@ import '../features/session/set_countdown.dart';
 import 'sample_data.dart';
 import 'workout_history.dart';
 import 'app_page.dart';
+import 'progress_state.dart';
 import 'training_state.dart';
 
 class WorkoutSessionPanel extends ConsumerStatefulWidget {
@@ -1049,6 +1050,30 @@ class _CountDialogState extends State<_CountDialog> {
   );
 }
 
+List<Widget> _personalBests(BuildContext context, WidgetRef ref, TrainingSession session, bool saved) {
+  final bests = bestsSetBy(ref.watch(lifetimeStatsProvider), session);
+  if (bests.isEmpty) return const [];
+  final theme = Theme.of(context);
+  return [
+    const SizedBox(height: AppSpacing.xl),
+    SectionHeading(title: bests.length == 1 ? 'New personal best' : 'New personal bests'),
+    const SizedBox(height: AppSpacing.md),
+    for (final best in bests) ...[
+      TrainingCard(
+        child: Row(
+          children: [
+            Icon(Icons.emoji_events_outlined, color: theme.colorScheme.primary),
+            const SizedBox(width: AppSpacing.md),
+            Expanded(child: Text(best.title, style: theme.textTheme.titleMedium)),
+            Text(best.valueLabel, style: theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.primary)),
+          ],
+        ),
+      ),
+      const SizedBox(height: AppSpacing.xs),
+    ],
+  ];
+}
+
 class SummaryPage extends ConsumerWidget {
   const SummaryPage({this.workoutId, super.key});
 
@@ -1094,6 +1119,7 @@ class SummaryPage extends ConsumerWidget {
             MetricTile(value: _time(session.elapsedSeconds), label: 'Elapsed time', detail: 'Includes rest'),
           ],
         ),
+        ..._personalBests(context, ref, session, saved),
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Your workout, set by set'),
         const SizedBox(height: AppSpacing.md),

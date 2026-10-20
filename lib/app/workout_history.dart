@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/drills/models/drill.dart';
 import '../features/settings/appearance_settings_controller.dart';
+import 'progress_state.dart';
 import 'sample_data.dart';
 import 'training_state.dart';
 
@@ -92,6 +93,7 @@ class WorkoutHistory extends Notifier<List<TrainingSession>> {
     final id = workoutId(session);
     final next = [session, ...state.where((existing) => workoutId(existing) != id)].take(maxWorkouts).toList();
     state = List.unmodifiable(next);
+    ref.read(lifetimeStatsProvider.notifier).record(session);
     final write = ref.read(sharedPreferencesProvider).setString(storageKey, jsonEncode([for (final workout in next) workout.toJson()]));
     unawaited(
       write.then((saved) {
