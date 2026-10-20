@@ -13,6 +13,7 @@ import { handleRevenueCatWebhook, revenueCatFetcher } from './entitlements';
 import { processSession } from './sessions';
 import { loadTuning } from './tuning';
 import { createPairingCode as createPairingCodeFor, redeemPairingCode as redeemPairingCodeFor } from './pairing';
+import * as teams from './teams';
 
 initializeApp();
 
@@ -33,6 +34,15 @@ export const createPairingCode = onCall((request) => createPairingCodeFor(getFir
 export const redeemPairingCode = onCall((request) => redeemPairingCodeFor(getFirestore(), getAuth(), request.data ?? {}));
 
 export const deleteAccount = onCall((request) => deleteAccountFor(getFirestore(), getAuth(), callerOf(request), request.data ?? {}));
+
+export const createTeam = onCall((request) => teams.createTeam(getFirestore(), callerOf(request), request.data ?? {}));
+export const updateTeam = onCall((request) => teams.updateTeam(getFirestore(), callerOf(request), request.data ?? {}));
+export const createTeamInvite = onCall((request) => teams.createTeamInvite(getFirestore(), callerOf(request), request.data ?? {}));
+export const previewTeamInvite = onCall((request) => teams.previewTeamInvite(getFirestore(), callerOf(request), request.data ?? {}));
+export const joinTeam = onCall((request) => teams.joinTeam(getFirestore(), callerOf(request), request.data ?? {}));
+export const acceptCoachInvite = onCall((request) => teams.acceptCoachInvite(getFirestore(), callerOf(request), request.data ?? {}));
+export const reviewTeamRequest = onCall((request) => teams.reviewTeamRequest(getFirestore(), callerOf(request), request.data ?? {}));
+export const removeTeamMember = onCall((request) => teams.removeTeamMember(getFirestore(), callerOf(request), request.data ?? {}));
 
 // Runs next to the database (Toronto), which Firestore triggers require. Credits a finished workout to the profile's lifetime stats and personal bests, once.
 export const onSessionCompleted = onDocumentCreated({ document: 'profiles/{profileId}/sessions/{sessionId}', region: 'northamerica-northeast2' }, async (event) => {

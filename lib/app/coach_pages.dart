@@ -14,8 +14,6 @@ const _players = [
   (id: 'p5', name: 'Avery H.', done: 3, assigned: 3, minutes: 118, verified: false),
 ];
 
-const _requests = [(name: 'Riley H.', detail: 'Asked to join from your public listing · parent approved'), (name: 'Drew K.', detail: 'Used your team code · waiting on your approval')];
-
 const _routines = [(title: 'Wrist Shot Ladder', detail: '4 drills · 25 min'), (title: 'Stickhandling Box', detail: '3 drills · 20 min'), (title: 'Skating Edges Circuit', detail: '5 drills · 30 min')];
 
 class _Notice extends StatelessWidget {
@@ -69,87 +67,6 @@ class _Entry extends StatelessWidget {
   }
 }
 
-class CoachRosterPage extends StatelessWidget {
-  const CoachRosterPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return AppPage(
-      title: 'Roster',
-      subtitle: 'Northside Novas · U12 · ${_players.length} of 30 players',
-      children: [
-        const _Notice('You\'re looking at a preview with example data. Roster changes, approvals and invites go live soon.'),
-        const SizedBox(height: AppSpacing.xl),
-        _Entry(icon: Icons.how_to_reg_outlined, title: 'Join requests', detail: '${_requests.length} waiting for approval', onTap: () => context.go('/coach/roster/requests')),
-        const SizedBox(height: AppSpacing.xl),
-        const SectionHeading(title: 'Players'),
-        const SizedBox(height: AppSpacing.md),
-        for (final player in _players) ...[
-          TrainingCard(
-            child: Row(
-              children: [
-                CircleAvatar(backgroundColor: theme.colorScheme.primary, foregroundColor: theme.colorScheme.onPrimary, child: Text(player.name.substring(0, 1))),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(player.name, style: theme.textTheme.titleMedium),
-                      Text('${player.minutes} active min this week', style: theme.textTheme.bodySmall),
-                    ],
-                  ),
-                ),
-                if (player.verified) Icon(Icons.verified, color: theme.colorScheme.primary, semanticLabel: 'Parent verified'),
-                PopupMenuButton<String>(
-                  tooltip: 'Manage ${player.name}',
-                  onSelected: (_) => showFeatureMessage(context, 'Roster changes aren\'t live yet. Nothing was changed.'),
-                  itemBuilder: (_) => const [PopupMenuItem(value: 'remove', child: Text('Remove from team'))],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-        ],
-      ],
-    );
-  }
-}
-
-class CoachRequestsPage extends StatelessWidget {
-  const CoachRequestsPage({super.key});
-
-  @override
-  Widget build(BuildContext context) => AppPage(
-    title: 'Join requests',
-    subtitle: 'Coaches can\'t search for players. Requests only come in through your team code or public listing.',
-    actions: [IconButton(tooltip: 'Back to Roster', icon: const Icon(Icons.close), onPressed: () => context.go('/coach/roster'))],
-    children: [
-      for (final request in _requests) ...[
-        TrainingCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(request.name, style: Theme.of(context).textTheme.titleMedium),
-              Text(request.detail),
-              const SizedBox(height: AppSpacing.md),
-              Wrap(
-                spacing: AppSpacing.sm,
-                runSpacing: AppSpacing.sm,
-                children: [
-                  FilledButton(onPressed: () => showFeatureMessage(context, 'Approvals aren\'t live yet. Nothing was approved.'), child: const Text('Approve')),
-                  OutlinedButton(onPressed: () => showFeatureMessage(context, 'Declining isn\'t live yet. Nothing was declined.'), child: const Text('Decline')),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-      ],
-    ],
-  );
-}
-
 class CoachHomeworkPage extends StatelessWidget {
   const CoachHomeworkPage({super.key});
 
@@ -160,6 +77,8 @@ class CoachHomeworkPage extends StatelessWidget {
       title: 'Homework',
       action: FilledButton.icon(onPressed: () => context.go('/coach/homework/new'), icon: const Icon(Icons.add), label: const Text('Assign homework')),
       children: [
+        const _Notice('Homework is a preview with example data. Assignments are not connected to your real roster yet.'),
+        const SizedBox(height: AppSpacing.md),
         const SectionHeading(title: 'Active'),
         const SizedBox(height: AppSpacing.md),
         TrainingCard(
@@ -307,71 +226,6 @@ class _CoachCompliancePageState extends State<CoachCompliancePage> {
           ),
           const SizedBox(height: AppSpacing.sm),
         ],
-      ],
-    );
-  }
-}
-
-class CoachTeamPage extends StatefulWidget {
-  const CoachTeamPage({super.key});
-
-  @override
-  State<CoachTeamPage> createState() => _CoachTeamPageState();
-}
-
-class _CoachTeamPageState extends State<CoachTeamPage> {
-  var _public = false;
-
-  @override
-  Widget build(BuildContext context) {
-    return AppPage(
-      title: 'Team',
-      children: [
-        const _Notice('Team settings and invites aren\'t live yet. Changes here only last until you restart the app.'),
-        const SizedBox(height: AppSpacing.xl),
-        ArenaPanel(
-          child: Builder(
-            builder: (context) {
-              final theme = Theme.of(context);
-              return Column(
-                children: [
-                  Text('NOVAS-4821', style: theme.textTheme.displaySmall),
-                  const SizedBox(height: AppSpacing.xs),
-                  Text('EXAMPLE JOIN CODE · NOT VALID', style: theme.textTheme.labelSmall),
-                ],
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: [
-            FilledButton.icon(onPressed: () => showFeatureMessage(context, 'Invite links aren\'t live yet. Nothing was sent.'), icon: const Icon(Icons.ios_share), label: const Text('Share invite')),
-            OutlinedButton(onPressed: () => showFeatureMessage(context, 'New codes aren\'t live yet. The code was not changed.'), child: const Text('New code')),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.xl),
-        const SectionHeading(title: 'Settings'),
-        const SizedBox(height: AppSpacing.md),
-        TrainingCard(
-          child: SwitchListTile(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Public listing'),
-            subtitle: Text(_public ? 'Shows in team search with your team name, coach name and player count.' : 'Private. Players can only join with your code.'),
-            value: _public,
-            onChanged: (value) => setState(() => _public = value),
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        _Entry(icon: Icons.verified_outlined, title: 'Workout verification', detail: 'Review verified and unverified sessions', onTap: () => context.go('/coach/compliance')),
-        const SizedBox(height: AppSpacing.xl),
-        const SectionHeading(title: 'Mode'),
-        const SizedBox(height: AppSpacing.md),
-        _Entry(icon: Icons.workspace_premium_outlined, title: 'Coach Pro', detail: 'Plans, restore and manage', onTap: () => context.push('/paywall?plan=coach')),
-        const SizedBox(height: AppSpacing.sm),
-        _Entry(icon: Icons.sports_hockey, title: 'Switch to Player', detail: 'Currently in Coach mode', onTap: () => context.go('/train')),
       ],
     );
   }

@@ -41,9 +41,9 @@ class ProfileRepository {
         ]..sort((a, b) => a.displayName.compareTo(b.displayName)),
       );
 
-  /// One profile, or null if it doesn't exist (yet) or can't be read.
+  /// One profile, or null if it doesn't exist yet. Read failures stay visible to callers.
   Stream<PlayerProfile?> watchProfile(String profileId) =>
-      FirebaseFirestore.instance.collection('profiles').doc(profileId).snapshots().map((doc) => doc.exists ? PlayerProfile.fromJson({...doc.data()!, 'id': doc.id}) : null).handleError((Object _) {});
+      FirebaseFirestore.instance.collection('profiles').doc(profileId).snapshots().map((doc) => doc.exists ? PlayerProfile.fromJson({...doc.data()!, 'id': doc.id}) : null);
 
   /// A parent adds a child. Returns the new profile's id.
   Future<String> createChildProfile({required String displayName, required int birthYear, required DateTime now}) async {

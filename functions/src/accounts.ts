@@ -2,6 +2,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 import type { Firestore } from 'firebase-admin/firestore';
 
 import { requireAccount, type CallerAuth } from './profiles';
+import { removeAccountFromTeams } from './teams';
 
 export interface UserEraser {
   deleteUsers(uids: string[]): Promise<unknown>;
@@ -16,6 +17,8 @@ export async function deleteAccount(db: Firestore, eraser: UserEraser, caller: C
   const account = requireAccount(caller);
   if (data.confirm !== true) throw new HttpsError('invalid-argument', 'Confirm that you want to delete this account.');
 
+  await db.doc(`users/${account.uid}`).set({ deletingAt: new Date() }, { merge: true });
+  await removeAccountFromTeams(db, account);
   const owned = await db.collection('profiles').where('ownerUid', '==', account.uid).get();
   const kidUids: string[] = [];
   for (const profile of owned.docs) {

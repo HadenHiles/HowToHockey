@@ -26,6 +26,12 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="howtohockey" android:host="app" android:pathPrefix="/join"/>
+            </intent-filter>
         </activity>
         <!-- Shows a scheduled rest-over reminder. Rests are short, so they are not rescheduled after a reboot. -->
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />

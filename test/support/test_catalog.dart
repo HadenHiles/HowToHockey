@@ -19,6 +19,7 @@ import 'package:how_to_hockey/features/progress/progress_stats.dart';
 import 'package:how_to_hockey/features/session/rest_notifications.dart';
 import 'package:how_to_hockey/features/sessions/session_repository.dart';
 import 'package:how_to_hockey/features/session/session_cues.dart';
+import 'package:how_to_hockey/features/teams/team_repository.dart';
 
 /// Widget tests cannot finish real asset I/O under fake time, so they read the
 /// same catalog file from disk and provide it directly.
@@ -197,7 +198,7 @@ class FakeProfileRepository extends ProfileRepository {
     calls.add('child:$displayName:$birthYear');
     if (failWith != null) throw failWith!;
     final id = 'child-${children.length + 1}';
-    children.add(PlayerProfile(id: id, ownerUid: 'u', displayName: displayName, birthYear: birthYear, isChild: true));
+    children.add(PlayerProfile(id: id, ownerUid: 'existing-user', displayName: displayName, birthYear: birthYear, isChild: true));
     _childChanges.add(List.of(children));
     return id;
   }
@@ -207,6 +208,85 @@ final testAuth = FakeAuthService();
 final testProfiles = FakeProfileRepository();
 final testAuthOverride = authServiceProvider.overrideWithValue(testAuth);
 final testProfilesOverride = profileRepositoryProvider.overrideWithValue(testProfiles);
+
+class FakeTeamRepository extends TeamRepository {
+  FakeTeamRepository() : super(call: (_, _) async => {});
+  final calls = <String>[];
+  List<Team> teams = const [];
+  List<TeamPerson> members = const [];
+  List<TeamRequest> requests = const [];
+  TeamException? failWith;
+  String joinStatus = 'joined';
+  String inviteKind = 'player';
+
+  void check() {
+    if (failWith != null) throw failWith!;
+  }
+
+  @override
+  Stream<List<Team>> watchTeams(AuthState auth, {required bool coaching}) => Stream.value(teams);
+  @override
+  Stream<List<Team>> discover(String prefix) => Stream.value(prefix.isEmpty ? [] : teams);
+  @override
+  Stream<List<TeamPerson>> watchMembers(String teamId) => Stream.value(members);
+  @override
+  Stream<List<TeamRequest>> watchCoachRequests(String teamId) => Stream.value(requests.where((r) => r.status == 'coachPending').toList());
+  @override
+  Stream<List<TeamRequest>> watchParentRequests(String uid) => Stream.value(requests);
+  @override
+  Future<void> create(String name) async {
+    check();
+    calls.add('create:$name');
+  }
+
+  @override
+  Future<void> setVisibility(String teamId, bool isPublic) async {
+    check();
+    calls.add('public:$teamId:$isPublic');
+  }
+
+  @override
+  Future<String> createInvite(String teamId, {required bool coach}) async {
+    check();
+    calls.add('invite:$teamId:$coach');
+    return 'ABCDEF0123456789';
+  }
+
+  @override
+  Future<TeamInvitation> preview(String input) async {
+    check();
+    calls.add('preview:${inviteCodeFrom(input)}');
+    return TeamInvitation(teamId: 't1', name: 'North Stars', kind: inviteKind);
+  }
+
+  @override
+  Future<String> join({required String profileId, String? code, String? teamId}) async {
+    check();
+    calls.add('join:$profileId');
+    return joinStatus;
+  }
+
+  @override
+  Future<void> acceptCoach(String code) async {
+    check();
+    calls.add('coach:$code');
+  }
+
+  @override
+  Future<void> review(TeamRequest request, bool approve) async {
+    check();
+    calls.add('review:${request.profileId}:$approve');
+  }
+
+  @override
+  Future<void> remove(String teamId, String profileId) async {
+    check();
+    calls.add('remove:$teamId:$profileId');
+  }
+}
+
+final testTeams = FakeTeamRepository();
+final testTeamsOverride = teamRepositoryProvider.overrideWithValue(testTeams);
 
 /// Keeps widget tests off Firestore: uploads are recorded, and stats come from whatever a test puts in [stats].
 class FakeSessionRepository extends SessionRepository {

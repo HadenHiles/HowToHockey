@@ -45,6 +45,35 @@ service cloud.firestore {
     match /users/{uid} {
       allow read: if signedIn() && !isKidDevice() && request.auth.uid == uid;
       allow write: if false;
+      match /teamRequests/{requestId} {
+        allow read: if signedIn() && !isKidDevice() && request.auth.uid == uid;
+        allow write: if false;
+      }
+    }
+
+    function canReadTeam(data) {
+      return signedIn() && (isKidDevice()
+        ? request.auth.token.profileId in data.memberProfileIds
+        : request.auth.uid in data.coachUids || request.auth.uid in data.memberOwnerUids);
+    }
+
+    match /teamDirectory/{teamId} {
+      allow read: if signedIn();
+      allow write: if false;
+    }
+
+    match /teams/{teamId} {
+      allow read: if canReadTeam(resource.data);
+      allow write: if false;
+      match /members/{profileId} {
+        allow read: if canReadTeam(get(/databases/$(database)/documents/teams/$(teamId)).data);
+        allow write: if false;
+      }
+      match /joinRequests/{profileId} {
+        allow read: if signedIn() && !isKidDevice()
+          && request.auth.uid in get(/databases/$(database)/documents/teams/$(teamId)).data.coachUids;
+        allow write: if false;
+      }
     }
 
     // Profiles are created and edited only through Cloud Functions, which validate names and enforce

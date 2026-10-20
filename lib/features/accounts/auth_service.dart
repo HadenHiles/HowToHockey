@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter/foundation.dart';
 
 /// Where the player stands with sign-in.
 sealed class AuthState {
@@ -121,7 +122,11 @@ class FirebaseAuthService implements AuthService {
       await _auth.createUserWithEmailAndPassword(email: email.trim(), password: password);
     }
     // Best effort: a missing verification email must not undo a created account.
-    unawaited(_auth.currentUser?.sendEmailVerification().catchError((Object _) {}));
+    unawaited(
+      _auth.currentUser?.sendEmailVerification().catchError((Object error, StackTrace stack) {
+        FlutterError.reportError(FlutterErrorDetails(exception: error, stack: stack, library: 'account verification'));
+      }),
+    );
   });
 
   @override
@@ -138,11 +143,11 @@ class FirebaseAuthService implements AuthService {
   });
 
   @override
-  Future<void> signOut() async {
+  Future<void> signOut() => _guard(() async {
     await _auth.signOut();
     // Keep the app usable as a guest after signing out.
-    await _guard(() => _auth.signInAnonymously());
-  }
+    await _auth.signInAnonymously();
+  });
 }
 
 final authServiceProvider = Provider<AuthService>((ref) => FirebaseAuthService());

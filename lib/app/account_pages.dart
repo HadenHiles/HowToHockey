@@ -12,10 +12,22 @@ import '../features/accounts/auth_service.dart';
 import '../features/profiles/active_player.dart';
 import '../features/profiles/display_name.dart';
 import '../features/profiles/profile_repository.dart';
+import '../features/teams/team_repository.dart';
+import 'training_state.dart';
 import 'app_page.dart';
 
 final _nameCharacters = FilteringTextInputFormatter.allow(RegExp(r"[\p{L}'’-]", unicode: true));
 final _initialCharacter = FilteringTextInputFormatter.allow(RegExp(r'\p{L}', unicode: true));
+
+bool switchPlayer(WidgetRef ref, BuildContext context, String profileId) {
+  final session = ref.read(trainingSessionProvider);
+  if (ref.read(activePlayerProvider)?.id != profileId && session.startedAt != null && !session.finished) {
+    showFeatureMessage(context, 'Finish your current workout before switching players.');
+    return false;
+  }
+  ref.read(activePlayerIdProvider.notifier).choose(profileId);
+  return true;
+}
 
 /// Create an account with email and password, then the player's own profile.
 class EmailSignupPage extends ConsumerStatefulWidget {
@@ -38,6 +50,12 @@ class _EmailSignupPageState extends ConsumerState<EmailSignupPage> {
   String? _error;
 
   @override
+  void initState() {
+    super.initState();
+    _accountCreated = ref.read(authServiceProvider).current is SignedInAccount;
+  }
+
+  @override
   void dispose() {
     _first.dispose();
     _initial.dispose();
@@ -54,6 +72,7 @@ class _EmailSignupPageState extends ConsumerState<EmailSignupPage> {
   }
 
   Future<void> _submit() async {
+    if (_busy) return;
     final problem = _validate();
     if (problem != null) {
       setState(() => _error = problem);
@@ -70,7 +89,7 @@ class _EmailSignupPageState extends ConsumerState<EmailSignupPage> {
       }
       // If this step fails the account already exists, so retrying only repeats the profile.
       await ref.read(profileRepositoryProvider).createOwnProfile(displayName: '${_first.text.trim()} ${_initial.text.trim()}', birthYear: widget.birthYear!, now: clock.now());
-      if (mounted) context.go('/onboarding/role');
+      if (mounted) context.go(pendingTeamInviteRoute(ref) ?? '/onboarding/role');
     } on AuthProblem catch (error) {
       if (mounted) setState(() => _error = error.message);
     } on ProfileException catch (error) {
@@ -346,6 +365,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
   }
 
   Future<void> _signIn() async {
+    if (_busy) return;
     if (!looksLikeEmail(_email.text) || _password.text.isEmpty) {
       setState(() => _error = 'Enter your email and password.');
       return;
@@ -356,7 +376,7 @@ class _SignInPageState extends ConsumerState<SignInPage> {
     });
     try {
       await ref.read(authServiceProvider).signInWithEmail(email: _email.text, password: _password.text);
-      if (mounted) context.go('/train');
+      if (mounted) context.go(pendingTeamInviteRoute(ref) ?? '/train');
     } on AuthProblem catch (error) {
       if (mounted) setState(() => _error = error.message);
     } finally {

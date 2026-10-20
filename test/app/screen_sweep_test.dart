@@ -47,6 +47,10 @@ const routes = [
   '/programs/hands-21/day/1',
   '/programs/shooting-30/day/3/lesson',
   '/missing-screen',
+  '/join?code=ABCDEF0123456789',
+  '/teams/discover',
+  '/coach/create',
+  '/profile/setup',
 ];
 
 void main() {
@@ -58,7 +62,7 @@ void main() {
       await testAuth.signInWithEmail(email: 'pat@example.com', password: 'password1');
       testProfiles.children
         ..clear()
-        ..add(const PlayerProfile(id: 'child-1', ownerUid: 'u', displayName: 'Avery H.', birthYear: 2015, isChild: true));
+        ..add(const PlayerProfile(id: 'child-1', ownerUid: 'existing-user', displayName: 'Avery H.', birthYear: 2015, isChild: true));
       final container = ProviderContainer(
         overrides: [
           sharedPreferencesProvider.overrideWithValue(preferences),
@@ -68,6 +72,7 @@ void main() {
           testRemindersOverride,
           testAuthOverride,
           testProfilesOverride,
+          testTeamsOverride,
           testSessionsOverride,
         ],
       );

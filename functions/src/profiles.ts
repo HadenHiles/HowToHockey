@@ -86,6 +86,7 @@ export async function createChildProfile(db: Firestore, caller: CallerAuth | und
     // Firestore requires every read in a transaction to happen before any write.
     const existing = await transaction.get(profiles.where('ownerUid', '==', auth.uid).where('isChild', '==', true));
     const user = await transaction.get(userRef);
+    if (user.data()?.deletingAt) throw new HttpsError('failed-precondition', 'This account is being deleted.');
     if (existing.size >= MAX_CHILD_PROFILES) {
       throw new HttpsError('failed-precondition', `You can add up to ${MAX_CHILD_PROFILES} child profiles.`);
     }
@@ -115,6 +116,7 @@ export async function createOwnProfile(db: Firestore, caller: CallerAuth | undef
       throw new HttpsError('already-exists', 'You already have a player profile.');
     }
     const user = await transaction.get(userRef);
+    if (user.data()?.deletingAt) throw new HttpsError('failed-precondition', 'This account is being deleted.');
     const roles: string[] = user.exists ? ((user.data()?.roles as string[] | undefined) ?? []) : [];
     transaction.set(profileRef, { ownerUid: auth.uid, displayName, birthYear, isChild: false, teamIds: [], pro: planOf(user.data()), createdAt: now });
     transaction.set(userRef, { roles: roles.includes('player') ? roles : [...roles, 'player'], createdAt: user.exists ? (user.data()?.createdAt ?? now) : now, ...(auth.email ? { email: auth.email } : {}) }, { merge: true });

@@ -22,6 +22,7 @@ Future<ProviderContainer> mount(WidgetTester tester, {double scale = 1}) async {
       testRemindersOverride,
       testAuthOverride,
       testProfilesOverride,
+      testTeamsOverride,
       testSessionsOverride,
     ],
   );
@@ -42,8 +43,8 @@ Future<void> signedInWithKids() async {
   testProfiles.children
     ..clear()
     ..addAll(const [
-      PlayerProfile(id: 'child-1', ownerUid: 'u', displayName: 'Avery H.', birthYear: 2015, isChild: true),
-      PlayerProfile(id: 'child-2', ownerUid: 'u', displayName: 'Riley H.', birthYear: 2017, isChild: true),
+      PlayerProfile(id: 'child-1', ownerUid: 'existing-user', displayName: 'Avery H.', birthYear: 2015, isChild: true),
+      PlayerProfile(id: 'child-2', ownerUid: 'existing-user', displayName: 'Riley H.', birthYear: 2017, isChild: true),
     ]);
 }
 
@@ -117,6 +118,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.ensureVisible(find.byType(Switch));
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
     expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);

@@ -318,401 +318,6 @@ class HistoryStat extends StatelessWidget {
   );
 }
 
-enum _TeamPreviewState { member, noTeam, locked }
-
-class TeamPage extends StatefulWidget {
-  const TeamPage({super.key});
-
-  @override
-  State<TeamPage> createState() => _TeamPageState();
-}
-
-class _TeamPageState extends State<TeamPage> {
-  var _previewState = _TeamPreviewState.member;
-  final Set<String> _sampleTaps = {};
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return AppPage(
-      title: 'Team',
-      subtitle: _previewState == _TeamPreviewState.member ? 'North Stars · U15' : 'Find your locker room.',
-      children: [
-        TrainingCard(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Icon(Icons.info_outline, color: theme.colorScheme.primary),
-              const SizedBox(width: AppSpacing.sm),
-              const Expanded(child: Text('You\'re looking at a preview with example data. Joining, invites and stick taps go live soon.')),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        Text('TEAM VIEW', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.onSurfaceVariant, letterSpacing: .8)),
-        const SizedBox(height: AppSpacing.xs),
-        Wrap(
-          spacing: AppSpacing.xs,
-          runSpacing: AppSpacing.xs,
-          children: [
-            for (final state in _TeamPreviewState.values)
-              ChoiceChip(
-                label: Text(switch (state) {
-                  _TeamPreviewState.member => 'Member',
-                  _TeamPreviewState.noTeam => 'No team',
-                  _TeamPreviewState.locked => 'Locked',
-                }),
-                selected: state == _previewState,
-                onSelected: (_) => setState(() => _previewState = state),
-              ),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.xl),
-        ...switch (_previewState) {
-          _TeamPreviewState.member => _memberContent(context),
-          _TeamPreviewState.noTeam => _noTeamContent(context),
-          _TeamPreviewState.locked => _lockedContent(context),
-        },
-      ],
-    );
-  }
-
-  List<Widget> _memberContent(BuildContext context) {
-    final theme = Theme.of(context);
-    return [
-      TrainingHeroCard(
-        eyebrow: 'Coach Jeremy  ·  Due Friday',
-        title: 'Team\nhomework',
-        detail: 'Build your foundation',
-        metrics: const [('20', 'minutes'), ('06', 'drills')],
-        actionLabel: 'View assignment',
-        onTap: () => context.push('/routine'),
-      ),
-      const SizedBox(height: AppSpacing.xl),
-      const SectionHeading(title: 'Locker room'),
-      const SizedBox(height: AppSpacing.md),
-      _TeamPostCard(
-        initials: 'AR',
-        name: 'Alex R.',
-        update: 'Finished Build your foundation',
-        detail: '24 active min  ·  80 shots  ·  5 day streak',
-        tapCount: 8,
-        tapped: _sampleTaps.contains('alex'),
-        onTap: () => _toggleSampleTap(context, 'alex'),
-      ),
-      const SizedBox(height: AppSpacing.sm),
-      _TeamPostCard(
-        initials: 'MS',
-        name: 'Morgan S.',
-        update: 'Set a new accuracy best',
-        detail: '84% accuracy  ·  Pick your corner',
-        tapCount: 12,
-        tapped: _sampleTaps.contains('morgan'),
-        onTap: () => _toggleSampleTap(context, 'morgan'),
-      ),
-      const SizedBox(height: AppSpacing.xl),
-      const SectionHeading(title: 'Weekly leaderboard'),
-      const SizedBox(height: AppSpacing.md),
-      ArenaPanel(
-        child: Builder(
-          builder: (context) {
-            final theme = Theme.of(context);
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text('ACTIVE TRAINING TIME', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary, letterSpacing: .8)),
-                    ),
-                    Text('THIS WEEK', style: theme.textTheme.labelSmall),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                const _LeaderboardRow(rank: 1, name: 'Morgan S.', minutes: 92),
-                const _LeaderboardRow(rank: 2, name: 'Jamie H.', minutes: 76, isCurrentPlayer: true),
-                const _LeaderboardRow(rank: 3, name: 'Alex R.', minutes: 64),
-                const SizedBox(height: AppSpacing.sm),
-                Text('Only verified training time counts. Example standings.', style: theme.textTheme.bodySmall),
-              ],
-            );
-          },
-        ),
-      ),
-      const SizedBox(height: AppSpacing.xl),
-      SectionHeading(title: 'Team access', action: 'Find teams', onAction: () => _showTeamDiscovery(context)),
-      const SizedBox(height: AppSpacing.md),
-      TrainingCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('North Stars invite', style: theme.textTheme.titleMedium),
-            const SizedBox(height: AppSpacing.xs),
-            Text('Share your coach\'s join code with a parent or teammate.', style: theme.textTheme.bodySmall),
-            const SizedBox(height: AppSpacing.md),
-            Wrap(
-              spacing: AppSpacing.sm,
-              runSpacing: AppSpacing.sm,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: () => showFeatureMessage(context, 'Invite sharing isn\'t live yet. Nothing was sent.'),
-                  icon: const Icon(Icons.ios_share_outlined),
-                  label: const Text('Share invite'),
-                ),
-                TextButton.icon(onPressed: () => _showJoinInvite(context), icon: const Icon(Icons.key_outlined), label: const Text('Join with code')),
-              ],
-            ),
-          ],
-        ),
-      ),
-    ];
-  }
-
-  List<Widget> _noTeamContent(BuildContext context) {
-    final theme = Theme.of(context);
-    return [
-      ArenaPanel(
-        child: Builder(
-          builder: (context) {
-            final theme = Theme.of(context);
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Icon(Icons.groups_outlined, size: 44, color: theme.colorScheme.primary),
-                const SizedBox(height: AppSpacing.md),
-                Text('Your next team starts here', style: theme.textTheme.headlineSmall),
-                const SizedBox(height: AppSpacing.xs),
-                const Text('Find a public team or review an invite from your coach. Each player profile joins on its own.'),
-                const SizedBox(height: AppSpacing.xl),
-                FilledButton.icon(onPressed: () => _showTeamDiscovery(context), icon: const Icon(Icons.search), label: const Text('Find a team')),
-                const SizedBox(height: AppSpacing.sm),
-                OutlinedButton.icon(onPressed: () => _showJoinInvite(context), icon: const Icon(Icons.key_outlined), label: const Text('Join with code')),
-              ],
-            );
-          },
-        ),
-      ),
-      const SizedBox(height: AppSpacing.xl),
-      const SectionHeading(title: 'Pending invite'),
-      const SizedBox(height: AppSpacing.md),
-      TrainingCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Westside Wolves · U15', style: theme.textTheme.titleMedium),
-            const SizedBox(height: AppSpacing.xs),
-            const Text('Invited by Coach Taylor. Child profiles need a parent\'s approval.'),
-            const SizedBox(height: AppSpacing.md),
-            OutlinedButton(onPressed: () => showFeatureMessage(context, 'Invite review isn\'t live yet. Nothing was changed.'), child: const Text('Review invite')),
-          ],
-        ),
-      ),
-    ];
-  }
-
-  List<Widget> _lockedContent(BuildContext context) {
-    final theme = Theme.of(context);
-    return [
-      ArenaPanel(
-        child: Builder(
-          builder: (context) {
-            final theme = Theme.of(context);
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Icon(Icons.lock_outline, size: 44, color: theme.colorScheme.primary),
-                const SizedBox(height: AppSpacing.md),
-                Text('Members only', style: theme.textTheme.headlineSmall),
-                const SizedBox(height: AppSpacing.xs),
-                const Text('Locker room posts, homework and standings unlock once this player joins the team.'),
-                const SizedBox(height: AppSpacing.xl),
-                FilledButton(onPressed: () => setState(() => _previewState = _TeamPreviewState.noTeam), child: const Text('View joining options')),
-              ],
-            );
-          },
-        ),
-      ),
-      const SizedBox(height: AppSpacing.xl),
-      TrainingCard(
-        child: Row(
-          children: [
-            Icon(Icons.shield_outlined, color: theme.colorScheme.primary),
-            const SizedBox(width: AppSpacing.md),
-            const Expanded(child: Text('Only team members can see team activity. Public team pages never show player activity.')),
-          ],
-        ),
-      ),
-    ];
-  }
-
-  void _toggleSampleTap(BuildContext context, String postId) {
-    setState(() {
-      if (!_sampleTaps.add(postId)) _sampleTaps.remove(postId);
-    });
-    showFeatureMessage(context, 'Stick taps aren\'t live yet. Nothing was sent.');
-  }
-
-  Future<void> _showTeamDiscovery(BuildContext context) => showModalBottomSheet<void>(
-    context: context,
-    useRootNavigator: true,
-    showDragHandle: true,
-    isScrollControlled: true,
-    builder: (sheetContext) => SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, AppSpacing.screen),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('Discover teams', style: Theme.of(sheetContext).textTheme.headlineSmall),
-            const SizedBox(height: AppSpacing.xs),
-            const Text('These are example teams. Player activity stays private to members.'),
-            const SizedBox(height: AppSpacing.xl),
-            _DiscoveryTeamCard(
-              name: 'Westside Wolves',
-              detail: 'U15 · Coach Taylor · 18 players',
-              onRequest: () => _showUnavailableAction(sheetContext, 'Join requests aren\'t live yet. Nothing was sent.'),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            _DiscoveryTeamCard(
-              name: 'River City Rockets',
-              detail: 'U14 · Coach Lee · 16 players',
-              onRequest: () => _showUnavailableAction(sheetContext, 'Join requests aren\'t live yet. Nothing was sent.'),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-
-  Future<void> _showJoinInvite(BuildContext context) => showModalBottomSheet<void>(
-    context: context,
-    useRootNavigator: true,
-    showDragHandle: true,
-    builder: (sheetContext) => SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, AppSpacing.screen),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('Join with a team code', style: Theme.of(sheetContext).textTheme.headlineSmall),
-            const SizedBox(height: AppSpacing.xs),
-            const Text('Team code entry is coming soon, along with accounts and parent approval.'),
-            const SizedBox(height: AppSpacing.xl),
-            OutlinedButton.icon(
-              onPressed: () => _showUnavailableAction(sheetContext, 'Team code lookup isn\'t live yet. Nothing was changed.'),
-              icon: const Icon(Icons.key_outlined),
-              label: const Text('Look up code'),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-
-  void _showUnavailableAction(BuildContext sheetContext, String message) {
-    Navigator.of(sheetContext).pop();
-    showFeatureMessage(context, message);
-  }
-}
-
-class _TeamPostCard extends StatelessWidget {
-  const _TeamPostCard({required this.initials, required this.name, required this.update, required this.detail, required this.tapCount, required this.tapped, required this.onTap});
-
-  final String initials;
-  final String name;
-  final String update;
-  final String detail;
-  final int tapCount;
-  final bool tapped;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return TrainingCard(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          CircleAvatar(backgroundColor: theme.colorScheme.primary, foregroundColor: theme.colorScheme.onPrimary, child: Text(initials)),
-          const SizedBox(width: AppSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Flexible(child: Text(name, style: theme.textTheme.titleMedium)),
-                    const SizedBox(width: AppSpacing.xs),
-                    Icon(Icons.verified, size: 16, color: theme.colorScheme.primary),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.xxs),
-                Text(update),
-                const SizedBox(height: AppSpacing.xs),
-                Text(detail, style: theme.textTheme.bodySmall),
-                const SizedBox(height: AppSpacing.md),
-                OutlinedButton.icon(onPressed: onTap, icon: Icon(tapped ? Icons.sports_hockey : Icons.sports_hockey_outlined), label: Text('${tapCount + (tapped ? 1 : 0)} stick taps')),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LeaderboardRow extends StatelessWidget {
-  const _LeaderboardRow({required this.rank, required this.name, required this.minutes, this.isCurrentPlayer = false});
-
-  final int rank;
-  final String name;
-  final int minutes;
-  final bool isCurrentPlayer;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.xs),
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.sm),
-      decoration: BoxDecoration(
-        color: isCurrentPlayer ? theme.colorScheme.primary.withValues(alpha: .18) : theme.colorScheme.surface.withValues(alpha: .08),
-        borderRadius: BorderRadius.circular(AppRadii.control),
-      ),
-      child: Row(
-        children: [
-          SizedBox(width: 28, child: Text('$rank', style: theme.textTheme.titleMedium)),
-          Expanded(child: Text(name, style: theme.textTheme.titleMedium)),
-          Text('$minutes min', style: theme.textTheme.labelLarge),
-        ],
-      ),
-    );
-  }
-}
-
-class _DiscoveryTeamCard extends StatelessWidget {
-  const _DiscoveryTeamCard({required this.name, required this.detail, required this.onRequest});
-
-  final String name;
-  final String detail;
-  final VoidCallback onRequest;
-
-  @override
-  Widget build(BuildContext context) => TrainingCard(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(name, style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: AppSpacing.xs),
-        Text(detail),
-        const SizedBox(height: AppSpacing.md),
-        OutlinedButton(onPressed: onRequest, child: const Text('Request to join')),
-      ],
-    ),
-  );
-}
-
 class MePage extends ConsumerStatefulWidget {
   const MePage({super.key});
 
@@ -780,7 +385,7 @@ class _MePageState extends ConsumerState<MePage> {
             children: [
               Icon(Icons.info_outline, color: theme.colorScheme.primary),
               const SizedBox(width: AppSpacing.sm),
-              const Expanded(child: Text('Accounts and profiles are live. Teams, leaderboards and plans still show example data while we build them.')),
+              const Expanded(child: Text('Accounts, profiles and team membership are connected. Team feeds, standings and homework are still coming.')),
             ],
           ),
         ),
@@ -826,7 +431,7 @@ class _MePageState extends ConsumerState<MePage> {
             children: [
               Text('Data & services', style: theme.textTheme.titleMedium),
               const SizedBox(height: AppSpacing.sm),
-              const Text('Workout results are saved on this device for now. Cloud history, team updates and purchases aren\'t live yet.'),
+              const Text('Signed-in workouts sync to the active player profile. Guest workouts stay on this device.'),
               const SizedBox(height: AppSpacing.md),
               Row(
                 children: [
@@ -842,6 +447,9 @@ class _MePageState extends ConsumerState<MePage> {
         const SectionHeading(title: 'Profile & access'),
         const SizedBox(height: AppSpacing.md),
         if (!kidDevice) ...[
+          if (ref.watch(authStateProvider).value is SignedInAccount && !ref.watch(ownProfileProvider).isLoading && ref.watch(ownProfileProvider).value == null)
+            _MeEntryCard(icon: Icons.person_add_outlined, title: 'Finish player setup', detail: 'Your account needs its own player profile', onTap: () => context.push('/profile/setup')),
+          if (ref.watch(ownProfileProvider).hasError) TextButton(onPressed: () => ref.invalidate(ownProfileProvider), child: const Text('Could not load your profile. Retry')),
           _MeEntryCard(icon: Icons.people_outline, title: 'Switch player', detail: 'Active: $playerName', onTap: _showProfileSwitcher),
           const SizedBox(height: AppSpacing.sm),
           _MeEntryCard(icon: Icons.switch_account_outlined, title: 'Switch role', detail: 'Player mode', onTap: _showRoleSwitcher),
@@ -883,7 +491,7 @@ class _MePageState extends ConsumerState<MePage> {
           children: [
             Text('Switch player', style: Theme.of(sheetContext).textTheme.headlineSmall),
             const SizedBox(height: AppSpacing.xs),
-            const Text('Workouts are saved on this device for now, whoever you train as.'),
+            const Text('Each player keeps their own workouts and team memberships.'),
             const SizedBox(height: AppSpacing.md),
             Consumer(
               builder: (context, ref, _) {
@@ -894,8 +502,7 @@ class _MePageState extends ConsumerState<MePage> {
                   groupValue: active?.id,
                   onChanged: (value) {
                     if (value == null) return;
-                    ref.read(activePlayerIdProvider.notifier).choose(value);
-                    Navigator.of(sheetContext).pop();
+                    if (switchPlayer(ref, context, value)) Navigator.of(sheetContext).pop();
                   },
                   child: Column(
                     children: [
@@ -930,7 +537,7 @@ class _MePageState extends ConsumerState<MePage> {
           children: [
             Text('Switch role', style: Theme.of(sheetContext).textTheme.headlineSmall),
             const SizedBox(height: AppSpacing.xs),
-            Text(signedIn ? 'Coach view is an example preview.' : 'Parent and Coach need an account.'),
+            Text(signedIn ? 'Choose which part of your account to manage.' : 'Parent and Coach need an account.'),
             const SizedBox(height: AppSpacing.md),
             const ListTile(leading: Icon(Icons.sports_hockey), title: Text('Player'), subtitle: Text('Current role'), trailing: Icon(Icons.check)),
             ListTile(
@@ -945,7 +552,7 @@ class _MePageState extends ConsumerState<MePage> {
             ListTile(
               leading: const Icon(Icons.groups_outlined),
               title: const Text('Coach'),
-              subtitle: Text(signedIn ? 'Example preview' : 'Needs an account'),
+              subtitle: Text(signedIn ? 'Manage your teams and roster' : 'Needs an account'),
               onTap: () {
                 Navigator.of(sheetContext).pop();
                 context.go('/coach/roster');

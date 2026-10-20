@@ -18,9 +18,11 @@ import 'app_page.dart';
 import 'session_pages.dart';
 import 'training_pages.dart';
 import 'training_state.dart';
+import 'team_pages.dart';
+import 'own_profile_setup.dart';
 import 'workout_sync.dart';
 
-const _kidDeviceBlocked = ['/parent', '/coach', '/signup', '/signin', '/welcome', '/pair', '/onboarding', '/paywall'];
+const _kidDeviceBlocked = ['/parent', '/coach', '/signup', '/signin', '/welcome', '/pair', '/onboarding', '/paywall', '/profile'];
 
 /// A paired kid device only gets Player screens. Returns where to send it, or null to let it through.
 String? kidDeviceRedirect(String path) => _kidDeviceBlocked.any((prefix) => path == prefix || path.startsWith('$prefix/')) ? '/train' : null;
@@ -61,7 +63,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [GoRoute(path: '/progress', builder: (_, _) => const ProgressPage())],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/team', builder: (_, _) => const TeamPage())],
+            routes: [GoRoute(path: '/team', builder: (_, _) => const PlayerTeamsPage())],
           ),
           StatefulShellBranch(
             routes: [GoRoute(path: '/me', builder: (_, _) => const MePage())],
@@ -78,12 +80,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 builder: (_, _) => const ParentKidsPage(),
                 routes: [
                   GoRoute(path: 'add', builder: (_, _) => const AddChildPage()),
-                  GoRoute(path: 'approvals', builder: (_, _) => const ParentApprovalsPage()),
+                  GoRoute(path: 'approvals', builder: (_, _) => const LiveTeamRequestsPage(parent: true)),
                   GoRoute(path: 'train-together', builder: (_, _) => const ParentTrainTogetherPage()),
                   GoRoute(
                     path: ':id',
                     builder: (_, state) => ParentChildPage(kidId: state.pathParameters['id']!),
                     routes: [
+                      GoRoute(
+                        path: 'teams',
+                        builder: (_, state) => PlayerTeamsPage(profileId: state.pathParameters['id']!),
+                      ),
                       GoRoute(
                         path: 'pair',
                         builder: (_, state) => KidPairingPage(kidId: state.pathParameters['id']!),
@@ -109,8 +115,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/coach/roster',
-                builder: (_, _) => const CoachRosterPage(),
-                routes: [GoRoute(path: 'requests', builder: (_, _) => const CoachRequestsPage())],
+                builder: (_, _) => const LiveCoachRosterPage(),
+                routes: [GoRoute(path: 'requests', builder: (_, _) => const LiveTeamRequestsPage())],
               ),
             ],
           ),
@@ -127,7 +133,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [GoRoute(path: '/coach/compliance', builder: (_, _) => const CoachCompliancePage())],
           ),
           StatefulShellBranch(
-            routes: [GoRoute(path: '/coach/team', builder: (_, _) => const CoachTeamPage())],
+            routes: [GoRoute(path: '/coach/team', builder: (_, _) => const LiveCoachTeamPage())],
           ),
         ],
       ),
@@ -140,6 +146,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, state) => EmailSignupPage(birthYear: int.tryParse(state.uri.queryParameters['year'] ?? '')),
       ),
       GoRoute(path: '/signin', builder: (_, _) => const SignInPage()),
+      GoRoute(path: '/profile/setup', builder: (_, _) => const OwnProfileSetupPage()),
+      GoRoute(path: '/coach/create', builder: (_, _) => const CreateTeamPage()),
+      GoRoute(
+        path: '/join',
+        builder: (_, state) => JoinTeamPage(key: ValueKey(state.uri.toString()), code: state.uri.queryParameters['code'] ?? '', profileId: state.uri.queryParameters['profile']),
+      ),
+      GoRoute(
+        path: '/teams/discover',
+        builder: (_, state) => DiscoverTeamsPage(profileId: state.uri.queryParameters['profile']),
+      ),
       GoRoute(path: '/pair', builder: (_, _) => const PairDevicePage()),
       GoRoute(path: '/onboarding/role', builder: (_, _) => const RoleOnboardingPage()),
       GoRoute(

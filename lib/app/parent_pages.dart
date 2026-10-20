@@ -9,7 +9,6 @@ import '../design/components/training_components.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/accounts/auth_service.dart';
 import 'commerce_pages.dart';
-import '../features/profiles/active_player.dart';
 import '../features/profiles/display_name.dart';
 import '../features/profiles/player_profile.dart';
 import '../features/profiles/profile_repository.dart';
@@ -43,8 +42,13 @@ final hiddenKidsProvider = NotifierProvider<HiddenKids, Set<String>>(HiddenKids.
 
 final parentKidsProvider = Provider<List<ParentKid>>((ref) {
   final hidden = ref.watch(hiddenKidsProvider);
-  final profiles = ref.watch(childProfilesProvider).value ?? const <PlayerProfile>[];
-  return [for (final profile in profiles) ParentKid.fromProfile(profile, now: clock.now(), hidden: hidden.contains(profile.id))];
+  final auth = ref.watch(authStateProvider).value;
+  final profiles = ref.watch(childProfilesProvider).asData?.value ?? const <PlayerProfile>[];
+  return [
+    if (auth is SignedInAccount)
+      for (final profile in profiles)
+        if (profile.ownerUid == auth.uid) ParentKid.fromProfile(profile, now: clock.now(), hidden: hidden.contains(profile.id)),
+  ];
 });
 
 class _SampleNotice extends StatelessWidget {
@@ -168,6 +172,19 @@ class ParentChildPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final profiles = ref.watch(childProfilesProvider);
+    if (profiles.isLoading) {
+      return const AppPage(
+        title: 'Loading player',
+        children: [Center(child: CircularProgressIndicator())],
+      );
+    }
+    if (profiles.hasError) {
+      return AppPage(
+        title: 'Could not load player',
+        children: [TextButton(onPressed: () => ref.invalidate(childProfilesProvider), child: const Text('Retry'))],
+      );
+    }
     final kid = ref.watch(parentKidsProvider).where((k) => k.id == kidId).firstOrNull;
     if (kid == null) {
       return AppPage(
@@ -208,8 +225,7 @@ class ParentChildPage extends ConsumerWidget {
           title: 'Train as ${kid.name}',
           detail: 'Opens Player mode as ${kid.name}',
           onTap: () {
-            ref.read(activePlayerIdProvider.notifier).choose(kid.id);
-            context.go('/train');
+            if (switchPlayer(ref, context, kid.id)) context.go('/train');
           },
         ),
         const SizedBox(height: AppSpacing.sm),
@@ -217,6 +233,8 @@ class ParentChildPage extends ConsumerWidget {
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Controls'),
         const SizedBox(height: AppSpacing.md),
+        _ActionCard(icon: Icons.groups_outlined, title: 'Manage teams', detail: 'Join or leave teams for ${kid.name}', onTap: () => context.push('/parent/kids/${kid.id}/teams')),
+        const SizedBox(height: AppSpacing.sm),
         TrainingCard(
           child: SwitchListTile(
             contentPadding: EdgeInsets.zero,
@@ -250,18 +268,6 @@ class ParentChildPage extends ConsumerWidget {
     );
     if (confirmed == true && context.mounted) showFeatureMessage(context, 'Team changes aren\'t live yet. Nothing was removed.');
   }
-}
-
-class ParentApprovalsPage extends StatelessWidget {
-  const ParentApprovalsPage({super.key});
-
-  @override
-  Widget build(BuildContext context) => AppPage(
-    title: 'Join approvals',
-    subtitle: 'Kids can\'t join a team or sign in on a new device until you approve.',
-    actions: [IconButton(tooltip: 'Back to Kids', icon: const Icon(Icons.close), onPressed: () => context.go('/parent/kids'))],
-    children: const [TrainingCard(child: Text('No requests waiting. Team joins and device sign-ins will show up here for you to approve.'))],
-  );
 }
 
 class KidPairingPage extends ConsumerStatefulWidget {

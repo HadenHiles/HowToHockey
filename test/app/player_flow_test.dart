@@ -24,6 +24,7 @@ Future<ProviderContainer> mountApp(WidgetTester tester, {String appearance = 'li
       testRemindersOverride,
       testAuthOverride,
       testProfilesOverride,
+      testTeamsOverride,
       testSessionsOverride,
     ],
   );
@@ -461,47 +462,16 @@ void main() {
     expect(tester.state<ScrollableState>(find.byType(Scrollable).first).position.pixels, trainPosition);
   });
 
-  testWidgets('Team tab exposes member, empty, locked, and discovery states', (tester) async {
+  testWidgets('Team tab has an honest guest state instead of example membership', (tester) async {
     phoneSize(tester);
+    await testAuth.signOut();
     final container = await mountApp(tester);
     container.read(appRouterProvider).go('/team');
     await tester.pumpAndSettle();
 
-    expect(find.text('Locker room'), findsOneWidget);
-    expect(find.text('Weekly leaderboard'), findsOneWidget);
-    expect(find.text('View assignment'), findsOneWidget);
-    await tester.ensureVisible(find.text('8 stick taps'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('8 stick taps'));
-    await tester.pumpAndSettle();
-    expect(find.text('9 stick taps'), findsOneWidget);
-    expect(find.text('Stick taps aren\'t live yet. Nothing was sent.'), findsOneWidget);
-    ScaffoldMessenger.of(tester.element(find.text('Locker room'))).hideCurrentSnackBar();
-    await tester.pumpAndSettle();
-
-    final pageScroll = find.descendant(of: find.byType(CustomScrollView).hitTestable(), matching: find.byType(Scrollable)).first;
-    tester.state<ScrollableState>(pageScroll).position.jumpTo(100);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('No team'));
-    await tester.pumpAndSettle();
-    expect(find.text('Your next team starts here'), findsOneWidget);
-    expect(find.text('Pending invite'), findsOneWidget);
-    await tester.ensureVisible(find.text('Find a team'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Find a team'));
-    await tester.pumpAndSettle();
-    expect(find.text('Discover teams'), findsOneWidget);
-    expect(find.text('Westside Wolves'), findsWidgets);
-    await tester.tap(find.text('Request to join').first);
-    await tester.pumpAndSettle();
-    expect(find.text('Join requests aren\'t live yet. Nothing was sent.'), findsOneWidget);
-
-    tester.state<ScrollableState>(pageScroll).position.jumpTo(100);
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Locked'));
-    await tester.pumpAndSettle();
-    expect(find.text('Members only'), findsOneWidget);
-    expect(find.textContaining('Only team members can see team activity'), findsOneWidget);
+    expect(find.text('Create an account to join'), findsOneWidget);
+    expect(find.text('Weekly leaderboard'), findsNothing);
+    expect(find.text('8 stick taps'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

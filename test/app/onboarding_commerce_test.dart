@@ -23,6 +23,7 @@ Future<ProviderContainer> mount(WidgetTester tester) async {
       testRemindersOverride,
       testAuthOverride,
       testProfilesOverride,
+      testTeamsOverride,
       testSessionsOverride,
       purchasesProvider.overrideWithValue(FakePurchases()),
     ],
