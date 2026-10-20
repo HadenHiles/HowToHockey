@@ -6,8 +6,16 @@ part 'player_profile.g.dart';
 /// One player's profile. An account can own several: its own, plus child profiles it manages.
 @freezed
 abstract class PlayerProfile with _$PlayerProfile {
-  const factory PlayerProfile({required String id, required String ownerUid, required String displayName, required int birthYear, required bool isChild, @Default(<String>[]) List<String> teamIds}) =
-      _PlayerProfile;
+  const factory PlayerProfile({
+    required String id,
+    required String ownerUid,
+    required String displayName,
+    required int birthYear,
+    required bool isChild,
+    @Default(<String>[]) List<String> teamIds,
+    // Kept by the server: true while the owning account has Player Pro or Coach Pro.
+    @Default(false) bool pro,
+  }) = _PlayerProfile;
 
   factory PlayerProfile.fromJson(Map<String, dynamic> json) => _$PlayerProfileFromJson(json);
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:how_to_hockey/app/hockey_app.dart';
+import 'package:how_to_hockey/features/commerce/entitlements.dart';
 import 'package:how_to_hockey/features/settings/appearance_settings_controller.dart';
 import 'package:how_to_hockey/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -23,6 +24,7 @@ Future<ProviderContainer> mount(WidgetTester tester) async {
       testAuthOverride,
       testProfilesOverride,
       testSessionsOverride,
+      purchasesProvider.overrideWithValue(FakePurchases()),
     ],
   );
   addTearDown(container.dispose);
@@ -74,12 +76,13 @@ void main() {
     router.go('/paywall');
     await tester.pumpAndSettle();
     expect(find.textContaining(r'$49.99 / year'), findsOneWidget);
+    expect(find.textContaining('One plan covers you and up to 3 kids'), findsOneWidget);
     await tester.tap(find.text('Coach Pro').first);
     await tester.pumpAndSettle();
     expect(find.textContaining(r'$99.99 / year'), findsOneWidget);
     await tester.tap(find.textContaining('Start Coach Pro'));
-    await tester.pump();
-    expect(find.textContaining('You weren\'t charged'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('You\'re all set'), findsOneWidget);
 
     ScaffoldMessenger.of(tester.element(find.byType(Scaffold).first)).clearSnackBars();
     router.go('/programs/hands-21');

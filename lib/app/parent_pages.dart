@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../design/components/training_components.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/accounts/auth_service.dart';
+import 'commerce_pages.dart';
 import '../features/profiles/active_player.dart';
 import '../features/profiles/display_name.dart';
 import '../features/profiles/player_profile.dart';
@@ -439,14 +440,14 @@ class ParentAccountPage extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: AppSpacing.sm),
-        _ActionCard(icon: Icons.workspace_premium_outlined, title: 'Subscription', detail: 'Free plan', onTap: () => context.push('/paywall')),
-        const SizedBox(height: AppSpacing.sm),
         _ActionCard(
-          icon: Icons.restore,
-          title: 'Restore purchases',
-          detail: 'Get back a past purchase',
-          onTap: () => showFeatureMessage(context, 'Restoring purchases isn\'t live yet. You weren\'t charged.'),
+          icon: Icons.workspace_premium_outlined,
+          title: 'Subscription',
+          detail: planLabel(ref) == 'Free plan' ? 'Free plan' : '${planLabel(ref)} · covers up to 3 kids',
+          onTap: () => context.push('/paywall'),
         ),
+        const SizedBox(height: AppSpacing.sm),
+        _ActionCard(icon: Icons.restore, title: 'Restore purchases', detail: 'Get back a past purchase', onTap: () => unawaited(restorePurchasesWithMessage(context, ref))),
         const SizedBox(height: AppSpacing.xl),
         if (ref.watch(authStateProvider).value is SignedInAccount)
           TextButton.icon(

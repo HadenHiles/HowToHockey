@@ -1,24 +1,53 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../design/components/training_components.dart';
 import '../design/tokens/app_spacing.dart';
+import '../features/accounts/auth_service.dart';
+import '../features/commerce/entitlements.dart';
+import '../features/commerce/purchases_service.dart';
 import '../features/drills/drill_media.dart';
 import 'app_page.dart';
 import 'drill_media_card.dart';
 
-class PaywallPage extends StatefulWidget {
+/// The plan to show for the player being trained, for example on Me and Account.
+String planLabel(WidgetRef ref) {
+  if (ref.watch(coachProProvider)) return 'Coach Pro';
+  return ref.watch(effectiveProProvider) ? 'Player Pro' : 'Free plan';
+}
+
+/// Restores the account's purchases and tells the person what happened.
+Future<void> restorePurchasesWithMessage(BuildContext context, WidgetRef ref) async {
+  final String message;
+  try {
+    final active = await ref.read(purchasesProvider).restore();
+    message = active.contains(playerProEntitlement) || active.contains(coachProEntitlement) ? 'Your plan is back.' : 'No purchases found for this account.';
+  } on PurchaseFailure catch (failure) {
+    if (context.mounted) showFeatureMessage(context, failure.message);
+    return;
+  }
+  if (context.mounted) showFeatureMessage(context, message);
+}
+
+class PaywallPage extends ConsumerStatefulWidget {
   const PaywallPage({super.key, this.coach = false});
 
   final bool coach;
 
   @override
-  State<PaywallPage> createState() => _PaywallPageState();
+  ConsumerState<PaywallPage> createState() => _PaywallPageState();
 }
 
-class _PaywallPageState extends State<PaywallPage> {
+class _PaywallPageState extends ConsumerState<PaywallPage> {
   late var _coach = widget.coach;
   var _yearly = true;
+  var _busy = false;
+  List<PlanOffer>? _offers;
+  var _offersFailed = false;
 
   static const _playerFeatures = [
     (label: 'Lifetime totals', free: true),
@@ -36,24 +65,93 @@ class _PaywallPageState extends State<PaywallPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    unawaited(_loadOffers());
+  }
+
+  Future<void> _loadOffers() async {
+    try {
+      final offers = await ref.read(purchasesProvider).offers();
+      if (mounted) setState(() => _offers = offers);
+    } on Object {
+      if (mounted) setState(() => _offersFailed = true);
+    }
+  }
+
+  PlanOffer? get _selected => _offers?.where((offer) => offer.coach == _coach && offer.yearly == _yearly).firstOrNull;
+
+  Future<void> _run(Future<String?> Function() action) async {
+    setState(() => _busy = true);
+    try {
+      final message = await action();
+      if (mounted && message != null) showFeatureMessage(context, message);
+    } on PurchaseFailure catch (failure) {
+      if (mounted) showFeatureMessage(context, failure.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _buy(PlanOffer offer) => _run(() async {
+    final outcome = await ref.read(purchasesProvider).purchase(offer);
+    if (outcome == PurchaseOutcome.cancelled) return null;
+    if (mounted) context.canPop() ? context.pop() : context.go('/me');
+    return 'You\'re all set. Thanks for supporting How To Hockey.';
+  });
+
+  Future<void> _restore() => _run(() async {
+    final active = await ref.read(purchasesProvider).restore();
+    if (active.contains(playerProEntitlement) || active.contains(coachProEntitlement)) return 'Your plan is back.';
+    return 'No purchases found for this account.';
+  });
+
+  Future<void> _manage() => _run(() async {
+    final opened = await launchUrl(await ref.read(purchasesProvider).manageUri(), mode: LaunchMode.externalApplication);
+    return opened ? null : 'Couldn\'t open your subscriptions. Open them from your phone\'s store settings.';
+  });
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final purchases = ref.watch(purchasesProvider);
+    final plans = ref.watch(accountPlansProvider);
+    final signedIn = ref.watch(authStateProvider).value is SignedInAccount;
     final features = _coach ? _coachFeatures : _playerFeatures;
-    final price = _coach ? (_yearly ? r'$99.99 / year' : r'$12.99 / month') : (_yearly ? r'$49.99 / year' : r'$7.99 / month');
     final name = _coach ? 'Coach Pro' : 'Player Pro';
+    final owned = _coach ? plans.coach : plans.player;
+    final offer = _selected;
+    final loading = purchases.available && _offers == null && !_offersFailed;
+    final unavailable = !purchases.available || _offersFailed || (_offers != null && offer == null);
+
+    final Widget primary;
+    if (owned) {
+      primary = FilledButton(onPressed: _busy ? null : _manage, child: const Text('Manage subscription'));
+    } else if (!signedIn) {
+      primary = FilledButton(onPressed: () => context.push('/signup'), child: const Text('Create a free account to subscribe'));
+    } else if (offer != null) {
+      primary = FilledButton(onPressed: _busy ? null : () => _buy(offer), child: Text('Start $name · ${offer.price} / ${_yearly ? 'year' : 'month'}'));
+    } else {
+      primary = FilledButton(onPressed: null, child: Text(loading ? 'Loading plans…' : 'Plans aren\'t available right now'));
+    }
+
     return AppPage(
       title: name,
-      subtitle: 'Example plans. Purchases aren\'t live yet, so you can\'t be charged.',
+      subtitle: owned
+          ? 'You have $name. Thank you!'
+          : unavailable
+          ? 'Plans aren\'t available right now. Nothing has been charged.'
+          : 'One plan covers you and up to 3 kids.',
       actions: [IconButton(tooltip: 'Close', icon: const Icon(Icons.close), onPressed: () => context.canPop() ? context.pop() : context.go('/me'))],
       action: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FilledButton(onPressed: () => showFeatureMessage(context, 'Purchases aren\'t live yet. You weren\'t charged.'), child: Text('Start $name · $price')),
+          primary,
           Wrap(
             alignment: WrapAlignment.center,
             children: [
-              TextButton(onPressed: () => showFeatureMessage(context, 'Restoring purchases isn\'t live yet. You weren\'t charged.'), child: const Text('Restore purchases')),
-              TextButton(onPressed: () => showFeatureMessage(context, 'Managing your plan isn\'t live yet. Nothing was changed.'), child: const Text('Manage subscription')),
+              if (signedIn && purchases.available) TextButton(onPressed: _busy ? null : _restore, child: const Text('Restore purchases')),
+              if (signedIn && purchases.available && !owned) TextButton(onPressed: _busy ? null : _manage, child: const Text('Manage subscription')),
             ],
           ),
         ],
@@ -106,6 +204,8 @@ class _PaywallPageState extends State<PaywallPage> {
         ),
         const SizedBox(height: AppSpacing.md),
         if (_coach) const Text('Players get a free month of Player Pro (30 days) when they join a Coach Pro team.'),
+        const SizedBox(height: AppSpacing.sm),
+        Text('Renews automatically until cancelled. Cancel any time in your phone\'s subscription settings.', style: theme.textTheme.bodySmall),
       ],
     );
   }

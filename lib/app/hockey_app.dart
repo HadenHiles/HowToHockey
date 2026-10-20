@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../design/theme/app_theme.dart';
+import '../features/commerce/entitlements.dart';
 import '../features/settings/appearance_settings_controller.dart';
 import '../features/accounts/auth_service.dart';
 import 'account_pages.dart';
@@ -215,6 +216,7 @@ class HockeyApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Keeps finished workouts flowing to the player's account for as long as the app is open.
     ref.listen(workoutSyncProvider, (_, _) {});
+    ref.watch(purchasesIdentityProvider);
     return MaterialApp.router(
       title: 'How To Hockey',
       debugShowCheckedModeBanner: false,

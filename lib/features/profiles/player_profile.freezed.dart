@@ -16,7 +16,7 @@ T _$identity<T>(T value) => value;
 /// @nodoc
 mixin _$PlayerProfile {
 
- String get id; String get ownerUid; String get displayName; int get birthYear; bool get isChild; List<String> get teamIds;
+ String get id; String get ownerUid; String get displayName; int get birthYear; bool get isChild; List<String> get teamIds; bool get pro;
 /// Create a copy of PlayerProfile
 /// with the given fields replaced by the non-null parameter values.
 @JsonKey(includeFromJson: false, includeToJson: false)
@@ -30,20 +30,20 @@ $PlayerProfileCopyWith<PlayerProfile> get copyWith => _$PlayerProfileCopyWithImp
 @override
 bool operator ==(Object other) {
   final _this = this as PlayerProfile;
-  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlayerProfile&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.ownerUid, _this.ownerUid) || other.ownerUid == _this.ownerUid)&&(identical(other.displayName, _this.displayName) || other.displayName == _this.displayName)&&(identical(other.birthYear, _this.birthYear) || other.birthYear == _this.birthYear)&&(identical(other.isChild, _this.isChild) || other.isChild == _this.isChild)&&const DeepCollectionEquality().equals(other.teamIds, _this.teamIds));
+  return identical(this, other) || (other.runtimeType == runtimeType&&other is PlayerProfile&&(identical(other.id, _this.id) || other.id == _this.id)&&(identical(other.ownerUid, _this.ownerUid) || other.ownerUid == _this.ownerUid)&&(identical(other.displayName, _this.displayName) || other.displayName == _this.displayName)&&(identical(other.birthYear, _this.birthYear) || other.birthYear == _this.birthYear)&&(identical(other.isChild, _this.isChild) || other.isChild == _this.isChild)&&const DeepCollectionEquality().equals(other.teamIds, _this.teamIds)&&(identical(other.pro, _this.pro) || other.pro == _this.pro));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
   final _this = this as PlayerProfile;
-  return Object.hash(runtimeType,_this.id,_this.ownerUid,_this.displayName,_this.birthYear,_this.isChild,const DeepCollectionEquality().hash(_this.teamIds));
+  return Object.hash(runtimeType,_this.id,_this.ownerUid,_this.displayName,_this.birthYear,_this.isChild,const DeepCollectionEquality().hash(_this.teamIds),_this.pro);
 }
 
 @override
 String toString() {
   final _this = this as PlayerProfile;
-  return 'PlayerProfile(id: ${_this.id}, ownerUid: ${_this.ownerUid}, displayName: ${_this.displayName}, birthYear: ${_this.birthYear}, isChild: ${_this.isChild}, teamIds: ${_this.teamIds})';
+  return 'PlayerProfile(id: ${_this.id}, ownerUid: ${_this.ownerUid}, displayName: ${_this.displayName}, birthYear: ${_this.birthYear}, isChild: ${_this.isChild}, teamIds: ${_this.teamIds}, pro: ${_this.pro})';
 }
 
 
@@ -54,7 +54,7 @@ abstract mixin class $PlayerProfileCopyWith<$Res>  {
   factory $PlayerProfileCopyWith(PlayerProfile value, $Res Function(PlayerProfile) _then) = _$PlayerProfileCopyWithImpl;
 @useResult
 $Res call({
- String id, String ownerUid, String displayName, int birthYear, bool isChild, List<String> teamIds
+ String id, String ownerUid, String displayName, int birthYear, bool isChild, List<String> teamIds, bool pro
 });
 
 
@@ -71,7 +71,7 @@ class _$PlayerProfileCopyWithImpl<$Res>
 
 /// Create a copy of PlayerProfile
 /// with the given fields replaced by the non-null parameter values.
-@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? ownerUid = null,Object? displayName = null,Object? birthYear = null,Object? isChild = null,Object? teamIds = null,}) {
+@pragma('vm:prefer-inline') @override $Res call({Object? id = null,Object? ownerUid = null,Object? displayName = null,Object? birthYear = null,Object? isChild = null,Object? teamIds = null,Object? pro = null,}) {
   return _then(PlayerProfile(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,ownerUid: null == ownerUid ? _self.ownerUid : ownerUid // ignore: cast_nullable_to_non_nullable
@@ -79,7 +79,8 @@ as String,displayName: null == displayName ? _self.displayName : displayName // 
 as String,birthYear: null == birthYear ? _self.birthYear : birthYear // ignore: cast_nullable_to_non_nullable
 as int,isChild: null == isChild ? _self.isChild : isChild // ignore: cast_nullable_to_non_nullable
 as bool,teamIds: null == teamIds ? _self.teamIds : teamIds // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,pro: null == pro ? _self.pro : pro // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 
@@ -164,10 +165,10 @@ return $default(_that);case _:
 /// }
 /// ```
 
-@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String ownerUid,  String displayName,  int birthYear,  bool isChild,  List<String> teamIds)?  $default,{required TResult orElse(),}) {final _that = this;
+@optionalTypeArgs TResult maybeWhen<TResult extends Object?>(TResult Function( String id,  String ownerUid,  String displayName,  int birthYear,  bool isChild,  List<String> teamIds,  bool pro)?  $default,{required TResult orElse(),}) {final _that = this;
 switch (_that) {
 case _PlayerProfile() when $default != null:
-return $default(_that.id,_that.ownerUid,_that.displayName,_that.birthYear,_that.isChild,_that.teamIds);case _:
+return $default(_that.id,_that.ownerUid,_that.displayName,_that.birthYear,_that.isChild,_that.teamIds,_that.pro);case _:
   return orElse();
 
 }
@@ -185,10 +186,10 @@ return $default(_that.id,_that.ownerUid,_that.displayName,_that.birthYear,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String ownerUid,  String displayName,  int birthYear,  bool isChild,  List<String> teamIds)  $default,) {final _that = this;
+@optionalTypeArgs TResult when<TResult extends Object?>(TResult Function( String id,  String ownerUid,  String displayName,  int birthYear,  bool isChild,  List<String> teamIds,  bool pro)  $default,) {final _that = this;
 switch (_that) {
 case _PlayerProfile():
-return $default(_that.id,_that.ownerUid,_that.displayName,_that.birthYear,_that.isChild,_that.teamIds);case _:
+return $default(_that.id,_that.ownerUid,_that.displayName,_that.birthYear,_that.isChild,_that.teamIds,_that.pro);case _:
   throw StateError('Unexpected subclass');
 
 }
@@ -205,10 +206,10 @@ return $default(_that.id,_that.ownerUid,_that.displayName,_that.birthYear,_that.
 /// }
 /// ```
 
-@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String ownerUid,  String displayName,  int birthYear,  bool isChild,  List<String> teamIds)?  $default,) {final _that = this;
+@optionalTypeArgs TResult? whenOrNull<TResult extends Object?>(TResult? Function( String id,  String ownerUid,  String displayName,  int birthYear,  bool isChild,  List<String> teamIds,  bool pro)?  $default,) {final _that = this;
 switch (_that) {
 case _PlayerProfile() when $default != null:
-return $default(_that.id,_that.ownerUid,_that.displayName,_that.birthYear,_that.isChild,_that.teamIds);case _:
+return $default(_that.id,_that.ownerUid,_that.displayName,_that.birthYear,_that.isChild,_that.teamIds,_that.pro);case _:
   return null;
 
 }
@@ -220,7 +221,7 @@ return $default(_that.id,_that.ownerUid,_that.displayName,_that.birthYear,_that.
 @JsonSerializable()
 
 class _PlayerProfile implements PlayerProfile {
-  const _PlayerProfile({required this.id, required this.ownerUid, required this.displayName, required this.birthYear, required this.isChild,  List<String> teamIds = const <String>[]}): _teamIds = teamIds;
+  const _PlayerProfile({required this.id, required this.ownerUid, required this.displayName, required this.birthYear, required this.isChild,  List<String> teamIds = const <String>[], this.pro = false}): _teamIds = teamIds;
   factory _PlayerProfile.fromJson(Map<String, dynamic> json) => _$PlayerProfileFromJson(json);
 
 @override final  String id;
@@ -235,6 +236,7 @@ class _PlayerProfile implements PlayerProfile {
   return EqualUnmodifiableListView(_teamIds);
 }
 
+@override@JsonKey() final  bool pro;
 
 /// Create a copy of PlayerProfile
 /// with the given fields replaced by the non-null parameter values.
@@ -249,18 +251,18 @@ Map<String, dynamic> toJson() {
 
 @override
 bool operator ==(Object other) {
-    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PlayerProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.ownerUid, ownerUid) || other.ownerUid == ownerUid)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.birthYear, birthYear) || other.birthYear == birthYear)&&(identical(other.isChild, isChild) || other.isChild == isChild)&&const DeepCollectionEquality().equals(other.teamIds, _teamIds));
+    return identical(this, other) || (other.runtimeType == runtimeType&&other is _PlayerProfile&&(identical(other.id, id) || other.id == id)&&(identical(other.ownerUid, ownerUid) || other.ownerUid == ownerUid)&&(identical(other.displayName, displayName) || other.displayName == displayName)&&(identical(other.birthYear, birthYear) || other.birthYear == birthYear)&&(identical(other.isChild, isChild) || other.isChild == isChild)&&const DeepCollectionEquality().equals(other.teamIds, _teamIds)&&(identical(other.pro, pro) || other.pro == pro));
 }
 
 @JsonKey(includeFromJson: false, includeToJson: false)
 @override
 int get hashCode {
-    return Object.hash(runtimeType,id,ownerUid,displayName,birthYear,isChild,const DeepCollectionEquality().hash(_teamIds));
+    return Object.hash(runtimeType,id,ownerUid,displayName,birthYear,isChild,const DeepCollectionEquality().hash(_teamIds),pro);
 }
 
 @override
 String toString() {
-    return 'PlayerProfile(id: $id, ownerUid: $ownerUid, displayName: $displayName, birthYear: $birthYear, isChild: $isChild, teamIds: $teamIds)';
+    return 'PlayerProfile(id: $id, ownerUid: $ownerUid, displayName: $displayName, birthYear: $birthYear, isChild: $isChild, teamIds: $teamIds, pro: $pro)';
 }
 
 
@@ -271,7 +273,7 @@ abstract mixin class _$PlayerProfileCopyWith<$Res> implements $PlayerProfileCopy
   factory _$PlayerProfileCopyWith(_PlayerProfile value, $Res Function(_PlayerProfile) _then) = __$PlayerProfileCopyWithImpl;
 @override @useResult
 $Res call({
- String id, String ownerUid, String displayName, int birthYear, bool isChild, List<String> teamIds
+ String id, String ownerUid, String displayName, int birthYear, bool isChild, List<String> teamIds, bool pro
 });
 
 
@@ -288,7 +290,7 @@ class __$PlayerProfileCopyWithImpl<$Res>
 
 /// Create a copy of PlayerProfile
 /// with the given fields replaced by the non-null parameter values.
-@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? ownerUid = null,Object? displayName = null,Object? birthYear = null,Object? isChild = null,Object? teamIds = null,}) {
+@override @pragma('vm:prefer-inline') $Res call({Object? id = null,Object? ownerUid = null,Object? displayName = null,Object? birthYear = null,Object? isChild = null,Object? teamIds = null,Object? pro = null,}) {
   return _then(_PlayerProfile(
 id: null == id ? _self.id : id // ignore: cast_nullable_to_non_nullable
 as String,ownerUid: null == ownerUid ? _self.ownerUid : ownerUid // ignore: cast_nullable_to_non_nullable
@@ -296,7 +298,8 @@ as String,displayName: null == displayName ? _self.displayName : displayName // 
 as String,birthYear: null == birthYear ? _self.birthYear : birthYear // ignore: cast_nullable_to_non_nullable
 as int,isChild: null == isChild ? _self.isChild : isChild // ignore: cast_nullable_to_non_nullable
 as bool,teamIds: null == teamIds ? _self._teamIds : teamIds // ignore: cast_nullable_to_non_nullable
-as List<String>,
+as List<String>,pro: null == pro ? _self.pro : pro // ignore: cast_nullable_to_non_nullable
+as bool,
   ));
 }
 

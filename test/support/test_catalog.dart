@@ -5,6 +5,8 @@ import 'package:clock/clock.dart';
 import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:how_to_hockey/features/commerce/entitlements.dart';
+import 'package:how_to_hockey/features/commerce/purchases_service.dart';
 import 'package:how_to_hockey/features/drills/drill_catalog.dart';
 import 'package:how_to_hockey/features/drills/drill_media.dart';
 import 'package:how_to_hockey/features/accounts/auth_service.dart';
@@ -233,3 +235,62 @@ class FakeSessionRepository extends SessionRepository {
 
 final testSessions = FakeSessionRepository();
 final testSessionsOverride = sessionRepositoryProvider.overrideWithValue(testSessions);
+
+/// A store that sells the four plans at the roadmap prices and remembers what was bought.
+class FakePurchases implements PurchasesService {
+  FakePurchases({this.available = true});
+
+  @override
+  final bool available;
+  final _controller = StreamController<Set<String>>.broadcast();
+  final identified = <String?>[];
+  final bought = <String>[];
+  Set<String> active = {};
+  Set<String> restorable = {};
+  PurchaseOutcome outcome = PurchaseOutcome.purchased;
+  PurchaseFailure? failWith;
+
+  @override
+  Stream<Set<String>> get entitlements => _controller.stream;
+
+  void setActive(Set<String> next) {
+    active = next;
+    _controller.add(next);
+  }
+
+  @override
+  Future<void> identify(String? uid) async => identified.add(uid);
+
+  @override
+  Future<List<PlanOffer>> offers() async => !available
+      ? const []
+      : const [
+          PlanOffer(id: 'player/\$rc_monthly', coach: false, yearly: false, price: r'$7.99'),
+          PlanOffer(id: 'player/\$rc_annual', coach: false, yearly: true, price: r'$49.99'),
+          PlanOffer(id: 'coach/\$rc_monthly', coach: true, yearly: false, price: r'$12.99'),
+          PlanOffer(id: 'coach/\$rc_annual', coach: true, yearly: true, price: r'$99.99'),
+        ];
+
+  @override
+  Future<PurchaseOutcome> purchase(PlanOffer offer) async {
+    if (failWith != null) throw failWith!;
+    if (outcome == PurchaseOutcome.purchased) {
+      bought.add(offer.id);
+      setActive(offer.coach ? {playerProEntitlement, coachProEntitlement} : {playerProEntitlement});
+    }
+    return outcome;
+  }
+
+  @override
+  Future<Set<String>> restore() async {
+    if (failWith != null) throw failWith!;
+    setActive(restorable);
+    return restorable;
+  }
+
+  @override
+  Future<Uri> manageUri() async => defaultManageUri();
+}
+
+final testPurchases = FakePurchases();
+final testPurchasesOverride = purchasesProvider.overrideWithValue(testPurchases);

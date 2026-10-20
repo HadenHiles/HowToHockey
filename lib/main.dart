@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui' as ui;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,6 +16,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/hockey_app.dart';
+import 'features/commerce/entitlements.dart';
+import 'features/commerce/purchases_service.dart';
 import 'features/settings/appearance_settings_controller.dart';
 import 'firebase_options.dart';
 
@@ -78,7 +81,15 @@ Future<void> main() async {
 
   await ensureSignedIn(FirebaseAuth.instance);
 
-  runApp(ProviderScope(overrides: [sharedPreferencesProvider.overrideWithValue(preferences)], child: const MyApp()));
+  // A store problem must never stop the app from opening; without it the app simply can't sell plans.
+  PurchasesService purchases = const UnavailablePurchases();
+  try {
+    purchases = await RevenueCatPurchases.configure() ?? purchases;
+  } on Object catch (error, stack) {
+    unawaited(crashlytics.recordError(error, stack));
+  }
+
+  runApp(ProviderScope(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), purchasesProvider.overrideWithValue(purchases)], child: const MyApp()));
 }
 
 /// Auth error codes that mean a saved anonymous session can never refresh its token.

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../commerce/entitlements.dart';
 import 'models/drill.dart';
 
 /// The starter catalog ships inside the app so it can be browsed offline.
@@ -19,8 +20,8 @@ List<Drill> parseDrillCatalog(String source) {
 
 final drillCatalogProvider = FutureProvider<List<Drill>>((ref) async => parseDrillCatalog(await rootBundle.loadString(drillCatalogAsset)));
 
-/// Local stand-in for the Player Pro entitlement until purchases are connected.
-final drillFiltersUnlockedProvider = Provider<bool>((ref) => false);
+/// Whether Player Pro features are unlocked for the player being trained.
+final drillFiltersUnlockedProvider = Provider<bool>((ref) => ref.watch(effectiveProProvider));
 
 class DrillFilters {
   const DrillFilters({this.location, this.puckInventory, this.ball, this.passer, this.pillar, this.trackingType});

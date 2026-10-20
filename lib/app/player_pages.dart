@@ -13,6 +13,7 @@ import '../design/tokens/app_spacing.dart';
 import '../features/drills/drill_catalog.dart';
 import '../features/drills/models/drill.dart';
 import '../features/accounts/auth_service.dart';
+import 'commerce_pages.dart';
 import '../features/profiles/active_player.dart';
 import '../features/profiles/display_name.dart';
 import '../features/profiles/player_profile.dart';
@@ -857,7 +858,7 @@ class _MePageState extends ConsumerState<MePage> {
           onTap: _showAccount,
         ),
         const SizedBox(height: AppSpacing.sm),
-        _MeEntryCard(icon: Icons.workspace_premium_outlined, title: 'Subscription', detail: 'Free plan', onTap: _showSubscription),
+        _MeEntryCard(icon: Icons.workspace_premium_outlined, title: 'Subscription', detail: kidDevice ? 'Managed by your parent' : planLabel(ref), onTap: _showSubscription),
         const SizedBox(height: AppSpacing.sm),
         _MeEntryCard(icon: Icons.school_outlined, title: 'Programs', detail: 'Signature programs from Coach Jeremy', onTap: () => context.push('/programs')),
         if (ref.watch(authStateProvider).value is! SignedInAccount && !kidDevice) ...[
@@ -980,40 +981,52 @@ class _MePageState extends ConsumerState<MePage> {
     ),
   );
 
-  Future<void> _showSubscription() => showModalBottomSheet<void>(
-    context: context,
-    useRootNavigator: true,
-    showDragHandle: true,
-    isScrollControlled: true,
-    builder: (sheetContext) => SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, AppSpacing.screen),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text('Player Free', style: Theme.of(sheetContext).textTheme.headlineSmall),
-            const SizedBox(height: AppSpacing.xs),
-            const Text('Player Pro purchases, restores and plan management are coming soon.'),
-            const SizedBox(height: AppSpacing.xl),
-            FilledButton(
-              onPressed: () {
-                Navigator.of(sheetContext).pop();
-                context.push('/paywall');
-              },
-              child: const Text('Explore Player Pro'),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            OutlinedButton(onPressed: () => _closeWithMessage(sheetContext, 'Restoring purchases isn\'t live yet. You weren\'t charged.'), child: const Text('Restore purchases')),
-          ],
+  Future<void> _showSubscription() {
+    final kidDevice = ref.read(authStateProvider).value is KidDeviceSession;
+    final plan = planLabel(ref);
+    final pro = plan != 'Free plan';
+    return showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, AppSpacing.screen),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(pro ? plan : 'Player Free', style: Theme.of(sheetContext).textTheme.headlineSmall),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                kidDevice
+                    ? 'A parent manages the plan from their own phone.'
+                    : (pro ? 'Thanks for supporting How To Hockey.' : 'Player Pro unlocks the skill radar, PR Vault, session breakdowns and unlimited saved routines.'),
+              ),
+              if (!kidDevice) ...[
+                const SizedBox(height: AppSpacing.xl),
+                FilledButton(
+                  onPressed: () {
+                    Navigator.of(sheetContext).pop();
+                    context.push('/paywall');
+                  },
+                  child: Text(pro ? 'Manage plan' : 'Explore Player Pro'),
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                OutlinedButton(
+                  onPressed: () {
+                    Navigator.of(sheetContext).pop();
+                    unawaited(restorePurchasesWithMessage(context, ref));
+                  },
+                  child: const Text('Restore purchases'),
+                ),
+              ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-
-  void _closeWithMessage(BuildContext sheetContext, String message) {
-    Navigator.of(sheetContext).pop();
-    showFeatureMessage(context, message);
+    );
   }
 }
 

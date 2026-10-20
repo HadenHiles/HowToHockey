@@ -98,7 +98,7 @@ as String?,
 @override
 @pragma('vm:prefer-inline')
 $DrillPrescriptionCopyWith<$Res> get defaultPrescription {
-
+  
   return $DrillPrescriptionCopyWith<$Res>(_self.defaultPrescription, (value) {
     return _then(_self.copyWith(defaultPrescription: value));
   });
@@ -377,7 +377,7 @@ as String?,
 @override
 @pragma('vm:prefer-inline')
 $DrillPrescriptionCopyWith<$Res> get defaultPrescription {
-
+  
   return $DrillPrescriptionCopyWith<$Res>(_self.defaultPrescription, (value) {
     return _then(_self.copyWith(defaultPrescription: value));
   });

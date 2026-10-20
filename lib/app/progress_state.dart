@@ -75,7 +75,7 @@ List<PersonalBest> bestsSetBy(LifetimeStats stats, TrainingSession session, [Pro
   ];
 }
 
-/// Stand-in for the Player Pro entitlement until purchases are built in Phase 8.
+/// Whether Player Pro features are unlocked for the player being trained.
 final playerProProvider = Provider<bool>((ref) => ref.watch(drillFiltersUnlockedProvider));
 
 /// The drills that put the most time into a skill across the workouts still on the device, most first.

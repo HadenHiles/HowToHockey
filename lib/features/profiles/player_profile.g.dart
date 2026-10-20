@@ -13,6 +13,7 @@ _PlayerProfile _$PlayerProfileFromJson(Map<String, dynamic> json) => _PlayerProf
   birthYear: (json['birthYear'] as num).toInt(),
   isChild: json['isChild'] as bool,
   teamIds: (json['teamIds'] as List<dynamic>?)?.map((e) => e as String).toList() ?? const <String>[],
+  pro: json['pro'] as bool? ?? false,
 );
 
 Map<String, dynamic> _$PlayerProfileToJson(_PlayerProfile instance) => <String, dynamic>{
@@ -22,4 +23,5 @@ Map<String, dynamic> _$PlayerProfileToJson(_PlayerProfile instance) => <String, 
   'birthYear': instance.birthYear,
   'isChild': instance.isChild,
   'teamIds': instance.teamIds,
+  'pro': instance.pro,
 };
