@@ -8,9 +8,25 @@ export type Pillar = 'shotAccuracy' | 'hands' | 'shotPower' | 'passing' | 'speed
 export const PILLARS: Pillar[] = ['shotAccuracy', 'hands', 'shotPower', 'passing', 'speedStrength', 'endurance'];
 export type BestKind = 'accuracy' | 'shotsPerMinute' | 'streak' | 'reps' | 'seconds';
 
-export const MAX_SHOTS_PER_SECOND = 5;
-export const MAX_SESSION_SECONDS = 3 * 3600;
-export const MAX_DAY_SECONDS = 4 * 3600;
+/** The tunable numbers. Defaults here match the app's; Remote Config can change them without a release. */
+export interface Tuning {
+  maxShotsPerSecond: number;
+  maxSessionSeconds: number;
+  maxDaySeconds: number;
+}
+
+export const DEFAULT_TUNING: Tuning = { maxShotsPerSecond: 5, maxSessionSeconds: 3 * 3600, maxDaySeconds: 4 * 3600 };
+
+/** Takes remote values that are sensible and keeps the default for the rest (same ranges as the app). */
+export function tuningFrom(values: Partial<Record<keyof Tuning, number | undefined>>): Tuning {
+  const pick = (v: number | undefined, fallback: number, low: number, high: number) => (v != null && Number.isFinite(v) && v >= low && v <= high ? v : fallback);
+  return {
+    maxShotsPerSecond: pick(values.maxShotsPerSecond, DEFAULT_TUNING.maxShotsPerSecond, 1, 20),
+    maxSessionSeconds: Math.round(pick(values.maxSessionSeconds, DEFAULT_TUNING.maxSessionSeconds, 600, 86400)),
+    maxDaySeconds: Math.round(pick(values.maxDaySeconds, DEFAULT_TUNING.maxDaySeconds, 600, 86400)),
+  };
+}
+
 const KEEP_DAYS = 400;
 
 export interface SetLog {
@@ -69,14 +85,14 @@ export const emptyStats = (): Stats => ({ workouts: 0, seconds: 0, shots: 0, pil
 
 const activeSeconds = (drill: DrillSpec, log: SetLog): number => log.seconds ?? drill.estimatedSecondsPerSet;
 
-export function isCountableSet(drill: DrillSpec, log: SetLog): boolean {
+export function isCountableSet(drill: DrillSpec, log: SetLog, tuning: Tuning = DEFAULT_TUNING): boolean {
   const seconds = log.seconds;
   if (seconds != null && (seconds <= 0 || seconds > 3600)) return false;
   const reps = log.reps;
   if (reps != null) {
     if (reps < 0 || reps > 10000) return false;
     const window = seconds ?? drill.estimatedSecondsPerSet;
-    if (window > 0 && reps / window > MAX_SHOTS_PER_SECOND) return false;
+    if (window > 0 && reps / window > tuning.maxShotsPerSecond) return false;
   }
   const streak = log.streak;
   if (streak != null && (streak < 0 || streak > 100000)) return false;
@@ -85,10 +101,10 @@ export function isCountableSet(drill: DrillSpec, log: SetLog): boolean {
 
 export const isShootingDrill = (drill: DrillSpec): boolean => (drill.weights.shotAccuracy ?? 0) + (drill.weights.shotPower ?? 0) >= 0.5 && drill.tracking !== 'duration';
 
-export function creditFor(workout: WorkoutInput, daySecondsSoFar = 0): Credit {
-  const counted = workout.sets.filter((s) => isCountableSet(s.drill, s.log)).map((s) => ({ ...s, seconds: activeSeconds(s.drill, s.log) }));
+export function creditFor(workout: WorkoutInput, daySecondsSoFar = 0, tuning: Tuning = DEFAULT_TUNING): Credit {
+  const counted = workout.sets.filter((s) => isCountableSet(s.drill, s.log, tuning)).map((s) => ({ ...s, seconds: activeSeconds(s.drill, s.log) }));
   const raw = counted.reduce((sum, s) => sum + s.seconds, 0);
-  const allowed = Math.min(raw, MAX_SESSION_SECONDS, Math.max(0, MAX_DAY_SECONDS - daySecondsSoFar));
+  const allowed = Math.min(raw, tuning.maxSessionSeconds, Math.max(0, tuning.maxDaySeconds - daySecondsSoFar));
   const factor = raw === 0 ? 0 : allowed / raw;
 
   const pillarSeconds: Partial<Record<Pillar, number>> = {};
@@ -138,10 +154,10 @@ export function dayKey(ms: number, tzOffsetMinutes: number): string {
 }
 
 /** Adds a workout to the stats. Returns the new stats and the personal bests it set. */
-export function addWorkout(stats: Stats, workout: WorkoutInput): { stats: Stats; newBests: Best[] } {
+export function addWorkout(stats: Stats, workout: WorkoutInput, tuning: Tuning = DEFAULT_TUNING): { stats: Stats; newBests: Best[] } {
   const key = dayKey(workout.startedAtMs, workout.tzOffsetMinutes);
   const day = stats.days[key] ?? [0, 0];
-  const credit = creditFor(workout, day[0]);
+  const credit = creditFor(workout, day[0], tuning);
 
   const bests = { ...stats.bests };
   const newBests: Best[] = [];

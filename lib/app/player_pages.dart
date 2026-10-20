@@ -24,7 +24,10 @@ import 'app_page.dart';
 import 'account_pages.dart';
 import '../features/progress/progress_stats.dart';
 import 'coach_state.dart';
+import '../features/progress/drill_trends.dart';
+import 'progress_pages.dart';
 import 'progress_state.dart';
+import 'progress_tuning.dart';
 import 'workout_sync.dart';
 import 'training_state.dart';
 import 'workout_history.dart';
@@ -137,7 +140,8 @@ class ProgressPage extends ConsumerWidget {
     const weekdays = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     final streak = stats.currentStreak(now);
     final focus = ref.watch(trainingFocusProvider);
-    final scores = radarScores(stats);
+    final tuning = ref.watch(progressTuningProvider);
+    final scores = radarScores(stats, tuning);
     final topScore = scores.fold(0, (most, score) => score > most ? score : most);
     final focusTop = focus.values.fold(1, (most, points) => points > most ? points : most);
     final plan = [for (final pillar in SkillPillar.values) ((focus[pillar] ?? 0) / focusTop * (topScore < 20 ? 60 : topScore)).round()];
@@ -205,7 +209,8 @@ class ProgressPage extends ConsumerWidget {
           spacing: AppSpacing.xs,
           runSpacing: AppSpacing.xs,
           children: [
-            for (final pillar in SkillPillar.values) ActionChip(label: Text('${pillar.label} · Lv ${stats.levelOf(pillar).level}'), onPressed: pro ? () => _showSkill(context, ref, pillar) : null),
+            for (final pillar in SkillPillar.values)
+              ActionChip(label: Text('${pillar.label} · Lv ${stats.levelOf(pillar, tuning).level}'), onPressed: pro ? () => _showSkill(context, ref, pillar) : null),
           ],
         ),
         const SizedBox(height: AppSpacing.xl),
@@ -228,51 +233,40 @@ class ProgressPage extends ConsumerWidget {
             spacing: AppSpacing.xl,
             runSpacing: AppSpacing.md,
             children: [
-              _HistoryStat(value: _duration(stats.seconds), label: 'active time'),
-              _HistoryStat(value: '${stats.workouts}', label: stats.workouts == 1 ? 'workout' : 'workouts'),
-              _HistoryStat(value: streak == 0 ? 'None' : '$streak ${streak == 1 ? 'day' : 'days'}', label: 'current streak'),
-              _HistoryStat(value: '${stats.longestStreak()} ${stats.longestStreak() == 1 ? 'day' : 'days'}', label: 'longest streak'),
+              HistoryStat(value: _duration(stats.seconds), label: 'active time'),
+              HistoryStat(value: '${stats.workouts}', label: stats.workouts == 1 ? 'workout' : 'workouts'),
+              HistoryStat(value: streak == 0 ? 'None' : '$streak ${streak == 1 ? 'day' : 'days'}', label: 'current streak'),
+              HistoryStat(value: '${stats.longestStreak()} ${stats.longestStreak() == 1 ? 'day' : 'days'}', label: 'longest streak'),
             ],
           ),
         ),
         const SizedBox(height: AppSpacing.xl),
-        const SectionHeading(title: 'Recent training'),
+        const SectionHeading(title: 'Drill by drill'),
+        const SizedBox(height: AppSpacing.md),
+        ProLocked(
+          unlocked: pro,
+          message: 'See how every drill has gone, workout by workout.',
+          child: Builder(
+            builder: (context) {
+              final trends = drillTrends([for (final workout in history) workout.toRecord()]);
+              if (trends.isEmpty) return const TrainingCard(child: Text('Finish a workout and each drill\'s results show up here.'));
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (final trend in trends.take(3)) ...[DrillTrendCard(trend: trend), const SizedBox(height: AppSpacing.sm)],
+                  if (trends.length > 3) OutlinedButton(onPressed: () => context.push('/progress/drills'), child: Text('See all ${trends.length} drills')),
+                ],
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: AppSpacing.xl),
+        SectionHeading(title: 'Recent training', action: history.length > 5 ? 'See all' : null, onAction: () => context.push('/history')),
         const SizedBox(height: AppSpacing.md),
         if (history.isEmpty)
           const TrainingCard(child: Text('No workouts yet. Finish one and it shows up here.'))
         else
-          for (final workout in history.take(5)) ...[
-            TrainingCard(
-              onTap: () => context.push('/history/${workoutId(workout)}'),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(child: Text(workoutTitle(workout), style: Theme.of(context).textTheme.titleLarge)),
-                      Icon(Icons.arrow_outward, color: Theme.of(context).colorScheme.primary, size: 18),
-                    ],
-                  ),
-                  const SizedBox(height: AppSpacing.sm),
-                  Text(
-                    '${workoutDateLabel(workout.startedAt!.toLocal(), clock.now()).toUpperCase()}  ·  ${(workout.activeSeconds / 60).round()} ACTIVE MIN',
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
-                  const SizedBox(height: AppSpacing.md),
-                  Wrap(
-                    spacing: AppSpacing.xl,
-                    runSpacing: AppSpacing.sm,
-                    children: [
-                      _HistoryStat(value: '${shotsLogged(workout)}', label: 'shots'),
-                      _HistoryStat(value: '${workout.drills.length}', label: workout.drills.length == 1 ? 'drill' : 'drills'),
-                      _HistoryStat(value: '${workout.logs.length}', label: workout.logs.length == 1 ? 'set' : 'sets'),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-          ],
+          for (final workout in history.take(5)) ...[WorkoutHistoryCard(workout: workout), const SizedBox(height: AppSpacing.sm)],
         const SizedBox(height: AppSpacing.xl),
         TrainingCard(
           onTap: () => showModalBottomSheet<void>(
@@ -343,8 +337,8 @@ class ProgressPage extends ConsumerWidget {
   }
 }
 
-class _HistoryStat extends StatelessWidget {
-  const _HistoryStat({required this.value, required this.label});
+class HistoryStat extends StatelessWidget {
+  const HistoryStat({required this.value, required this.label, super.key});
 
   final String value;
   final String label;
@@ -1235,7 +1229,7 @@ class _PersonalBests extends ConsumerWidget {
             ),
             for (final best in (bests.where((b) => b.kind == kind).toList()..sort((a, b) => b.value.compareTo(a.value)))) ...[
               TrainingCard(
-                onTap: history.byId(best.workoutId) == null ? null : () => context.push('/history/${best.workoutId}'),
+                onTap: () => history.byId(best.workoutId) == null ? _showOlderBest(context, best) : context.push('/history/${best.workoutId}'),
                 child: Row(
                   children: [
                     Expanded(
@@ -1261,9 +1255,10 @@ class _PersonalBests extends ConsumerWidget {
 }
 
 void _showSkill(BuildContext context, WidgetRef ref, SkillPillar pillar) {
-  final level = ref.read(progressStatsProvider).levelOf(pillar);
+  final tuning = ref.read(progressTuningProvider);
+  final level = ref.read(progressStatsProvider).levelOf(pillar, tuning);
   final top = topDrillsFor(pillar, ref.read(workoutHistoryProvider));
-  final nextHours = level.level >= maxLevel ? null : (secondsForLevel(level.level + 1) - level.seconds) / 3600;
+  final nextHours = level.level >= maxLevel ? null : (secondsForLevel(level.level + 1, tuning) - level.seconds) / 3600;
   showModalBottomSheet<void>(
     context: context,
     useRootNavigator: true,
@@ -1344,4 +1339,32 @@ class _WeekCard extends ConsumerWidget {
       ),
     );
   }
+}
+
+/// A personal best from a workout that has aged out of the latest 60 kept on the device.
+void _showOlderBest(BuildContext context, PersonalBest best) {
+  showModalBottomSheet<void>(
+    context: context,
+    useRootNavigator: true,
+    showDragHandle: true,
+    builder: (sheetContext) {
+      final theme = Theme.of(sheetContext);
+      return SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, AppSpacing.screen),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(best.title, style: theme.textTheme.headlineSmall),
+              const SizedBox(height: AppSpacing.xs),
+              Text('${best.valueLabel} · ${workoutDateLabel(best.achievedAt.toLocal(), clock.now())}', style: theme.textTheme.titleMedium),
+              const SizedBox(height: AppSpacing.sm),
+              const Text('That workout is older than the latest 60 kept on this device, so its full summary isn\'t available. The best itself is saved to your account.'),
+            ],
+          ),
+        ),
+      );
+    },
+  );
 }

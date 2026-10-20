@@ -1884,6 +1884,146 @@
     },
     "bests": {}
    }
+  },
+  {
+   "name": "tuned caps and shot speed",
+   "daySecondsSoFar": 500,
+   "tuning": {
+    "maxShotsPerSecond": 1,
+    "maxSessionSeconds": 600,
+    "maxDaySeconds": 900
+   },
+   "workout": {
+    "id": "a",
+    "startedAtMs": 1792500000000,
+    "tzOffsetMinutes": 0,
+    "sets": [
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 100,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 100,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 100,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 100,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 100,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 100,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 100,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 100,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 100,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "quick",
+      "log": {
+       "seconds": 100,
+       "loggedAtMs": 1792500000000
+      }
+     },
+     {
+      "drill": "corner",
+      "log": {
+       "reps": 100,
+       "hits": 50,
+       "seconds": 60,
+       "loggedAtMs": 1792500000000
+      }
+     }
+    ]
+   },
+   "expected": {
+    "seconds": 400.0,
+    "shots": 0,
+    "pillarSeconds": {
+     "hands": 320.0,
+     "speedStrength": 80.0
+    },
+    "bests": {
+     "seconds:quiet-hands-quick-feet": 100.0
+    }
+   }
+  },
+  {
+   "name": "tuned shot speed alone",
+   "daySecondsSoFar": 0,
+   "tuning": {
+    "maxShotsPerSecond": 20
+   },
+   "workout": {
+    "id": "a",
+    "startedAtMs": 1792500000000,
+    "tzOffsetMinutes": 0,
+    "sets": [
+     {
+      "drill": "corner",
+      "log": {
+       "reps": 900,
+       "hits": 450,
+       "seconds": 60,
+       "loggedAtMs": 1792500000000
+      }
+     }
+    ]
+   },
+   "expected": {
+    "seconds": 60.0,
+    "shots": 900,
+    "pillarSeconds": {
+     "shotAccuracy": 48.0,
+     "shotPower": 12.0
+    },
+    "bests": {
+     "accuracy:pick-your-corner": 50.0
+    }
+   }
   }
  ],
  "sequences": [

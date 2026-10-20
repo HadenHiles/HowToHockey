@@ -658,3 +658,66 @@ class _ProgressPainter extends CustomPainter {
   @override
   bool shouldRepaint(_ProgressPainter oldDelegate) => progress != oldDelegate.progress || colors != oldDelegate.colors;
 }
+
+/// A small line of how a number has moved, oldest on the left. The last point is marked.
+class Sparkline extends StatelessWidget {
+  const Sparkline({required this.values, required this.semanticLabel, super.key, this.height = 48});
+
+  final List<double> values;
+  final String semanticLabel;
+  final double height;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    label: semanticLabel,
+    child: ExcludeSemantics(
+      child: SizedBox(
+        width: double.infinity,
+        height: height,
+        child: CustomPaint(painter: _SparklinePainter(values, Theme.of(context).colorScheme.primary, Theme.of(context).extension<AppColors>()!.border)),
+      ),
+    ),
+  );
+}
+
+class _SparklinePainter extends CustomPainter {
+  const _SparklinePainter(this.values, this.color, this.baseline);
+
+  final List<double> values;
+  final Color color;
+  final Color baseline;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (values.isEmpty) return;
+    const pad = 5.0;
+    final low = values.reduce(math.min);
+    final high = values.reduce(math.max);
+    final range = high - low;
+    Offset at(int i) {
+      final x = values.length == 1 ? size.width / 2 : pad + (size.width - pad * 2) * i / (values.length - 1);
+      final y = range == 0 ? size.height / 2 : size.height - pad - (size.height - pad * 2) * (values[i] - low) / range;
+      return Offset(x, y);
+    }
+
+    canvas.drawLine(Offset(0, size.height - 1), Offset(size.width, size.height - 1), Paint()..color = baseline);
+    if (values.length > 1) {
+      final path = Path()..moveTo(at(0).dx, at(0).dy);
+      for (var i = 1; i < values.length; i++) {
+        path.lineTo(at(i).dx, at(i).dy);
+      }
+      canvas.drawPath(
+        path,
+        Paint()
+          ..color = color.withValues(alpha: .6)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2
+          ..strokeJoin = StrokeJoin.round,
+      );
+    }
+    canvas.drawCircle(at(values.length - 1), 4, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(_SparklinePainter old) => old.values != values || old.color != color || old.baseline != baseline;
+}

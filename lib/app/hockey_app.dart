@@ -12,6 +12,7 @@ import 'manual_logger_pages.dart';
 import 'onboarding_pages.dart';
 import 'parent_pages.dart';
 import 'player_pages.dart';
+import 'progress_pages.dart';
 import 'app_page.dart';
 import 'session_pages.dart';
 import 'training_pages.dart';
@@ -187,6 +188,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/rest', redirect: (_, _) => '/train/session'),
       GoRoute(path: '/session', redirect: (_, _) => '/train/session'),
       GoRoute(path: '/summary', builder: (_, _) => const SummaryPage()),
+      GoRoute(path: '/history', builder: (_, _) => const HistoryListPage()),
+      GoRoute(path: '/progress/drills', builder: (_, _) => const DrillBreakdownPage()),
       GoRoute(
         path: '/history/:id',
         builder: (_, state) => SummaryPage(workoutId: state.pathParameters['id']),

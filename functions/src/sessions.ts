@@ -1,6 +1,6 @@
 import type { Firestore, Timestamp } from 'firebase-admin/firestore';
 
-import { addWorkout, emptyStats, PILLARS, type Best, type DrillSpec, type Pillar, type SetLog, type Stats, type Tracking, type WorkoutInput } from './progress';
+import { addWorkout, DEFAULT_TUNING, emptyStats, PILLARS, type Best, type DrillSpec, type Pillar, type SetLog, type Stats, type Tracking, type Tuning, type WorkoutInput } from './progress';
 
 const TRACKING: Tracking[] = ['volume', 'duration', 'density', 'accuracy', 'streak', 'binary'];
 const MAX_SETS = 300;
@@ -42,7 +42,7 @@ function cleanWeights(raw: unknown): Partial<Record<Pillar, number>> {
  * Credits a finished session to its profile, once. Drills in the catalog use the catalog's numbers, so
  * a doctored phone can't change what a drill is worth; custom and manual drills use their own, within sane limits.
  */
-export async function processSession(db: Firestore, profileId: string, sessionId: string, now: Date = new Date()): Promise<Outcome> {
+export async function processSession(db: Firestore, profileId: string, sessionId: string, now: Date = new Date(), tuning: Tuning = DEFAULT_TUNING): Promise<Outcome> {
   const profileRef = db.collection('profiles').doc(profileId);
   const sessionRef = profileRef.collection('sessions').doc(sessionId);
   const statsRef = profileRef.collection('stats').doc('lifetime');
@@ -87,7 +87,7 @@ export async function processSession(db: Firestore, profileId: string, sessionId
     if (sets.length > MAX_SETS) return reject('too many sets');
 
     const before = statsSnap.exists ? readStats(statsSnap.data()!) : emptyStats();
-    const { stats, newBests } = addWorkout(before, { id: sessionId, startedAtMs, tzOffsetMinutes, sets });
+    const { stats, newBests } = addWorkout(before, { id: sessionId, startedAtMs, tzOffsetMinutes, sets }, tuning);
     const recent = [...(Array.isArray(statsSnap.data()?.recent) ? (statsSnap.data()!.recent as string[]) : []), sessionId].slice(-RECENT_IDS);
     tx.set(statsRef, { ...writeStats(stats), recent });
     for (const best of newBests) tx.set(profileRef.collection('prs').doc(best.key), bestDoc(best));

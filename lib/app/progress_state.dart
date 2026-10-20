@@ -9,6 +9,7 @@ import '../features/drills/models/drill.dart';
 import '../features/drills/set_calculations.dart';
 import '../features/progress/progress_stats.dart';
 import '../features/settings/appearance_settings_controller.dart';
+import 'progress_tuning.dart';
 import 'training_state.dart';
 import 'workout_history.dart';
 
@@ -39,14 +40,14 @@ class LifetimeStatsNotifier extends Notifier<LifetimeStats> {
     // First run after this was added, or damaged data: rebuild from the workouts still on the device.
     var stats = const LifetimeStats();
     for (final workout in ref.read(workoutHistoryProvider).reversed) {
-      stats = stats.add(workout.toRecord()).stats;
+      stats = stats.add(workout.toRecord(), tuning: ref.read(progressTuningProvider)).stats;
     }
     return stats;
   }
 
   /// Counts a finished workout. Counting the same one twice changes nothing.
   void record(TrainingSession session) {
-    final next = state.add(session.toRecord()).stats;
+    final next = state.add(session.toRecord(), tuning: ref.read(progressTuningProvider)).stats;
     if (identical(next, state)) return;
     state = next;
     unawaited(
@@ -60,7 +61,7 @@ class LifetimeStatsNotifier extends Notifier<LifetimeStats> {
 final lifetimeStatsProvider = NotifierProvider<LifetimeStatsNotifier, LifetimeStats>(LifetimeStatsNotifier.new);
 
 /// Personal bests a workout set: the ones already recorded for it, or, if it isn't counted yet, the ones it would set.
-List<PersonalBest> bestsSetBy(LifetimeStats stats, TrainingSession session) {
+List<PersonalBest> bestsSetBy(LifetimeStats stats, TrainingSession session, [ProgressTuning tuning = ProgressTuning.defaults]) {
   final record = session.toRecord();
   if (stats.counted.contains(record.id)) {
     return [
@@ -69,7 +70,7 @@ List<PersonalBest> bestsSetBy(LifetimeStats stats, TrainingSession session) {
     ];
   }
   return [
-    for (final best in creditFor(record).bests.values)
+    for (final best in creditFor(record, tuning: tuning).bests.values)
       if (stats.bests[best.key] == null || best.value > stats.bests[best.key]!.value) best,
   ];
 }

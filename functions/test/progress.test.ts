@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
-import { addWorkout, creditFor, dayKey, emptyStats, type DrillSpec, type SetLog, type WorkoutInput } from '../src/progress';
+import { addWorkout, creditFor, dayKey, emptyStats, tuningFrom, type DrillSpec, type SetLog, type Tuning, type WorkoutInput } from '../src/progress';
 
 interface VectorWorkout {
   id: string;
@@ -12,7 +12,7 @@ interface VectorWorkout {
 
 const vectors = JSON.parse(readFileSync(new URL('./vectors/progress.json', import.meta.url), 'utf8')) as {
   drills: Record<string, DrillSpec>;
-  cases: { name: string; daySecondsSoFar: number; workout: VectorWorkout; expected: Record<string, unknown> }[];
+  cases: { name: string; daySecondsSoFar: number; tuning?: Partial<Record<keyof Tuning, number>>; workout: VectorWorkout; expected: Record<string, unknown> }[];
   sequences: { name: string; workouts: VectorWorkout[]; expected: Record<string, unknown> }[];
 };
 
@@ -25,7 +25,7 @@ const bestValues = (bests: Record<string, { value: number }>) => Object.fromEntr
 describe('stats rules match the app', () => {
   for (const c of vectors.cases) {
     it(`credit: ${c.name}`, () => {
-      const credit = creditFor(toInput(c.workout), c.daySecondsSoFar);
+      const credit = creditFor(toInput(c.workout), c.daySecondsSoFar, tuningFrom(c.tuning ?? {}));
       expect({ seconds: round6(credit.seconds), shots: credit.shots, pillarSeconds: roundMap(credit.pillarSeconds), bests: bestValues(credit.bests) }).toEqual(c.expected);
     });
   }
@@ -50,6 +50,12 @@ describe('stats rules match the app', () => {
       }).toEqual(s.expected);
     });
   }
+
+  it('ignores remote values that are missing or out of range', () => {
+    expect(tuningFrom({})).toEqual({ maxShotsPerSecond: 5, maxSessionSeconds: 10800, maxDaySeconds: 14400 });
+    expect(tuningFrom({ maxShotsPerSecond: 8, maxSessionSeconds: 7200, maxDaySeconds: 9000 })).toEqual({ maxShotsPerSecond: 8, maxSessionSeconds: 7200, maxDaySeconds: 9000 });
+    expect(tuningFrom({ maxShotsPerSecond: 0, maxSessionSeconds: -1, maxDaySeconds: Number.NaN })).toEqual({ maxShotsPerSecond: 5, maxSessionSeconds: 10800, maxDaySeconds: 14400 });
+  });
 
   it('turns a moment into the player\'s own calendar day', () => {
     const lateEvening = Date.UTC(2026, 9, 21, 2, 0);

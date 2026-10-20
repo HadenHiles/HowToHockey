@@ -87,7 +87,11 @@ void main() {
 
   for (final c in vectors['cases'] as List) {
     test('credit: ${c['name']}', () {
-      final actual = creditJson(creditFor(recordFrom(c['workout'], library), daySecondsSoFar: (c['daySecondsSoFar'] as num).toDouble()));
+      final t = c['tuning'] as Map<String, dynamic>?;
+      final tuning = t == null
+          ? ProgressTuning.defaults
+          : ProgressTuning.fromValues(maxShotsPerSecond: t['maxShotsPerSecond'] as num?, maxSessionSeconds: t['maxSessionSeconds'] as num?, maxDaySeconds: t['maxDaySeconds'] as num?);
+      final actual = creditJson(creditFor(recordFrom(c['workout'], library), daySecondsSoFar: (c['daySecondsSoFar'] as num).toDouble(), tuning: tuning));
       computed['case:${c['name']}'] = actual;
       if (!writeVectors) expect(jsonDecode(jsonEncode(actual)), c['expected']);
     });

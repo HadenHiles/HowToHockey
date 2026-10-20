@@ -9,6 +9,7 @@ import { createChildProfile as createChildProfileFor, createOwnProfile as create
 
 import { deleteAccount as deleteAccountFor } from './accounts';
 import { processSession } from './sessions';
+import { loadTuning } from './tuning';
 import { createPairingCode as createPairingCodeFor, redeemPairingCode as redeemPairingCodeFor } from './pairing';
 
 initializeApp();
@@ -33,5 +34,5 @@ export const deleteAccount = onCall((request) => deleteAccountFor(getFirestore()
 
 // Runs next to the database (Toronto), which Firestore triggers require. Credits a finished workout to the profile's lifetime stats and personal bests, once.
 export const onSessionCompleted = onDocumentCreated({ document: 'profiles/{profileId}/sessions/{sessionId}', region: 'northamerica-northeast2' }, async (event) => {
-  await processSession(getFirestore(), event.params.profileId, event.params.sessionId);
+  await processSession(getFirestore(), event.params.profileId, event.params.sessionId, new Date(), await loadTuning());
 });

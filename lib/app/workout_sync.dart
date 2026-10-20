@@ -11,6 +11,7 @@ import '../features/progress/progress_stats.dart';
 import '../features/sessions/session_repository.dart';
 import '../features/settings/appearance_settings_controller.dart';
 import 'progress_state.dart';
+import 'progress_tuning.dart';
 import 'training_state.dart';
 import 'workout_history.dart';
 
@@ -170,6 +171,7 @@ final activeCloudStatsProvider = Provider<AsyncValue<LifetimeStats?>>((ref) {
 /// Guests, who have no profile yet, see what this device has recorded.
 final progressStatsProvider = Provider<LifetimeStats>((ref) {
   final player = ref.watch(activePlayerProvider);
+  final tuning = ref.watch(progressTuningProvider);
   if (player == null) return ref.watch(lifetimeStatsProvider);
   final cloud = ref.watch(cloudStatsProvider(player.id));
   var stats = (cloud is AsyncData<LifetimeStats?> ? cloud.value : null) ?? const LifetimeStats();
@@ -179,7 +181,7 @@ final progressStatsProvider = Provider<LifetimeStats>((ref) {
   for (final MapEntry(:key, :value) in ref.watch(workoutSyncProvider).entries) {
     if ((value.profileId ?? ownId) != player.id) continue;
     final session = history.byId(key);
-    if (session != null) stats = stats.add(session.toRecord()).stats;
+    if (session != null) stats = stats.add(session.toRecord(), tuning: tuning).stats;
   }
   return stats;
 });

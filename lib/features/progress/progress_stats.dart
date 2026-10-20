@@ -3,18 +3,52 @@ import 'dart:math' as math;
 import '../drills/models/drill.dart';
 import '../drills/set_calculations.dart';
 
-/// The most shots a person can plausibly take in a second; anything faster is a typo or a stuck timer.
-const maxShotsPerSecond = 5;
-const maxSessionSeconds = 3 * 3600;
-const maxDaySeconds = 4 * 3600;
+/// The numbers behind the rules, so they can be tuned from Remote Config without shipping an update.
+/// The server uses the same values when it counts a workout (`functions/src/progress.ts`).
+class ProgressTuning {
+  const ProgressTuning({this.maxShotsPerSecond = 5, this.maxSessionSeconds = 3 * 3600, this.maxDaySeconds = 4 * 3600, this.levelOneSeconds = 3600, this.levelGrowth = 1.65});
 
-/// Hours of training for level 1, and how much more each level asks for. Level 10 is about 90 hours.
-const levelOneSeconds = 3600.0;
-const levelGrowth = 1.65;
+  /// The most shots a person can plausibly take in a second; anything faster is a typo or a stuck timer.
+  final double maxShotsPerSecond;
+  final int maxSessionSeconds;
+  final int maxDaySeconds;
+
+  /// Seconds of training for level 1, and how much more each level asks for. Level 10 is about 90 hours.
+  final double levelOneSeconds;
+  final double levelGrowth;
+
+  static const defaults = ProgressTuning();
+
+  /// Builds tuning from remote values, keeping the default for anything missing or outside a sane range.
+  factory ProgressTuning.fromValues({num? maxShotsPerSecond, num? maxSessionSeconds, num? maxDaySeconds, num? levelOneSeconds, num? levelGrowth}) {
+    double pick(num? value, double fallback, double low, double high) => value != null && value.isFinite && value >= low && value <= high ? value.toDouble() : fallback;
+    const d = defaults;
+    return ProgressTuning(
+      maxShotsPerSecond: pick(maxShotsPerSecond, d.maxShotsPerSecond, 1, 20),
+      maxSessionSeconds: pick(maxSessionSeconds, d.maxSessionSeconds.toDouble(), 600, 86400).round(),
+      maxDaySeconds: pick(maxDaySeconds, d.maxDaySeconds.toDouble(), 600, 86400).round(),
+      levelOneSeconds: pick(levelOneSeconds, d.levelOneSeconds, 600, 36000),
+      levelGrowth: pick(levelGrowth, d.levelGrowth, 1.2, 3),
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is ProgressTuning &&
+      other.maxShotsPerSecond == maxShotsPerSecond &&
+      other.maxSessionSeconds == maxSessionSeconds &&
+      other.maxDaySeconds == maxDaySeconds &&
+      other.levelOneSeconds == levelOneSeconds &&
+      other.levelGrowth == levelGrowth;
+
+  @override
+  int get hashCode => Object.hash(maxShotsPerSecond, maxSessionSeconds, maxDaySeconds, levelOneSeconds, levelGrowth);
+}
+
 const maxLevel = 10;
 
 /// Seconds of training needed to reach [level] (1 to 10).
-double secondsForLevel(int level) => levelOneSeconds * math.pow(levelGrowth, level - 1);
+double secondsForLevel(int level, [ProgressTuning tuning = ProgressTuning.defaults]) => tuning.levelOneSeconds * math.pow(tuning.levelGrowth, level - 1);
 
 class SkillLevel {
   const SkillLevel({required this.level, required this.progress, required this.seconds});
@@ -32,26 +66,26 @@ class SkillLevel {
   double get hours => seconds / 3600;
 }
 
-SkillLevel skillLevelFor(double seconds) {
+SkillLevel skillLevelFor(double seconds, [ProgressTuning tuning = ProgressTuning.defaults]) {
   var level = 0;
-  while (level < maxLevel && seconds >= secondsForLevel(level + 1)) {
+  while (level < maxLevel && seconds >= secondsForLevel(level + 1, tuning)) {
     level++;
   }
   if (level >= maxLevel) return SkillLevel(level: maxLevel, progress: 0, seconds: seconds);
-  final floor = level == 0 ? 0.0 : secondsForLevel(level);
-  final next = secondsForLevel(level + 1);
+  final floor = level == 0 ? 0.0 : secondsForLevel(level, tuning);
+  final next = secondsForLevel(level + 1, tuning);
   return SkillLevel(level: level, progress: ((seconds - floor) / (next - floor)).clamp(0.0, 0.999999), seconds: seconds);
 }
 
 /// A set that can be trusted for stats. Impossible entries (too many shots too fast) are left out.
-bool isCountableSet(Drill drill, SetLog log) {
+bool isCountableSet(Drill drill, SetLog log, [ProgressTuning tuning = ProgressTuning.defaults]) {
   final seconds = log.seconds;
   if (seconds != null && (seconds <= 0 || seconds > 3600)) return false;
   final reps = log.reps;
   if (reps != null) {
     if (reps < 0 || reps > 10000) return false;
     final window = seconds ?? drill.estimatedSecondsPerSet;
-    if (window > 0 && reps / window > maxShotsPerSecond) return false;
+    if (window > 0 && reps / window > tuning.maxShotsPerSecond) return false;
   }
   final streak = log.streak;
   if (streak != null && (streak < 0 || streak > 100000)) return false;
@@ -129,16 +163,16 @@ class WorkoutRecord {
 }
 
 /// Works out what a workout is worth. [daySecondsSoFar] is what that day already earned, for the daily cap.
-WorkoutCredit creditFor(WorkoutRecord workout, {double daySecondsSoFar = 0}) {
+WorkoutCredit creditFor(WorkoutRecord workout, {double daySecondsSoFar = 0, ProgressTuning tuning = ProgressTuning.defaults}) {
   final byId = {for (final drill in workout.drills) drill.id: drill};
   final counted = <({Drill drill, SetLog log, int seconds})>[];
   for (final entry in workout.logs) {
     final drill = byId[entry.drillId];
-    if (drill == null || !isCountableSet(drill, entry.log)) continue;
+    if (drill == null || !isCountableSet(drill, entry.log, tuning)) continue;
     counted.add((drill: drill, log: entry.log, seconds: activeSecondsForSet(entry.log, drill)));
   }
   final raw = counted.fold<int>(0, (sum, set) => sum + set.seconds);
-  final allowed = math.min(math.min(raw.toDouble(), maxSessionSeconds.toDouble()), math.max(0.0, maxDaySeconds - daySecondsSoFar));
+  final allowed = math.min(math.min(raw.toDouble(), tuning.maxSessionSeconds.toDouble()), math.max(0.0, tuning.maxDaySeconds - daySecondsSoFar));
   final factor = raw == 0 ? 0.0 : allowed / raw;
 
   final pillarSeconds = <SkillPillar, double>{};
@@ -220,13 +254,13 @@ class LifetimeStats {
   /// Workouts already counted, so adding one twice changes nothing.
   final Set<String> counted;
 
-  SkillLevel levelOf(SkillPillar pillar) => skillLevelFor(pillarSeconds[pillar] ?? 0);
+  SkillLevel levelOf(SkillPillar pillar, [ProgressTuning tuning = ProgressTuning.defaults]) => skillLevelFor(pillarSeconds[pillar] ?? 0, tuning);
 
   /// Adds a finished workout. Returns the new stats and the personal bests it set.
-  ({LifetimeStats stats, List<PersonalBest> newBests}) add(WorkoutRecord workout) {
+  ({LifetimeStats stats, List<PersonalBest> newBests}) add(WorkoutRecord workout, {ProgressTuning tuning = ProgressTuning.defaults}) {
     if (counted.contains(workout.id)) return (stats: this, newBests: const []);
     final key = dayKeyAt(workout.startedAt, workout.tzOffsetMinutes);
-    final credit = creditFor(workout, daySecondsSoFar: days[key]?.seconds ?? 0);
+    final credit = creditFor(workout, daySecondsSoFar: days[key]?.seconds ?? 0, tuning: tuning);
 
     final nextBests = {...bests};
     final newBests = <PersonalBest>[];
@@ -346,4 +380,6 @@ class LifetimeStats {
 }
 
 /// How the radar reads: each skill's level plus progress, on a 0 to 100 scale.
-List<int> radarScores(LifetimeStats stats) => [for (final pillar in SkillPillar.values) (stats.levelOf(pillar).vertex * 10).round().clamp(0, 100)];
+List<int> radarScores(LifetimeStats stats, [ProgressTuning tuning = ProgressTuning.defaults]) => [
+  for (final pillar in SkillPillar.values) (stats.levelOf(pillar, tuning).vertex * 10).round().clamp(0, 100),
+];

@@ -77,10 +77,41 @@ void main() {
     test('a session and a day each have a cap', () {
       final sets = [for (var i = 0; i < 200; i++) ('quiet-hands-quick-feet', setLog(seconds: 3000))];
       final credit = creditFor(workout('w', noon, sets));
-      expect(credit.seconds, maxSessionSeconds);
-      expect(credit.pillarSeconds.values.fold(0.0, (a, b) => a + b), closeTo(maxSessionSeconds, 0.5));
-      expect(creditFor(workout('w', noon, sets), daySecondsSoFar: maxDaySeconds - 600.0).seconds, 600);
-      expect(creditFor(workout('w', noon, sets), daySecondsSoFar: maxDaySeconds.toDouble()).seconds, 0);
+      expect(credit.seconds, ProgressTuning.defaults.maxSessionSeconds);
+      expect(credit.pillarSeconds.values.fold(0.0, (a, b) => a + b), closeTo(ProgressTuning.defaults.maxSessionSeconds, 0.5));
+      expect(creditFor(workout('w', noon, sets), daySecondsSoFar: ProgressTuning.defaults.maxDaySeconds - 600.0).seconds, 600);
+      expect(creditFor(workout('w', noon, sets), daySecondsSoFar: ProgressTuning.defaults.maxDaySeconds.toDouble()).seconds, 0);
+    });
+  });
+
+  group('tuning', () {
+    test('caps, shot speed and level steps follow the tuning', () {
+      const tuning = ProgressTuning(maxShotsPerSecond: 1, maxSessionSeconds: 600, maxDaySeconds: 900, levelOneSeconds: 1800, levelGrowth: 2);
+      final sets = [for (var i = 0; i < 100; i++) ('quiet-hands-quick-feet', setLog(seconds: 100))];
+      expect(creditFor(workout('w', noon, sets), tuning: tuning).seconds, 600);
+      expect(creditFor(workout('w', noon, sets), daySecondsSoFar: 500, tuning: tuning).seconds, 400);
+      expect(isCountableSet(drill('pick-your-corner'), setLog(reps: 100, seconds: 60), tuning), isFalse, reason: 'faster than 1 a second');
+      expect(isCountableSet(drill('pick-your-corner'), setLog(reps: 100, seconds: 60)), isTrue);
+      expect(secondsForLevel(1, tuning), 1800);
+      expect(secondsForLevel(4, tuning), 14400);
+      expect(skillLevelFor(1800, tuning).level, 1);
+      expect(skillLevelFor(3599, tuning).level, 1);
+      expect(skillLevelFor(3600, tuning).level, 2);
+      final stats = const LifetimeStats().add(workout('a', noon, sets), tuning: tuning).stats;
+      expect(stats.seconds, 600);
+      expect(radarScores(LifetimeStats(pillarSeconds: {SkillPillar.hands: 1800}), tuning)[1], 10);
+    });
+
+    test('remote values are used when sensible and ignored when not', () {
+      expect(ProgressTuning.fromValues(), ProgressTuning.defaults);
+      final tuned = ProgressTuning.fromValues(maxShotsPerSecond: 8, maxSessionSeconds: 7200, maxDaySeconds: 10800, levelOneSeconds: 1200, levelGrowth: 1.5);
+      expect(tuned.maxShotsPerSecond, 8);
+      expect(tuned.maxSessionSeconds, 7200);
+      expect(tuned.maxDaySeconds, 10800);
+      expect(tuned.levelOneSeconds, 1200);
+      expect(tuned.levelGrowth, 1.5);
+      final bad = ProgressTuning.fromValues(maxShotsPerSecond: 0, maxSessionSeconds: -5, maxDaySeconds: double.nan, levelOneSeconds: 99999999, levelGrowth: 0.5);
+      expect(bad, ProgressTuning.defaults);
     });
   });
 
@@ -136,8 +167,8 @@ void main() {
       for (var i = 0; i < 4; i++) {
         stats = stats.add(workout('w$i', noon.add(Duration(minutes: i)), long)).stats;
       }
-      expect(stats.days[dayKey(noon)]!.seconds, closeTo(maxDaySeconds, 0.5));
-      expect(stats.seconds, closeTo(maxDaySeconds, 0.5));
+      expect(stats.days[dayKey(noon)]!.seconds, closeTo(ProgressTuning.defaults.maxDaySeconds, 0.5));
+      expect(stats.seconds, closeTo(ProgressTuning.defaults.maxDaySeconds, 0.5));
     });
 
     test('streaks count consecutive days, allow today to still be open, and break on a gap', () {

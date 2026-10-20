@@ -69,7 +69,7 @@ void main() {
       expect(find.text('0 shots this week  ·  0 min active'), findsOneWidget);
       expect(find.text('None'), findsOneWidget);
       expect(find.byType(SkillRadar), findsOneWidget, reason: 'blurred behind the unlock prompt');
-      expect(find.text('Unlock with Player Pro'), findsNWidgets(2));
+      expect(find.text('Unlock with Player Pro'), findsNWidgets(3));
     });
   });
 
@@ -90,8 +90,8 @@ void main() {
       expect(find.text('2 days'), findsWidgets);
       expect(find.text('Unlock with Player Pro'), findsNothing);
       expect(find.text('Accuracy · Lv 0'), findsOneWidget);
-      await tester.ensureVisible(find.text('90%'));
-      expect(find.text('90%'), findsOneWidget, reason: 'best accuracy, 18 of 20');
+      await tester.ensureVisible(find.text('90%').first);
+      expect(find.text('90%'), findsWidgets, reason: 'best accuracy, 18 of 20');
       expect(find.text('25'), findsWidgets, reason: 'best streak');
 
       await tester.ensureVisible(find.text('Accuracy · Lv 0'));
@@ -133,6 +133,86 @@ void main() {
       await tester.tap(find.text('Unlock with Player Pro').first);
       await tester.pumpAndSettle();
       expect(container.read(appRouterProvider).state.uri.path, '/paywall');
+    });
+  });
+
+  testWidgets('drill by drill shows each drill\'s trend to Pro players, and a short list on Progress', (tester) async {
+    await withClock(Clock.fixed(now), () async {
+      final container = await mount(tester, pro: true);
+      final history = container.read(workoutHistoryProvider.notifier);
+      history.add(workout(now.subtract(const Duration(days: 2)), [('pick-your-corner', shots(10, 5)), ('ball-bounce-streak', (at) => SetLog(setIndex: 0, streak: 8, loggedAt: at))]));
+      history.add(workout(now.subtract(const Duration(days: 1)), [('pick-your-corner', shots(10, 7))]));
+      history.add(workout(now, [('pick-your-corner', shots(10, 9))]));
+
+      container.read(appRouterProvider).go('/progress');
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Drill by drill'));
+      expect(find.text('Accuracy per workout · 3 workouts'), findsOneWidget);
+      expect(find.byType(Sparkline), findsWidgets);
+      expect(find.textContaining('See all'), findsNothing, reason: 'only two drills');
+
+      container.read(appRouterProvider).go('/progress/drills');
+      await tester.pumpAndSettle();
+      expect(find.text('Drill by drill'), findsWidgets);
+      expect(find.text('Best streak · 1 workout'), findsOneWidget);
+      expect(find.text('Unlock with Player Pro'), findsNothing);
+      await tester.tap(find.text('Pick your corner').first);
+      await tester.pumpAndSettle();
+      expect(container.read(appRouterProvider).state.uri.path, '/drills/pick-your-corner');
+    });
+  });
+
+  testWidgets('without Player Pro the drill page is a prompt over a blurred preview', (tester) async {
+    await withClock(Clock.fixed(now), () async {
+      final container = await mount(tester);
+      container.read(workoutHistoryProvider.notifier).add(workout(now, [('pick-your-corner', shots(10, 9))]));
+      container.read(appRouterProvider).go('/progress/drills');
+      await tester.pumpAndSettle();
+      expect(find.text('Unlock with Player Pro'), findsOneWidget);
+      expect(find.text('See every drill\'s results, workout by workout.'), findsOneWidget);
+    });
+  });
+
+  testWidgets('the workout history lists every workout, and Progress links to it past five', (tester) async {
+    await withClock(Clock.fixed(now), () async {
+      final container = await mount(tester);
+      final history = container.read(workoutHistoryProvider.notifier);
+      for (var i = 0; i < 7; i++) {
+        history.add(workout(now.subtract(Duration(days: i)), [('pick-your-corner', shots(10, 5))]));
+      }
+      container.read(appRouterProvider).go('/progress');
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.text('See all'), 300);
+      await tester.drag(find.byType(Scrollable).first, const Offset(0, -150));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('See all'));
+      await tester.pumpAndSettle();
+      expect(container.read(appRouterProvider).state.uri.path, '/history');
+      expect(find.text('Your latest 7 workouts, saved on this device.'), findsOneWidget);
+      expect(find.text('Pick your corner'), findsNWidgets(7), reason: 'one card per workout');
+      await tester.tap(find.text('Pick your corner').first);
+      await tester.pumpAndSettle();
+      expect(find.text('Workout summary'), findsWidgets);
+    });
+  });
+
+  testWidgets('a personal best from a workout no longer in history says so instead of going nowhere', (tester) async {
+    await withClock(Clock.fixed(now), () async {
+      final first = workout(now.subtract(const Duration(days: 80)), [('pick-your-corner', shots(10, 9))]);
+      final container = await mount(tester, pro: true);
+      container.read(workoutHistoryProvider.notifier).add(first);
+      for (var i = 0; i < WorkoutHistory.maxWorkouts; i++) {
+        container.read(workoutHistoryProvider.notifier).add(workout(now.subtract(Duration(minutes: i + 1)), [('toe-drag-reps', (at) => SetLog(setIndex: 0, reps: 10, loggedAt: at))]));
+      }
+      expect(container.read(workoutHistoryProvider.notifier).byId(workoutId(first)), isNull);
+      container.read(appRouterProvider).go('/progress');
+      await tester.pumpAndSettle();
+      final card = find.widgetWithText(TrainingCard, 'Pick your corner');
+      await tester.ensureVisible(card);
+      await tester.pumpAndSettle();
+      await tester.tap(card);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('older than the latest 60'), findsOneWidget);
     });
   });
 

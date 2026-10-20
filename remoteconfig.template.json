@@ -1,0 +1,39 @@
+{
+  "parameters": {
+    "progress_max_shots_per_second": {
+      "defaultValue": {
+        "value": "5"
+      },
+      "valueType": "NUMBER",
+      "description": "Most shots a person can take in a second. Sets faster than this are ignored in stats."
+    },
+    "progress_max_session_seconds": {
+      "defaultValue": {
+        "value": "10800"
+      },
+      "valueType": "NUMBER",
+      "description": "Most training seconds one workout can earn (3 hours)."
+    },
+    "progress_max_day_seconds": {
+      "defaultValue": {
+        "value": "14400"
+      },
+      "valueType": "NUMBER",
+      "description": "Most training seconds one player can earn in a day (4 hours)."
+    },
+    "progress_level_one_seconds": {
+      "defaultValue": {
+        "value": "3600"
+      },
+      "valueType": "NUMBER",
+      "description": "Seconds of training for skill level 1 (1 hour)."
+    },
+    "progress_level_growth": {
+      "defaultValue": {
+        "value": "1.65"
+      },
+      "valueType": "NUMBER",
+      "description": "How many times more training each skill level needs than the one before (level 10 is about 90 hours)."
+    }
+  }
+}
