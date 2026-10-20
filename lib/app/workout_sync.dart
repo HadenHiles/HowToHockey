@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/drills/models/drill.dart';
 import '../features/profiles/active_player.dart';
 import '../features/progress/progress_stats.dart';
 import '../features/sessions/session_repository.dart';
@@ -184,4 +185,36 @@ final progressStatsProvider = Provider<LifetimeStats>((ref) {
     if (session != null) stats = stats.add(session.toRecord(), tuning: tuning).stats;
   }
   return stats;
+});
+
+/// Saved workouts for whoever is training, newest first. Guests, who have no profile yet, see what
+/// this device has recorded; a profile never sees another profile's workouts.
+final playerHistoryProvider = Provider<List<TrainingSession>>((ref) {
+  final player = ref.watch(activePlayerProvider);
+  final history = ref.watch(workoutHistoryProvider);
+  if (player == null) return history;
+  final ownId = ref.watch(switchablePlayersProvider).where((p) => !p.isChild).firstOrNull?.id;
+  final owners = ref.watch(workoutOwnersProvider);
+  return [
+    for (final workout in history)
+      if ((owners[workoutId(workout)] ?? ownId) == player.id) workout,
+  ];
+});
+
+/// A drill's most recent logged sets for the player training, for comparing as they log.
+typedef LastResult = ({DateTime when, List<SetLog> sets});
+
+final lastResultsProvider = Provider<Map<String, LastResult>>((ref) {
+  final results = <String, LastResult>{};
+  for (final workout in ref.watch(playerHistoryProvider)) {
+    for (final drill in workout.drills) {
+      if (results.containsKey(drill.id)) continue;
+      final sets = [
+        for (final entry in workout.logs)
+          if (entry.drillId == drill.id) entry.log,
+      ];
+      if (sets.isNotEmpty) results[drill.id] = (when: workout.startedAt!, sets: sets);
+    }
+  }
+  return results;
 });

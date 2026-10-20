@@ -11,6 +11,7 @@ import '../features/coach/routine_generator.dart';
 import '../features/drills/drill_catalog.dart';
 import '../features/drills/models/drill.dart';
 import 'coach_state.dart';
+import 'drill_picker.dart';
 import 'drill_media_card.dart';
 import 'player_pages.dart';
 import 'sample_data.dart';
@@ -345,6 +346,7 @@ class RoutineLibraryPage extends ConsumerWidget {
                   runSpacing: AppSpacing.xs,
                   children: [
                     OutlinedButton.icon(onPressed: () => context.push('/routines/${routine.id}/edit'), icon: const Icon(Icons.edit_outlined), label: const Text('Edit')),
+                    OutlinedButton.icon(onPressed: () => _duplicate(context, ref, routine), icon: const Icon(Icons.copy_outlined), label: const Text('Duplicate')),
                     FilledButton.icon(
                       onPressed: routine.drills.isEmpty
                           ? null
@@ -366,6 +368,17 @@ class RoutineLibraryPage extends ConsumerWidget {
         if (routines.isEmpty) const TrainingCard(child: Text('No routines yet. Create one and it shows up here.')),
       ],
     );
+  }
+
+  Future<void> _duplicate(BuildContext context, WidgetRef ref, RoutinePlan routine) async {
+    try {
+      await ref.read(routineLibraryProvider.notifier).save(RoutinePlan(id: 'routine-${DateTime.now().microsecondsSinceEpoch}', name: '${routine.name} copy', drills: routine.drills));
+      if (context.mounted) showFeatureMessage(context, 'Duplicated "${routine.name}".');
+    } on StateError catch (error) {
+      if (context.mounted) showFeatureMessage(context, error.message);
+    } on PlatformException catch (error) {
+      if (context.mounted) showFeatureMessage(context, 'Couldn\'t duplicate routine: ${error.message ?? error.code}');
+    }
   }
 
   Future<void> _deleteRoutine(BuildContext context, WidgetRef ref, RoutinePlan routine) async {
@@ -418,16 +431,20 @@ class _RoutineBuilderPageState extends ConsumerState<RoutineBuilderPage> {
     _drills = [...?existing?.drills];
   }
 
-  void _toggleDrill(Drill drill, bool selected) {
-    setState(() {
-      _drills.removeWhere((item) => item.id == drill.id);
-      if (selected) _drills.add(drill);
-    });
+  Future<void> _addDrills() async {
+    final chosen = await showDrillPicker(context, title: 'Add drills', excludeIds: _drills.map((drill) => drill.id).toSet());
+    if (chosen != null && chosen.isNotEmpty && mounted) setState(() => _drills.addAll(chosen));
   }
 
-  Future<void> _createDrill() async {
-    final drill = await showModalBottomSheet<Drill>(context: context, isScrollControlled: true, showDragHandle: true, builder: (_) => const _TemplateDrillSheet());
-    if (drill != null && mounted) setState(() => _drills.add(drill));
+  void _move(int from, int to) {
+    if (to < 0 || to >= _drills.length) return;
+    setState(() => _drills.insert(to, _drills.removeAt(from)));
+  }
+
+  void _setSets(int index, int sets) {
+    if (sets < 1 || sets > 12) return;
+    final drill = _drills[index];
+    setState(() => _drills[index] = drill.copyWith(defaultPrescription: drill.defaultPrescription.copyWith(sets: sets)));
   }
 
   Future<void> _save() async {
@@ -472,103 +489,59 @@ class _RoutineBuilderPageState extends ConsumerState<RoutineBuilderPage> {
           isExpanded: true,
           initialValue: _name,
           decoration: const InputDecoration(labelText: 'Routine style'),
-          items: [for (final name in _routineNames) DropdownMenuItem(value: name, child: Text(name))],
+          // A routine saved under another name (the starter routine, a copy, or one made from history) keeps it.
+          items: [
+            for (final name in {..._routineNames, _name}) DropdownMenuItem(value: name, child: Text(name)),
+          ],
           onChanged: _saving ? null : (value) => setState(() => _name = value!),
         ),
         const SizedBox(height: AppSpacing.xl),
         SectionHeading(title: 'Drills (${_drills.length})'),
         const SizedBox(height: AppSpacing.sm),
-        for (final drill in _drills.indexed) ...[
+        for (final (index, drill) in _drills.indexed) ...[
           TrainingCard(
-            child: Row(
+            key: ValueKey('routine-drill-${drill.id}'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(drill.$2.pillar.icon, color: drill.$2.pillar.color(pillars)),
-                const SizedBox(width: AppSpacing.md),
-                Expanded(child: Text('${drill.$1 + 1}. ${drill.$2.title}\n${drill.$2.prescriptionLabel}')),
-                IconButton(tooltip: 'Remove ${drill.$2.title}', onPressed: () => setState(() => _drills.removeAt(drill.$1)), icon: const Icon(Icons.remove_circle_outline)),
+                Row(
+                  children: [
+                    Icon(drill.pillar.icon, color: drill.pillar.color(pillars)),
+                    const SizedBox(width: AppSpacing.md),
+                    Expanded(child: Text('${index + 1}. ${drill.title}\n${drill.prescriptionLabel}')),
+                    IconButton(tooltip: 'Remove ${drill.title}', onPressed: () => setState(() => _drills.removeAt(index)), icon: const Icon(Icons.remove_circle_outline)),
+                  ],
+                ),
+                Wrap(
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    IconButton(
+                      tooltip: 'Fewer sets for ${drill.title}',
+                      onPressed: drill.defaultPrescription.sets > 1 ? () => _setSets(index, drill.defaultPrescription.sets - 1) : null,
+                      icon: const Icon(Icons.remove),
+                    ),
+                    Text('${drill.defaultPrescription.sets} sets'),
+                    IconButton(
+                      tooltip: 'More sets for ${drill.title}',
+                      onPressed: drill.defaultPrescription.sets < 12 ? () => _setSets(index, drill.defaultPrescription.sets + 1) : null,
+                      icon: const Icon(Icons.add),
+                    ),
+                    IconButton(tooltip: 'Move ${drill.title} up', onPressed: index > 0 ? () => _move(index, index - 1) : null, icon: const Icon(Icons.arrow_upward)),
+                    IconButton(tooltip: 'Move ${drill.title} down', onPressed: index < _drills.length - 1 ? () => _move(index, index + 1) : null, icon: const Icon(Icons.arrow_downward)),
+                  ],
+                ),
               ],
             ),
           ),
           const SizedBox(height: AppSpacing.xs),
         ],
-        OutlinedButton.icon(onPressed: _createDrill, icon: const Icon(Icons.auto_awesome), label: const Text('Create a drill from a template')),
-        const SizedBox(height: AppSpacing.sm),
-        const SectionHeading(title: 'Add from drill library'),
-        const SizedBox(height: AppSpacing.sm),
-        ...ref
-            .watch(drillCatalogProvider)
-            .when(
-              data: (catalog) => [
-                for (final drill in visibleDrills(catalog, pro: ref.watch(drillFiltersUnlockedProvider))) ...[
-                  CheckboxListTile(
-                    contentPadding: EdgeInsets.zero,
-                    value: _drills.any((item) => item.id == drill.id),
-                    title: Text(drill.title),
-                    subtitle: Text('${drill.pillar.label} · ${drill.prescriptionLabel}'),
-                    secondary: Icon(drill.pillar.icon, color: drill.pillar.color(pillars)),
-                    onChanged: (selected) => _toggleDrill(drill, selected ?? false),
-                  ),
-                  const Divider(height: 1),
-                ],
-              ],
-              loading: () => const [
-                Center(
-                  child: Padding(padding: EdgeInsets.all(AppSpacing.lg), child: CircularProgressIndicator()),
-                ),
-              ],
-              error: (_, _) => const [Text('We couldn\'t load the drill library. Close this screen and try again.')],
-            ),
+        FilledButton.tonalIcon(onPressed: _addDrills, icon: const Icon(Icons.add), label: const Text('Add drills')),
         if (_error != null) ...[const SizedBox(height: AppSpacing.md), Text(_error!, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error))],
         const SizedBox(height: AppSpacing.md),
-        const Text('Routines and template drills are saved on this device. Cloud sync and plan checks are coming soon.'),
+        const Text('Routines and your own drills are saved on this device. Cloud sync and plan checks are coming soon.'),
       ],
     );
   }
-}
-
-class _TemplateDrillSheet extends StatefulWidget {
-  const _TemplateDrillSheet();
-
-  @override
-  State<_TemplateDrillSheet> createState() => _TemplateDrillSheetState();
-}
-
-class _TemplateDrillSheetState extends State<_TemplateDrillSheet> {
-  SkillPillar _pillar = SkillPillar.hands;
-  int _sets = 2;
-  int _reps = 10;
-
-  @override
-  Widget build(BuildContext context) => SafeArea(
-    child: Padding(
-      padding: EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.sm, AppSpacing.screen, MediaQuery.viewInsetsOf(context).bottom + AppSpacing.screen),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text('Create a drill', style: Theme.of(context).textTheme.headlineSmall),
-          const SizedBox(height: AppSpacing.md),
-          DropdownButtonFormField<SkillPillar>(
-            isExpanded: true,
-            initialValue: _pillar,
-            decoration: const InputDecoration(labelText: 'Skill focus'),
-            items: [for (final pillar in SkillPillar.values) DropdownMenuItem(value: pillar, child: Text(pillar.label))],
-            onChanged: (value) => setState(() => _pillar = value!),
-          ),
-          const SizedBox(height: AppSpacing.md),
-          Text('Sets: $_sets'),
-          Slider(value: _sets.toDouble(), min: 1, max: 6, divisions: 5, label: '$_sets', onChanged: (value) => setState(() => _sets = value.round())),
-          Text('Reps per set: $_reps'),
-          Slider(value: _reps.toDouble(), min: 5, max: 30, divisions: 5, label: '$_reps', onChanged: (value) => setState(() => _reps = value.round())),
-          const SizedBox(height: AppSpacing.md),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, createTemplateDrill(_pillar, sets: _sets, reps: _reps)),
-            child: const Text('Add drill'),
-          ),
-        ],
-      ),
-    ),
-  );
 }
 
 class LibraryPage extends ConsumerStatefulWidget {

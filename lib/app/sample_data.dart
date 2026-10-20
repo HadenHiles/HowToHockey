@@ -85,17 +85,18 @@ extension DrillPresentation on Drill {
     TrackingType.volume || TrackingType.duration || TrackingType.streak || TrackingType.binary => null,
     _ => trackingType.label == pillar.label ? null : trackingType.label,
   };
-  String get prescriptionLabel {
+  String get targetLabel {
     final prescription = defaultPrescription;
-    final target = prescription.seconds != null
+    return prescription.seconds != null
         ? '${prescription.seconds}s'
         : prescription.reps != null
         ? '${prescription.reps} reps'
         : trackingType == TrackingType.streak
         ? 'best streak'
         : 'complete';
-    return '${prescription.sets} sets · $target';
   }
+
+  String get prescriptionLabel => '${defaultPrescription.sets} sets · $targetLabel';
 }
 
 final sampleDrills = List<Drill>.unmodifiable([

@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../features/drills/models/drill.dart';
+import '../features/profiles/active_player.dart';
 import '../features/settings/appearance_settings_controller.dart';
 import 'progress_state.dart';
 import 'sample_data.dart';
@@ -59,6 +60,38 @@ HistoryTotals totalsFor(List<TrainingSession> history, DateTime now) {
   );
 }
 
+/// Which player each saved workout belongs to, kept on the device. Without this a sibling sharing the
+/// phone would see (and be compared with) another player's results once a workout has been counted.
+/// Workouts with no owner were done as a guest and belong to the account's own profile.
+class WorkoutOwners extends Notifier<Map<String, String>> {
+  static const storageKey = 'workoutOwners';
+
+  @override
+  Map<String, String> build() {
+    final stored = ref.read(sharedPreferencesProvider).getString(storageKey);
+    if (stored == null) return const {};
+    try {
+      return Map.unmodifiable((jsonDecode(stored) as Map<String, dynamic>).map((key, value) => MapEntry(key, value as String)));
+    } on Object catch (error, stackTrace) {
+      FlutterError.reportError(FlutterErrorDetails(exception: error, stack: stackTrace, library: 'workout history', context: ErrorDescription('while reading who saved workouts belong to')));
+      return const {};
+    }
+  }
+
+  /// Notes the player a workout belongs to, and forgets workouts that have left the history.
+  void record(String workoutId, String? profileId, Set<String> keep) {
+    final next = {
+      for (final entry in state.entries)
+        if (keep.contains(entry.key)) entry.key: entry.value,
+      workoutId: ?profileId,
+    };
+    state = Map.unmodifiable(next);
+    unawaited(ref.read(sharedPreferencesProvider).setString(storageKey, jsonEncode(next)));
+  }
+}
+
+final workoutOwnersProvider = NotifierProvider<WorkoutOwners, Map<String, String>>(WorkoutOwners.new);
+
 /// Finished workouts kept on this device, newest first. A stand-in until workouts are saved to the
 /// player's account.
 class WorkoutHistory extends Notifier<List<TrainingSession>> {
@@ -94,6 +127,7 @@ class WorkoutHistory extends Notifier<List<TrainingSession>> {
     final id = workoutId(session);
     final next = [session, ...state.where((existing) => workoutId(existing) != id)].take(maxWorkouts).toList();
     state = List.unmodifiable(next);
+    ref.read(workoutOwnersProvider.notifier).record(id, ref.read(activePlayerProvider)?.id, next.map(workoutId).toSet());
     ref.read(lifetimeStatsProvider.notifier).record(session);
     ref.read(workoutSyncProvider.notifier).enqueue(session);
     final write = ref.read(sharedPreferencesProvider).setString(storageKey, jsonEncode([for (final workout in next) workout.toJson()]));

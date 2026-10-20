@@ -15,7 +15,7 @@ Future<ProviderContainer> mount(WidgetTester tester, {Map<String, Object> prefs 
   testReminders.events.clear();
   testReminders.permissionRequests = 0;
   testReminders.lastScheduledAt = null;
-  SharedPreferences.setMockInitialValues(prefs);
+  SharedPreferences.setMockInitialValues({'workoutFocusView': true, ...prefs});
   final preferences = await SharedPreferences.getInstance();
   final container = ProviderContainer(
     overrides: [

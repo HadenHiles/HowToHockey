@@ -247,16 +247,30 @@ class TrainingSession {
     );
   }
 
-  TrainingSession copyWith({int? drillIndex, List<({String drillId, SetLog log})>? logs, DateTime? restEndsAt, DateTime? endedAt, bool clearRest = false, bool? dismissed}) => TrainingSession(
-    drills: drills,
-    drillIndex: drillIndex ?? this.drillIndex,
-    logs: logs ?? this.logs,
-    startedAt: startedAt,
-    endedAt: endedAt ?? this.endedAt,
-    restEndsAt: clearRest ? null : restEndsAt ?? this.restEndsAt,
-    setIndex: (logs ?? this.logs).where((entry) => entry.drillId == drills[drillIndex ?? this.drillIndex].id).length,
-    dismissed: dismissed ?? this.dismissed,
-  );
+  TrainingSession copyWith({
+    List<Drill>? drills,
+    int? drillIndex,
+    List<({String drillId, SetLog log})>? logs,
+    DateTime? restEndsAt,
+    DateTime? endedAt,
+    bool clearRest = false,
+    bool clearEnded = false,
+    bool? dismissed,
+  }) {
+    final nextDrills = drills ?? this.drills;
+    final nextLogs = logs ?? this.logs;
+    final nextIndex = drillIndex ?? this.drillIndex;
+    return TrainingSession(
+      drills: nextDrills,
+      drillIndex: nextIndex,
+      logs: nextLogs,
+      startedAt: startedAt,
+      endedAt: clearEnded ? null : endedAt ?? this.endedAt,
+      restEndsAt: clearRest ? null : restEndsAt ?? this.restEndsAt,
+      setIndex: nextLogs.where((entry) => entry.drillId == nextDrills[nextIndex].id).length,
+      dismissed: dismissed ?? this.dismissed,
+    );
+  }
 }
 
 class TrainingSessionNotifier extends Notifier<TrainingSession> {
@@ -329,22 +343,128 @@ class TrainingSessionNotifier extends Notifier<TrainingSession> {
 
   /// Replaces a drill that has no logged sets yet with another one.
   void swapDrill(int index, Drill replacement) {
+    _checkEditable();
     if (index < 0 || index >= state.drills.length) throw RangeError.index(index, state.drills);
     if (state.setsLogged(index) > 0) throw StateError('Sets are already logged for this drill, so it can\'t be swapped.');
     if (state.drills.any((drill) => drill.id == replacement.id)) throw ArgumentError('That drill is already in this workout.');
     final drills = [...state.drills]..[index] = replacement;
-    _update(
-      TrainingSession(
-        drills: List.unmodifiable(drills),
-        drillIndex: state.drillIndex,
-        setIndex: state.setIndex,
-        logs: state.logs,
-        startedAt: state.startedAt,
-        restEndsAt: state.restEndsAt,
-        endedAt: state.endedAt,
-        dismissed: state.dismissed,
-      ),
-    );
+    _update(state.copyWith(drills: List.unmodifiable(drills)));
+  }
+
+  void _checkEditable() {
+    if (state.dismissed) throw StateError('This workout is already saved.');
+  }
+
+  /// Adds drills that aren't in the workout yet. Finishing is undone, since there is more to do.
+  int addDrills(List<Drill> additions) {
+    _checkEditable();
+    final present = state.drills.map((drill) => drill.id).toSet();
+    final fresh = <Drill>[];
+    for (final drill in additions) {
+      if (present.add(drill.id)) fresh.add(drill);
+    }
+    if (fresh.isEmpty) return 0;
+    _update(state.copyWith(drills: List.unmodifiable([...state.drills, ...fresh]), clearEnded: true));
+    return fresh.length;
+  }
+
+  /// Removes a drill with no logged sets. Logged results are never discarded; end the drill early instead.
+  void removeDrill(int index) {
+    _checkEditable();
+    if (index < 0 || index >= state.drills.length) throw RangeError.index(index, state.drills);
+    if (state.setsLogged(index) > 0) throw StateError('This drill has logged sets. End it early to keep them.');
+    if (state.drills.length == 1) throw StateError('A workout needs at least one drill.');
+    final current = state.drill.id;
+    final drills = [...state.drills]..removeAt(index);
+    final nextIndex = drills.indexWhere((drill) => drill.id == current);
+    _update(state.copyWith(drills: List.unmodifiable(drills), drillIndex: nextIndex >= 0 ? nextIndex : index.clamp(0, drills.length - 1)));
+  }
+
+  /// Moves a drill to a new position without losing its sets. The drill being worked on stays selected.
+  void moveDrill(int from, int to) {
+    _checkEditable();
+    if (from < 0 || from >= state.drills.length) throw RangeError.index(from, state.drills);
+    if (to < 0 || to >= state.drills.length) throw RangeError.index(to, state.drills);
+    if (from == to) return;
+    final current = state.drill.id;
+    final drills = [...state.drills];
+    drills.insert(to, drills.removeAt(from));
+    _update(state.copyWith(drills: List.unmodifiable(drills), drillIndex: drills.indexWhere((drill) => drill.id == current)));
+  }
+
+  static const maxSetsPerDrill = 12;
+
+  Drill _withSets(Drill drill, int sets) => drill.copyWith(defaultPrescription: drill.defaultPrescription.copyWith(sets: sets));
+
+  /// Adds one more set to a drill, reopening a workout that was finished.
+  void addSet(int index) {
+    _checkEditable();
+    if (index < 0 || index >= state.drills.length) throw RangeError.index(index, state.drills);
+    final drill = state.drills[index];
+    if (drill.defaultPrescription.sets >= maxSetsPerDrill) throw StateError('A drill can have up to $maxSetsPerDrill sets.');
+    final drills = [...state.drills]..[index] = _withSets(drill, drill.defaultPrescription.sets + 1);
+    _update(state.copyWith(drills: List.unmodifiable(drills), clearEnded: true));
+  }
+
+  /// Takes away a planned set that hasn't been logged.
+  void removeUnloggedSet(int index) {
+    _checkEditable();
+    if (index < 0 || index >= state.drills.length) throw RangeError.index(index, state.drills);
+    final drill = state.drills[index];
+    final sets = drill.defaultPrescription.sets;
+    if (sets <= 1 || sets <= state.setsLogged(index)) throw StateError('Only an unlogged set can be removed.');
+    final drills = [...state.drills]..[index] = _withSets(drill, sets - 1);
+    _update(_finishIfDone(state.copyWith(drills: List.unmodifiable(drills))));
+  }
+
+  /// Stops a drill at the sets already logged. Skipped sets earn nothing and aren't recorded.
+  void endDrillEarly(int index) {
+    _checkEditable();
+    if (index < 0 || index >= state.drills.length) throw RangeError.index(index, state.drills);
+    final logged = state.setsLogged(index);
+    if (logged == 0) throw StateError('Log a set first, or remove this drill.');
+    final drills = [...state.drills]..[index] = _withSets(state.drills[index], logged);
+    _update(_finishIfDone(state.copyWith(drills: List.unmodifiable(drills))));
+  }
+
+  /// Ends the workout with what has been logged: unstarted drills are dropped, partial drills stop where they are.
+  void finishEarly() {
+    _checkEditable();
+    if (state.logs.isEmpty) throw StateError('Log at least one set before finishing.');
+    final drills = [
+      for (final (index, drill) in state.drills.indexed)
+        if (state.setsLogged(index) > 0) _withSets(drill, state.setsLogged(index)),
+    ];
+    final current = state.drill.id;
+    final nextIndex = drills.indexWhere((drill) => drill.id == current);
+    _update(_finishIfDone(state.copyWith(drills: List.unmodifiable(drills), drillIndex: nextIndex >= 0 ? nextIndex : 0)));
+  }
+
+  TrainingSession _finishIfDone(TrainingSession next) => next.finished ? next.copyWith(clearRest: true, endedAt: clock.now().toUtc()) : next;
+
+  /// Removes the most recent logged set of a drill, for a set logged by mistake.
+  void undoLastSet(int index) {
+    _checkEditable();
+    if (index < 0 || index >= state.drills.length) throw RangeError.index(index, state.drills);
+    final id = state.drills[index].id;
+    final position = state.logs.lastIndexWhere((entry) => entry.drillId == id);
+    if (position < 0) throw StateError('No logged set to undo.');
+    final logs = [...state.logs]..removeAt(position);
+    _update(state.copyWith(logs: List.unmodifiable(logs), clearEnded: true, clearRest: true));
+  }
+
+  /// Corrects a logged set's result.
+  void editSet(int index, int setIndex, {int? reps, int? hits, int? seconds, int? streak, bool? completed}) {
+    _checkEditable();
+    if (index < 0 || index >= state.drills.length) throw RangeError.index(index, state.drills);
+    final drill = state.drills[index];
+    validateSetEntry(drill.trackingType, reps: reps, hits: hits, seconds: seconds, streak: streak, completed: completed);
+    final position = state.logs.indexWhere((entry) => entry.drillId == drill.id && entry.log.setIndex == setIndex);
+    if (position < 0) throw StateError('That set hasn\'t been logged.');
+    final old = state.logs[position].log;
+    final logs = [...state.logs];
+    logs[position] = (drillId: drill.id, log: SetLog(setIndex: setIndex, reps: reps, hits: hits, seconds: seconds, streak: streak, completed: completed, loggedAt: old.loggedAt));
+    _update(state.copyWith(logs: List.unmodifiable(logs)));
   }
 
   void dismissFinishedWorkout() {
@@ -389,6 +509,22 @@ class TrainingSessionNotifier extends Notifier<TrainingSession> {
 }
 
 final trainingSessionProvider = NotifierProvider<TrainingSessionNotifier, TrainingSession>(TrainingSessionNotifier.new);
+
+/// Whether workouts open on the one-drill focus view (timers and big counters) instead of the
+/// scrolling list of sets. The list is the default; this remembers a player's choice on the device.
+class WorkoutFocusPreference extends Notifier<bool> {
+  static const storageKey = 'workoutFocusView';
+
+  @override
+  bool build() => ref.read(sharedPreferencesProvider).getBool(storageKey) ?? false;
+
+  void choose(bool focus) {
+    state = focus;
+    unawaited(ref.read(sharedPreferencesProvider).setBool(storageKey, focus));
+  }
+}
+
+final workoutFocusPreferenceProvider = NotifierProvider<WorkoutFocusPreference, bool>(WorkoutFocusPreference.new);
 
 class WorkoutSheetProgress extends Notifier<double> {
   @override

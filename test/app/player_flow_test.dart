@@ -13,7 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../support/test_catalog.dart';
 
 Future<ProviderContainer> mountApp(WidgetTester tester, {String appearance = 'light'}) async {
-  SharedPreferences.setMockInitialValues({'appearance': appearance});
+  SharedPreferences.setMockInitialValues({'appearance': appearance, 'workoutFocusView': true});
   final preferences = await SharedPreferences.getInstance();
   final container = ProviderContainer(
     overrides: [
@@ -604,13 +604,16 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Workout overview'));
     await tester.pumpAndSettle();
-    expect(find.text('Workout overview'), findsOneWidget);
-    expect(find.text('0 / 2 sets · Reps'), findsOneWidget);
+    expect(find.text('Workout'), findsOneWidget);
+    expect(find.byKey(const ValueKey('set-quick-release-wrist-shots-0-reps')), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('Accuracy: Pick your corner, 1 of 2 sets')), findsNothing, reason: 'the list replaces the carousel');
+    await tester.tap(find.byTooltip('Focus view'));
+    await tester.pumpAndSettle();
     expect(find.bySemanticsLabel(RegExp('Accuracy: Pick your corner, 1 of 2 sets')), findsOneWidget);
     await revealWorkoutDrill(tester);
-    await tester.ensureVisible(find.text('Quick-release wrist shots').last);
+    await tester.ensureVisible(find.byKey(const ValueKey('workout-preview-quick-release-wrist-shots')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Quick-release wrist shots').last);
+    await tester.tap(find.byKey(const ValueKey('workout-preview-quick-release-wrist-shots')));
     await tester.pumpAndSettle();
     expect(find.text('7'), findsOneWidget);
     await tapWorkoutAction(tester, 'Log set');
@@ -715,20 +718,36 @@ void main() {
     await tester.tap(find.text('Create routine'));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('Create a drill from a template'));
+    await tester.tap(find.text('Add drills'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Create drill'));
     await tester.pumpAndSettle();
     expect(find.text('Create a drill'), findsOneWidget);
     expect(find.byType(TextFormField), findsNothing);
-    await tester.ensureVisible(find.text('Add drill'));
-    await tester.tap(find.text('Add drill'));
+    await tester.ensureVisible(find.text('Save to My drills'));
+    await tester.tap(find.text('Save to My drills'));
     await tester.pumpAndSettle();
     expect(find.text('Create a drill'), findsNothing);
-    expect(find.textContaining('Custom puck control'), findsOneWidget);
-
-    final libraryDrill = find.widgetWithText(CheckboxListTile, 'Pick your corner');
-    await tester.ensureVisible(libraryDrill);
+    expect(find.text('Add 1 drill'), findsOneWidget);
+    await tester.tap(find.text('Add 1 drill'));
     await tester.pumpAndSettle();
+    expect(find.textContaining('Custom puck control'), findsOneWidget);
+    expect(container.read(customDrillLibraryProvider).map((drill) => drill.title), ['Custom puck control']);
+
+    await tester.ensureVisible(find.text('Add drills'));
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -250));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add drills'));
+    await tester.pumpAndSettle();
+    final libraryDrill = find.byKey(const ValueKey('picker-drill-pick-your-corner'));
+    await tester.scrollUntilVisible(
+      libraryDrill,
+      200,
+      scrollable: find.descendant(of: find.byKey(const ValueKey('drill-picker-list')), matching: find.byType(Scrollable)),
+    );
     await tester.tap(libraryDrill);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Add 1 drill'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Save routine'));
     await tester.pumpAndSettle();
@@ -789,12 +808,11 @@ void main() {
     await tester.tap(find.byTooltip('Workout overview'));
     await tester.pumpAndSettle();
     await tester.pump(const Duration(seconds: 5));
+    returnWorkoutSheetToTop(tester);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Focus view'));
+    await tester.pumpAndSettle();
     await revealWorkoutDrill(tester);
-    final overviewDrill = find.text('Quiet hands, quick feet').last;
-    await tester.ensureVisible(overviewDrill);
-    await tester.pumpAndSettle();
-    await tester.tap(overviewDrill);
-    await tester.pumpAndSettle();
     expect(find.text('0:02'), findsOneWidget);
     await revealWorkoutDrill(tester);
     await tester.ensureVisible(find.text('Resume timer'));

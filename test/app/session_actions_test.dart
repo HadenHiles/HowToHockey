@@ -115,7 +115,7 @@ void main() {
 
   group('screens', () {
     Future<ProviderContainer> mount(WidgetTester tester) async {
-      SharedPreferences.setMockInitialValues({});
+      SharedPreferences.setMockInitialValues({'workoutFocusView': true});
       final preferences = await SharedPreferences.getInstance();
       final container = ProviderContainer(
         overrides: [
@@ -147,9 +147,14 @@ void main() {
 
       await tester.tap(find.text('Swap drill'));
       await tester.pumpAndSettle();
+      expect(find.text('Suggested'), findsOneWidget);
       expect(find.text('Bottom-shelf snap shots'), findsOneWidget);
       expect(find.text('Top-shelf lifts'), findsOneWidget);
-      expect(find.text('Shoot the tarp'), findsNothing);
+      // Drills that don't fit the setup are not suggested; they can only appear lower, under the library.
+      final tarp = find.text('Shoot the tarp');
+      if (tarp.evaluate().isNotEmpty) {
+        expect(tester.getTopLeft(tarp).dy, greaterThan(tester.getTopLeft(find.text('Top-shelf lifts')).dy));
+      }
 
       await tester.tap(find.text('Top-shelf lifts'));
       await tester.pumpAndSettle();
@@ -165,6 +170,7 @@ void main() {
       await tester.tap(find.text('Swap drill'));
       await tester.pumpAndSettle();
       expect(find.textContaining('No other drills fit your setup'), findsOneWidget);
+      expect(find.text('Suggested'), findsNothing);
       Navigator.of(tester.element(find.text('Swap drill').last)).pop();
       await tester.pumpAndSettle();
 

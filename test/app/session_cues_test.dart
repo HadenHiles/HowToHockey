@@ -14,7 +14,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../support/test_catalog.dart';
 
 Future<ProviderContainer> mount(WidgetTester tester) async {
-  SharedPreferences.setMockInitialValues({});
+  SharedPreferences.setMockInitialValues({'workoutFocusView': true});
   final preferences = await SharedPreferences.getInstance();
   final container = ProviderContainer(
     overrides: [
