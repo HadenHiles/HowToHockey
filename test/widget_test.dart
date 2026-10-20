@@ -91,11 +91,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Share your progress'));
     await tester.pumpAndSettle();
-    expect(find.text('Your progress card'), findsOneWidget);
+    expect(find.text('Share your work'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('progress shows the skill map, personal bests, totals and share-card preview', (WidgetTester tester) async {
+  testWidgets('progress shows the skill map, personal bests, totals and share sheet', (WidgetTester tester) async {
     final preferences = await SharedPreferences.getInstance();
     final container = ProviderContainer(
       overrides: [
@@ -125,8 +125,8 @@ void main() {
     await tester.tap(find.text('Share your progress'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Your progress card'), findsOneWidget);
-    expect(find.textContaining('Sharing isn\'t live yet'), findsOneWidget);
+    expect(find.text('Share your work'), findsOneWidget);
+    expect(find.textContaining('Nothing is uploaded'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

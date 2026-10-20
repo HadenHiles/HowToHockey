@@ -25,7 +25,9 @@ import '../features/session/set_countdown.dart';
 import 'sample_data.dart';
 import 'workout_history.dart';
 import 'app_page.dart';
+import '../features/share/share_data.dart';
 import 'progress_state.dart';
+import 'share_sheet.dart';
 import 'progress_tuning.dart';
 import 'workout_sync.dart';
 import 'training_state.dart';
@@ -1120,6 +1122,24 @@ class SummaryPage extends ConsumerWidget {
             MetricTile(value: _time(session.activeSeconds), label: 'Active training', detail: 'Untimed sets are estimated'),
             MetricTile(value: _time(session.elapsedSeconds), label: 'Elapsed time', detail: 'Includes rest'),
           ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        OutlinedButton.icon(
+          onPressed: () => showShareSheet(
+            context,
+            data: workoutCard(
+              shots: shots,
+              activeSeconds: session.activeSeconds,
+              drills: session.drills.length,
+              sets: session.logs.length,
+              bests: bestsSetBy(ref.read(progressStatsProvider), session, ref.read(progressTuningProvider)),
+              streakDays: ref.read(progressStatsProvider).add(session.toRecord(), tuning: ref.read(progressTuningProvider)).stats.currentStreak(clock.now()),
+              dateLabel: workoutDateLabel(session.startedAt!.toLocal(), clock.now()),
+            ),
+            fileStem: 'how-to-hockey-workout',
+          ),
+          icon: const Icon(Icons.ios_share),
+          label: const Text('Share this workout'),
         ),
         ..._personalBests(context, ref, session, saved),
         const SizedBox(height: AppSpacing.xl),

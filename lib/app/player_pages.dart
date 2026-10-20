@@ -25,7 +25,9 @@ import 'account_pages.dart';
 import '../features/progress/progress_stats.dart';
 import 'coach_state.dart';
 import '../features/progress/drill_trends.dart';
+import '../features/share/share_data.dart';
 import 'progress_pages.dart';
+import 'share_sheet.dart';
 import 'progress_state.dart';
 import 'progress_tuning.dart';
 import 'workout_sync.dart';
@@ -269,48 +271,10 @@ class ProgressPage extends ConsumerWidget {
           for (final workout in history.take(5)) ...[WorkoutHistoryCard(workout: workout), const SizedBox(height: AppSpacing.sm)],
         const SizedBox(height: AppSpacing.xl),
         TrainingCard(
-          onTap: () => showModalBottomSheet<void>(
-            context: context,
-            useRootNavigator: true,
-            isScrollControlled: true,
-            showDragHandle: true,
-            builder: (context) {
-              final colors = Theme.of(context).extension<AppColors>()!;
-              final theme = Theme.of(context);
-              return SafeArea(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppSpacing.screen),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text('Your progress card', style: theme.textTheme.headlineSmall),
-                      const SizedBox(height: AppSpacing.md),
-                      DecoratedBox(
-                        decoration: BoxDecoration(color: theme.brightness == Brightness.dark ? colors.surface : colors.textPrimary, borderRadius: BorderRadius.circular(AppRadii.card)),
-                        child: Padding(
-                          padding: const EdgeInsets.all(AppSpacing.xl),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('HOW TO HOCKEY  ·  WEEKLY RECAP', style: theme.textTheme.labelSmall?.copyWith(color: colors.brandPrimaryOnDark)),
-                              const SizedBox(height: AppSpacing.xl),
-                              Text(
-                                '${stats.weekShots(clock.now())}',
-                                style: theme.textTheme.displayMedium?.copyWith(color: theme.brightness == Brightness.dark ? colors.textPrimary : colors.brandCream),
-                              ),
-                              Text('SHOTS THIS WEEK', style: theme.textTheme.labelMedium?.copyWith(color: theme.brightness == Brightness.dark ? colors.textPrimary : colors.brandCream)),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: AppSpacing.md),
-                      Text('Sharing isn\'t live yet', style: theme.textTheme.bodySmall),
-                      const SizedBox(height: AppSpacing.md),
-                    ],
-                  ),
-                ),
-              );
-            },
+          onTap: () => showShareSheet(
+            context,
+            data: weekCard(stats: stats, now: now, dateLabel: 'Last 7 days'),
+            fileStem: 'how-to-hockey-week',
           ),
           child: Row(
             children: [
