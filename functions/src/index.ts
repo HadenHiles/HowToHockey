@@ -2,12 +2,14 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { onDocumentCreated } from 'firebase-functions/v2/firestore';
-import { onCall } from 'firebase-functions/v2/https';
+import { onCall, onRequest } from 'firebase-functions/v2/https';
+import { defineSecret } from 'firebase-functions/params';
 
 import { getHealthStatus } from './health';
 import { createChildProfile as createChildProfileFor, createOwnProfile as createOwnProfileFor, type CallerAuth } from './profiles';
 
 import { deleteAccount as deleteAccountFor } from './accounts';
+import { handleRevenueCatWebhook, revenueCatFetcher } from './entitlements';
 import { processSession } from './sessions';
 import { loadTuning } from './tuning';
 import { createPairingCode as createPairingCodeFor, redeemPairingCode as redeemPairingCodeFor } from './pairing';
@@ -35,4 +37,27 @@ export const deleteAccount = onCall((request) => deleteAccountFor(getFirestore()
 // Runs next to the database (Toronto), which Firestore triggers require. Credits a finished workout to the profile's lifetime stats and personal bests, once.
 export const onSessionCompleted = onDocumentCreated({ document: 'profiles/{profileId}/sessions/{sessionId}', region: 'northamerica-northeast2' }, async (event) => {
   await processSession(getFirestore(), event.params.profileId, event.params.sessionId, new Date(), await loadTuning());
+});
+
+const revenueCatWebhookAuth = defineSecret('REVENUECAT_WEBHOOK_AUTH');
+const revenueCatSecretKey = defineSecret('REVENUECAT_SECRET_KEY');
+
+// RevenueCat calls this when someone buys, renews, cancels or expires. It keeps the account's plans, and the
+// `pro` flag on each profile it owns, in step with the store.
+export const revenueCatWebhook = onRequest({ secrets: [revenueCatWebhookAuth, revenueCatSecretKey], invoker: 'public' }, async (request, response) => {
+  if (request.method !== 'POST') {
+    response.status(405).send('Use POST.');
+    return;
+  }
+  try {
+    const result = await handleRevenueCatWebhook(
+      { authorization: request.get('authorization'), body: request.body },
+      { db: getFirestore(), expectedAuthorization: revenueCatWebhookAuth.value(), fetchSubscriber: revenueCatFetcher(revenueCatSecretKey.value()) },
+    );
+    response.status(result.status).send(result.message);
+  } catch (error) {
+    console.error('RevenueCat webhook failed', error);
+    // A server error makes RevenueCat retry, which is what we want when its record or ours was unreachable.
+    response.status(500).send('Try again.');
+  }
 });

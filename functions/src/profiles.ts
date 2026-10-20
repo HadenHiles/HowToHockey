@@ -41,6 +41,11 @@ export function yearsSinceBirthYear(birthYear: number, now: Date): number {
   return now.getUTCFullYear() - birthYear;
 }
 
+/** Whether the account that owns a new profile already holds Player Pro or Coach Pro. */
+function planOf(user: FirebaseFirestore.DocumentData | undefined): boolean {
+  return (user?.entitlements as { playerPro?: boolean } | undefined)?.playerPro === true;
+}
+
 export interface CallerAuth {
   uid: string;
   isAnonymous: boolean;
@@ -85,7 +90,7 @@ export async function createChildProfile(db: Firestore, caller: CallerAuth | und
       throw new HttpsError('failed-precondition', `You can add up to ${MAX_CHILD_PROFILES} child profiles.`);
     }
     const roles: string[] = (user.data()?.roles as string[] | undefined) ?? [];
-    transaction.set(profileRef, { ownerUid: auth.uid, displayName, birthYear, isChild: true, teamIds: [], createdAt: now });
+    transaction.set(profileRef, { ownerUid: auth.uid, displayName, birthYear, isChild: true, teamIds: [], pro: planOf(user.data()), createdAt: now });
     transaction.set(userRef, { roles: roles.includes('parent') ? roles : [...roles, 'parent'], createdAt: user.data()?.createdAt ?? now }, { merge: true });
   });
   return { profileId: profileRef.id, displayName };
@@ -111,7 +116,7 @@ export async function createOwnProfile(db: Firestore, caller: CallerAuth | undef
     }
     const user = await transaction.get(userRef);
     const roles: string[] = user.exists ? ((user.data()?.roles as string[] | undefined) ?? []) : [];
-    transaction.set(profileRef, { ownerUid: auth.uid, displayName, birthYear, isChild: false, teamIds: [], createdAt: now });
+    transaction.set(profileRef, { ownerUid: auth.uid, displayName, birthYear, isChild: false, teamIds: [], pro: planOf(user.data()), createdAt: now });
     transaction.set(userRef, { roles: roles.includes('player') ? roles : [...roles, 'player'], createdAt: user.exists ? (user.data()?.createdAt ?? now) : now, ...(auth.email ? { email: auth.email } : {}) }, { merge: true });
   });
   return { profileId: profileRef.id, displayName };

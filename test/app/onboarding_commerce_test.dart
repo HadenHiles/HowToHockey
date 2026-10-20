@@ -75,14 +75,12 @@ void main() {
     final router = (await mount(tester)).read(appRouterProvider);
     router.go('/paywall');
     await tester.pumpAndSettle();
-    expect(find.textContaining(r'$49.99 / year'), findsOneWidget);
-    expect(find.textContaining('One plan covers you and up to 3 kids'), findsOneWidget);
-    await tester.tap(find.text('Coach Pro').first);
+    expect(find.text('Paywall for player'), findsOneWidget);
+    router.go('/paywall?plan=coach');
     await tester.pumpAndSettle();
-    expect(find.textContaining(r'$99.99 / year'), findsOneWidget);
-    await tester.tap(find.textContaining('Start Coach Pro'));
+    expect(find.text('Paywall for coach'), findsOneWidget);
+    await tester.tap(find.text('Buy coach'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('You\'re all set'), findsOneWidget);
 
     ScaffoldMessenger.of(tester.element(find.byType(Scaffold).first)).clearSnackBars();
     router.go('/programs/hands-21');

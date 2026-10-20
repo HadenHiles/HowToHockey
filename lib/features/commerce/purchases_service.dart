@@ -2,7 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:purchases_ui_flutter/purchases_ui_flutter.dart';
 
 /// RevenueCat entitlement identifiers. Coach Pro products also grant `player_pro`.
 const playerProEntitlement = 'player_pro';
@@ -11,21 +13,6 @@ const coachProEntitlement = 'coach_pro';
 /// The public SDK keys are meant to ship inside the app; they can only read offerings and make purchases.
 const revenueCatAppleKey = 'appl_OeNEuTtPsolnKkVomQlwOKdSGwT';
 const revenueCatGoogleKey = 'goog_XbMcpcfabIHJWMJKboTFfoCIiGg';
-
-/// One plan the store can sell, with the price text the store itself reports.
-class PlanOffer {
-  const PlanOffer({required this.id, required this.coach, required this.yearly, required this.price, this.handle});
-
-  final String id;
-  final bool coach;
-  final bool yearly;
-  final String price;
-
-  /// The store package behind this plan. Opaque to the screens.
-  final Object? handle;
-}
-
-enum PurchaseOutcome { purchased, cancelled }
 
 class PurchaseFailure implements Exception {
   const PurchaseFailure(this.message);
@@ -46,8 +33,10 @@ abstract class PurchasesService {
   /// Ties purchases to a signed-in account. Null means nobody who can buy is signed in.
   Future<void> identify(String? uid);
 
-  Future<List<PlanOffer>> offers();
-  Future<PurchaseOutcome> purchase(PlanOffer offer);
+  /// RevenueCat's paywall for an offering (`player` or `coach`). Its wording, plans and look are edited in the
+  /// RevenueCat dashboard, so they change without an app release. Null when there is nothing to show.
+  Future<Widget?> paywall(String offeringId, {required VoidCallback onFinished});
+
   Future<Set<String>> restore();
 
   /// Where the person can change or cancel their plan.
@@ -67,10 +56,7 @@ class UnavailablePurchases implements PurchasesService {
   Future<void> identify(String? uid) async {}
 
   @override
-  Future<List<PlanOffer>> offers() async => const [];
-
-  @override
-  Future<PurchaseOutcome> purchase(PlanOffer offer) => throw const PurchaseFailure('Purchases aren\'t available right now.');
+  Future<Widget?> paywall(String offeringId, {required VoidCallback onFinished}) async => null;
 
   @override
   Future<Set<String>> restore() => throw const PurchaseFailure('Purchases aren\'t available right now.');
@@ -122,26 +108,19 @@ class RevenueCatPurchases implements PurchasesService {
   }
 
   @override
-  Future<List<PlanOffer>> offers() async {
-    final offerings = await Purchases.getOfferings();
-    return [
-      for (final (id, coach) in const [('player', false), ('coach', true)])
-        for (final package in offerings.getOffering(id)?.availablePackages ?? const <Package>[])
-          if (package.packageType == PackageType.monthly || package.packageType == PackageType.annual)
-            PlanOffer(id: '$id/${package.identifier}', coach: coach, yearly: package.packageType == PackageType.annual, price: package.storeProduct.priceString, handle: package),
-    ];
-  }
-
-  @override
-  Future<PurchaseOutcome> purchase(PlanOffer offer) async {
-    try {
-      final result = await Purchases.purchase(PurchaseParams.package(offer.handle! as Package));
-      _entitlements.add(_activeEntitlements(result.customerInfo));
-      return PurchaseOutcome.purchased;
-    } on PlatformException catch (error) {
-      if (PurchasesErrorHelper.getErrorCode(error) == PurchasesErrorCode.purchaseCancelledError) return PurchaseOutcome.cancelled;
-      throw const PurchaseFailure('The purchase didn\'t go through. You weren\'t charged. Try again in a moment.');
-    }
+  Future<Widget?> paywall(String offeringId, {required VoidCallback onFinished}) async {
+    final offering = (await Purchases.getOfferings()).getOffering(offeringId);
+    if (offering == null) return null;
+    return PaywallView(
+      offering: offering,
+      displayCloseButton: true,
+      onPurchaseCompleted: (info, _) {
+        _entitlements.add(_activeEntitlements(info));
+        onFinished();
+      },
+      onRestoreCompleted: (info) => _entitlements.add(_activeEntitlements(info)),
+      onDismiss: onFinished,
+    );
   }
 
   @override

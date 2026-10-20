@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:flutter/material.dart';
+
 import 'package:clock/clock.dart';
 
 import 'dart:io';
@@ -247,7 +249,6 @@ class FakePurchases implements PurchasesService {
   final bought = <String>[];
   Set<String> active = {};
   Set<String> restorable = {};
-  PurchaseOutcome outcome = PurchaseOutcome.purchased;
   PurchaseFailure? failWith;
 
   @override
@@ -261,30 +262,30 @@ class FakePurchases implements PurchasesService {
   @override
   Future<void> identify(String? uid) async => identified.add(uid);
 
+  /// Stands in for RevenueCat's paywall: shows which offering was asked for and a button that "buys" it.
   @override
-  Future<List<PlanOffer>> offers() async => !available
-      ? const []
-      : const [
-          PlanOffer(id: 'player/\$rc_monthly', coach: false, yearly: false, price: r'$7.99'),
-          PlanOffer(id: 'player/\$rc_annual', coach: false, yearly: true, price: r'$49.99'),
-          PlanOffer(id: 'coach/\$rc_monthly', coach: true, yearly: false, price: r'$12.99'),
-          PlanOffer(id: 'coach/\$rc_annual', coach: true, yearly: true, price: r'$99.99'),
-        ];
-
-  @override
-  Future<PurchaseOutcome> purchase(PlanOffer offer) async {
-    if (failWith != null) throw failWith!;
-    if (outcome == PurchaseOutcome.purchased) {
-      bought.add(offer.id);
-      setActive(offer.coach ? {playerProEntitlement, coachProEntitlement} : {playerProEntitlement});
-    }
-    return outcome;
+  Future<Widget?> paywall(String offeringId, {required VoidCallback onFinished}) async {
+    if (!available) return null;
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Text('Paywall for $offeringId'),
+        TextButton(
+          onPressed: () {
+            bought.add(offeringId);
+            setActive(offeringId == 'coach' ? {playerProEntitlement, coachProEntitlement} : {playerProEntitlement});
+            onFinished();
+          },
+          child: Text('Buy $offeringId'),
+        ),
+      ],
+    );
   }
 
   @override
   Future<Set<String>> restore() async {
     if (failWith != null) throw failWith!;
-    setActive(restorable);
+    setActive({...active, ...restorable});
     return restorable;
   }
 

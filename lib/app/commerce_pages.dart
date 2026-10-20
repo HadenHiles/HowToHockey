@@ -33,6 +33,8 @@ Future<void> restorePurchasesWithMessage(BuildContext context, WidgetRef ref) as
   if (context.mounted) showFeatureMessage(context, message);
 }
 
+/// The plans screen. What a new subscriber sees (wording, plans, look) is RevenueCat's paywall, edited in its
+/// dashboard. This wrapper only handles what the app itself knows: who is signed in and what they already own.
 class PaywallPage extends ConsumerStatefulWidget {
   const PaywallPage({super.key, this.coach = false});
 
@@ -43,170 +45,71 @@ class PaywallPage extends ConsumerStatefulWidget {
 }
 
 class _PaywallPageState extends ConsumerState<PaywallPage> {
-  late var _coach = widget.coach;
-  var _yearly = true;
+  Future<Widget?>? _paywall;
   var _busy = false;
-  List<PlanOffer>? _offers;
-  var _offersFailed = false;
 
-  static const _playerFeatures = [
-    (label: 'Lifetime totals', free: true),
-    (label: 'Skill radar and PR Vault', free: false),
-    (label: 'Session breakdown charts', free: false),
-    (label: 'Pro drill media', free: false),
-    (label: 'Unlimited saved routines', free: false),
-  ];
-  static const _coachFeatures = [
-    (label: 'Roster up to 30 players', free: false),
-    (label: 'Team routine builder', free: false),
-    (label: 'Assign homework', free: false),
-    (label: 'Compliance dashboard', free: false),
-    (label: 'Everything in Player Pro', free: false),
-  ];
+  String get _name => widget.coach ? 'Coach Pro' : 'Player Pro';
 
-  @override
-  void initState() {
-    super.initState();
-    unawaited(_loadOffers());
-  }
+  void _close() => context.canPop() ? context.pop() : context.go('/me');
 
-  Future<void> _loadOffers() async {
-    try {
-      final offers = await ref.read(purchasesProvider).offers();
-      if (mounted) setState(() => _offers = offers);
-    } on Object {
-      if (mounted) setState(() => _offersFailed = true);
-    }
-  }
-
-  PlanOffer? get _selected => _offers?.where((offer) => offer.coach == _coach && offer.yearly == _yearly).firstOrNull;
-
-  Future<void> _run(Future<String?> Function() action) async {
+  Future<void> _manage() async {
     setState(() => _busy = true);
     try {
-      final message = await action();
-      if (mounted && message != null) showFeatureMessage(context, message);
-    } on PurchaseFailure catch (failure) {
-      if (mounted) showFeatureMessage(context, failure.message);
+      final opened = await launchUrl(await ref.read(purchasesProvider).manageUri(), mode: LaunchMode.externalApplication);
+      if (!opened && mounted) showFeatureMessage(context, 'Couldn\'t open your subscriptions. Open them from your phone\'s store settings.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
   }
 
-  Future<void> _buy(PlanOffer offer) => _run(() async {
-    final outcome = await ref.read(purchasesProvider).purchase(offer);
-    if (outcome == PurchaseOutcome.cancelled) return null;
-    if (mounted) context.canPop() ? context.pop() : context.go('/me');
-    return 'You\'re all set. Thanks for supporting How To Hockey.';
-  });
-
-  Future<void> _restore() => _run(() async {
-    final active = await ref.read(purchasesProvider).restore();
-    if (active.contains(playerProEntitlement) || active.contains(coachProEntitlement)) return 'Your plan is back.';
-    return 'No purchases found for this account.';
-  });
-
-  Future<void> _manage() => _run(() async {
-    final opened = await launchUrl(await ref.read(purchasesProvider).manageUri(), mode: LaunchMode.externalApplication);
-    return opened ? null : 'Couldn\'t open your subscriptions. Open them from your phone\'s store settings.';
-  });
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final purchases = ref.watch(purchasesProvider);
     final plans = ref.watch(accountPlansProvider);
     final signedIn = ref.watch(authStateProvider).value is SignedInAccount;
-    final features = _coach ? _coachFeatures : _playerFeatures;
-    final name = _coach ? 'Coach Pro' : 'Player Pro';
-    final owned = _coach ? plans.coach : plans.player;
-    final offer = _selected;
-    final loading = purchases.available && _offers == null && !_offersFailed;
-    final unavailable = !purchases.available || _offersFailed || (_offers != null && offer == null);
+    final owned = widget.coach ? plans.coach : plans.player;
+    final close = IconButton(tooltip: 'Close', icon: const Icon(Icons.close), onPressed: _close);
 
-    final Widget primary;
     if (owned) {
-      primary = FilledButton(onPressed: _busy ? null : _manage, child: const Text('Manage subscription'));
-    } else if (!signedIn) {
-      primary = FilledButton(onPressed: () => context.push('/signup'), child: const Text('Create a free account to subscribe'));
-    } else if (offer != null) {
-      primary = FilledButton(onPressed: _busy ? null : () => _buy(offer), child: Text('Start $name · ${offer.price} / ${_yearly ? 'year' : 'month'}'));
-    } else {
-      primary = FilledButton(onPressed: null, child: Text(loading ? 'Loading plans…' : 'Plans aren\'t available right now'));
+      return AppPage(
+        title: _name,
+        subtitle: 'You have $_name. Thank you!',
+        actions: [close],
+        action: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FilledButton(onPressed: _busy ? null : _manage, child: const Text('Manage subscription')),
+            TextButton(onPressed: () => unawaited(restorePurchasesWithMessage(context, ref)), child: const Text('Restore purchases')),
+          ],
+        ),
+        children: const [Text('One plan covers you and up to 3 kids. Change or cancel any time in your phone\'s subscription settings.')],
+      );
+    }
+    if (!signedIn) {
+      return AppPage(
+        title: _name,
+        subtitle: 'Create a free account to subscribe, so your plan follows you to a new phone.',
+        actions: [close],
+        action: FilledButton(onPressed: () => context.push('/signup'), child: const Text('Create a free account')),
+        children: const [],
+      );
     }
 
-    return AppPage(
-      title: name,
-      subtitle: owned
-          ? 'You have $name. Thank you!'
-          : unavailable
-          ? 'Plans aren\'t available right now. Nothing has been charged.'
-          : 'One plan covers you and up to 3 kids.',
-      actions: [IconButton(tooltip: 'Close', icon: const Icon(Icons.close), onPressed: () => context.canPop() ? context.pop() : context.go('/me'))],
-      action: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          primary,
-          Wrap(
-            alignment: WrapAlignment.center,
-            children: [
-              if (signedIn && purchases.available) TextButton(onPressed: _busy ? null : _restore, child: const Text('Restore purchases')),
-              if (signedIn && purchases.available && !owned) TextButton(onPressed: _busy ? null : _manage, child: const Text('Manage subscription')),
-            ],
-          ),
-        ],
-      ),
-      children: [
-        SegmentedButton<bool>(
-          segments: const [
-            ButtonSegment(value: false, label: Text('Player Pro')),
-            ButtonSegment(value: true, label: Text('Coach Pro')),
-          ],
-          selected: {_coach},
-          onSelectionChanged: (value) => setState(() => _coach = value.first),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        SegmentedButton<bool>(
-          segments: const [
-            ButtonSegment(value: false, label: Text('Monthly')),
-            ButtonSegment(value: true, label: Text('Yearly')),
-          ],
-          selected: {_yearly},
-          onSelectionChanged: (value) => setState(() => _yearly = value.first),
-        ),
-        const SizedBox(height: AppSpacing.xl),
-        TrainingCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  const Expanded(child: SizedBox()),
-                  Text('Free', style: theme.textTheme.labelLarge),
-                  const SizedBox(width: AppSpacing.lg),
-                  Text('Pro', style: theme.textTheme.labelLarge),
-                ],
-              ),
-              for (final feature in features)
-                Padding(
-                  padding: const EdgeInsets.only(top: AppSpacing.sm),
-                  child: Row(
-                    children: [
-                      Expanded(child: Text(feature.label)),
-                      Icon(feature.free ? Icons.check : Icons.remove, semanticLabel: feature.free ? 'Included in Free' : 'Not in Free'),
-                      const SizedBox(width: AppSpacing.lg),
-                      Icon(Icons.check, color: theme.colorScheme.primary, semanticLabel: 'Included in Pro'),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: AppSpacing.md),
-        if (_coach) const Text('Players get a free month of Player Pro (30 days) when they join a Coach Pro team.'),
-        const SizedBox(height: AppSpacing.sm),
-        Text('Renews automatically until cancelled. Cancel any time in your phone\'s subscription settings.', style: theme.textTheme.bodySmall),
-      ],
+    _paywall ??= purchases.paywall(widget.coach ? 'coach' : 'player', onFinished: _close).catchError((Object _) => null);
+    return FutureBuilder<Widget?>(
+      future: _paywall,
+      builder: (context, snapshot) {
+        final paywall = snapshot.data;
+        if (paywall != null) return Scaffold(body: paywall);
+        if (snapshot.connectionState != ConnectionState.done) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+        return AppPage(
+          title: _name,
+          subtitle: 'Plans aren\'t available right now. Nothing has been charged.',
+          actions: [close],
+          action: FilledButton(onPressed: _close, child: const Text('Back')),
+          children: const [],
+        );
+      },
     );
   }
 }

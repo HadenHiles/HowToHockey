@@ -1,5 +1,6 @@
 package com.howtohockey.app
 
-import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.android.FlutterFragmentActivity
 
-class MainActivity : FlutterActivity()
+// RevenueCat's paywall needs a fragment activity and an AppCompat theme.
+class MainActivity : FlutterFragmentActivity()

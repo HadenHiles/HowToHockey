@@ -144,7 +144,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: '/onboarding/role', builder: (_, _) => const RoleOnboardingPage()),
       GoRoute(
         path: '/paywall',
-        builder: (_, state) => PaywallPage(coach: state.uri.queryParameters['plan'] == 'coach'),
+        builder: (_, state) {
+          final coach = state.uri.queryParameters['plan'] == 'coach';
+          return PaywallPage(key: ValueKey(coach), coach: coach);
+        },
       ),
       GoRoute(
         path: '/programs',
