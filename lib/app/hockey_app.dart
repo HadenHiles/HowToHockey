@@ -34,11 +34,14 @@ String? roleRedirect(AuthState? auth, String path) {
   return roleScreen && auth is! SignedInAccount ? '/signup' : null;
 }
 
+/// Where the app opens. `main()` sends a first launch to the welcome walkthrough; everything else opens Train.
+final initialLocationProvider = Provider<String>((_) => '/train');
+
 final appRouterProvider = Provider<GoRouter>((ref) {
   final authChanged = ValueNotifier<int>(0);
   ref.listen(authStateProvider, (_, _) => authChanged.value++);
   final router = GoRouter(
-    initialLocation: '/train',
+    initialLocation: ref.read(initialLocationProvider),
     refreshListenable: authChanged,
     redirect: (_, state) => roleRedirect(ref.read(authStateProvider).value, state.uri.path),
     routes: [

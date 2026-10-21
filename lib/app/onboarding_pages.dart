@@ -1,37 +1,221 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../design/components/training_components.dart';
+import '../design/tokens/app_shapes.dart';
 import '../design/tokens/app_spacing.dart';
-import '../features/drills/drill_media.dart';
+import '../features/coach/outcomes.dart';
+import '../features/settings/appearance_settings_controller.dart';
 import 'app_page.dart';
-import 'drill_media_card.dart';
+import 'sample_data.dart';
 
-class WelcomePage extends StatelessWidget {
+/// Remembers that the welcome walkthrough has been seen, so it only opens by itself on the first launch.
+const welcomeSeenKey = 'welcomeSeen';
+
+/// The first screens: what the app does for a player, a parent and a coach, one swipe each, then the ways in.
+class WelcomePage extends ConsumerStatefulWidget {
   const WelcomePage({super.key});
+
+  @override
+  ConsumerState<WelcomePage> createState() => _WelcomePageState();
+}
+
+class _WelcomePageState extends ConsumerState<WelcomePage> {
+  final _pages = PageController();
+  var _page = 0;
+
+  @override
+  void dispose() {
+    _pages.dispose();
+    super.dispose();
+  }
+
+  void _leave(String route) {
+    unawaited(ref.read(sharedPreferencesProvider).setBool(welcomeSeenKey, true));
+    context.go(route);
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Words get more room at larger text sizes; the page still scrolls if it must.
+    final pageHeight = MediaQuery.textScalerOf(context).scale(470);
     return AppPage(
       title: 'Welcome',
       showAppBar: false,
       children: [
-        const SizedBox(height: AppSpacing.xl),
+        const SizedBox(height: AppSpacing.md),
         const Center(child: BrandWordmark()),
-        const SizedBox(height: AppSpacing.xl),
-        const DrillMediaCard(title: 'Coach Jeremy', mediaPath: placeholderLessonMediaPath),
-        const SizedBox(height: AppSpacing.xl),
-        Text('Feel more confident in your next game.', style: theme.textTheme.headlineLarge),
+        const SizedBox(height: AppSpacing.lg),
+        SizedBox(
+          height: pageHeight,
+          child: PageView(
+            key: const ValueKey('welcome-pages'),
+            controller: _pages,
+            onPageChanged: (page) => setState(() => _page = page),
+            children: const [_PlayerPage(), _ParentPage(), _CoachPage()],
+          ),
+        ),
+        Semantics(
+          label: 'Page ${_page + 1} of 3',
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              for (var i = 0; i < 3; i++)
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: i == _page ? 22 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(color: i == _page ? theme.colorScheme.primary : theme.dividerColor, borderRadius: BorderRadius.circular(4)),
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: AppSpacing.lg),
+        FilledButton(onPressed: () => _leave('/signup'), child: const Text('Get started')),
         const SizedBox(height: AppSpacing.sm),
-        const Text('Off-ice workouts with clear instruction, your progress, and your team in one place.'),
-        const SizedBox(height: AppSpacing.xl),
-        FilledButton(onPressed: () => context.go('/signup'), child: const Text('Get started')),
-        const SizedBox(height: AppSpacing.sm),
-        OutlinedButton(onPressed: () => context.go('/signin'), child: const Text('I already have an account')),
-        TextButton(onPressed: () => context.go('/pair'), child: const Text('Set up a kid\'s device')),
-        TextButton(onPressed: () => context.go('/train'), child: const Text('Look around first')),
+        OutlinedButton(onPressed: () => _leave('/signin'), child: const Text('I already have an account')),
+        TextButton(onPressed: () => _leave('/pair'), child: const Text('Set up a kid\'s device')),
+        TextButton(onPressed: () => _leave('/train'), child: const Text('Look around first')),
       ],
+    );
+  }
+}
+
+/// One role's page: who it is for, the promise, a look at it, and what it does (or soon will).
+class _RolePage extends StatelessWidget {
+  const _RolePage({required this.eyebrow, required this.headline, required this.preview, required this.points});
+
+  final String eyebrow;
+  final String headline;
+  final Widget preview;
+  final List<(String, bool)> points;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(eyebrow, style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary, letterSpacing: 1)),
+          const SizedBox(height: AppSpacing.xxs),
+          Text(headline, style: theme.textTheme.headlineMedium),
+          const SizedBox(height: AppSpacing.md),
+          // A picture of the screen, not the screen: it can't be tapped and isn't read out.
+          ExcludeSemantics(child: IgnorePointer(child: preview)),
+          const SizedBox(height: AppSpacing.md),
+          for (final (text, soon) in points)
+            Padding(
+              padding: const EdgeInsets.only(bottom: AppSpacing.xs),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(soon ? Icons.schedule : Icons.check_circle, size: 20, color: soon ? theme.colorScheme.onSurfaceVariant : theme.colorScheme.primary),
+                  const SizedBox(width: AppSpacing.xs),
+                  Expanded(child: Text(text, style: theme.textTheme.bodyMedium)),
+                  if (soon)
+                    Container(
+                      margin: const EdgeInsets.only(left: AppSpacing.xs),
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: theme.dividerColor),
+                        borderRadius: BorderRadius.circular(AppRadii.control),
+                      ),
+                      child: Text('Soon', style: theme.textTheme.labelSmall),
+                    ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlayerPage extends StatelessWidget {
+  const _PlayerPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return _RolePage(
+      eyebrow: 'FOR PLAYERS',
+      headline: 'Get better at hockey, and have fun doing it.',
+      preview: Wrap(
+        spacing: AppSpacing.xs,
+        runSpacing: AppSpacing.xs,
+        children: [
+          for (final outcome in outcomes.take(4))
+            Chip(
+              avatar: Icon(outcome.pillar.icon, size: 18, color: theme.colorScheme.primary),
+              label: Text(outcome.label),
+            ),
+        ],
+      ),
+      points: const [('Pick what you want to improve, then tap Start.', false), ('Follow along one drill at a time.', false), ('Watch your progress add up.', false)],
+    );
+  }
+}
+
+class _ParentPage extends StatelessWidget {
+  const _ParentPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    Widget kid(String initials, String name) => TrainingCard(
+      child: Row(
+        children: [
+          CircleAvatar(backgroundColor: theme.colorScheme.primary, foregroundColor: theme.colorScheme.onPrimary, child: Text(initials)),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(child: Text(name, style: theme.textTheme.titleMedium)),
+          Icon(Icons.chevron_right, color: theme.colorScheme.onSurfaceVariant),
+        ],
+      ),
+    );
+    return _RolePage(
+      eyebrow: 'FOR PARENTS',
+      headline: 'Your kids train. You stay in charge.',
+      preview: Column(
+        children: [
+          kid('A', 'Avery H.'),
+          const SizedBox(height: AppSpacing.xs),
+          kid('J', 'Jamie H.'),
+        ],
+      ),
+      points: const [('Set up to 3 kids. No email needed for them.', false), ('Approve their team requests.', false), ('Confirm their workouts and fix their training time.', true)],
+    );
+  }
+}
+
+class _CoachPage extends StatelessWidget {
+  const _CoachPage();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return _RolePage(
+      eyebrow: 'FOR COACHES',
+      headline: 'Get your whole team training.',
+      preview: TrainingCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Team code', style: theme.textTheme.labelSmall),
+            const SizedBox(height: AppSpacing.xxs),
+            Text('7F3A 9C21 B54E 08D6', style: theme.textTheme.headlineSmall),
+            const SizedBox(height: AppSpacing.xxs),
+            Text('Example', style: theme.textTheme.bodySmall),
+          ],
+        ),
+      ),
+      points: const [('Create a team and share one code.', false), ('Approve players and add assistant coaches.', false), ('Share a routine with your whole team.', true)],
     );
   }
 }

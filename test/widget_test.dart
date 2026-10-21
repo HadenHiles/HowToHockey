@@ -33,7 +33,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).themeMode, ThemeMode.system);
-    expect(find.text('View workout'), findsOneWidget);
+    expect(find.text('Start workout'), findsOneWidget);
     expect(find.byType(NavigationBar), findsOneWidget);
     final logo = find.bySemanticsLabel('How To Hockey');
     expect(logo, findsOneWidget);

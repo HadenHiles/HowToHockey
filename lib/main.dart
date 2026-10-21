@@ -16,6 +16,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/hockey_app.dart';
+import 'app/onboarding_pages.dart' show welcomeSeenKey;
 import 'features/commerce/entitlements.dart';
 import 'features/commerce/purchases_service.dart';
 import 'features/settings/appearance_settings_controller.dart';
@@ -81,6 +82,9 @@ Future<void> main() async {
 
   await ensureSignedIn(FirebaseAuth.instance);
 
+  // First launch opens the welcome walkthrough. Someone already signed in to a real account has no need of it.
+  final user = FirebaseAuth.instance.currentUser;
+  final seenWelcome = (preferences.getBool(welcomeSeenKey) ?? false) || (user != null && !user.isAnonymous);
   // A store problem must never stop the app from opening; without it the app simply can't sell plans.
   PurchasesService purchases = const UnavailablePurchases();
   try {
@@ -89,7 +93,12 @@ Future<void> main() async {
     unawaited(crashlytics.recordError(error, stack));
   }
 
-  runApp(ProviderScope(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), purchasesProvider.overrideWithValue(purchases)], child: const MyApp()));
+  runApp(
+    ProviderScope(
+      overrides: [sharedPreferencesProvider.overrideWithValue(preferences), purchasesProvider.overrideWithValue(purchases), if (!seenWelcome) initialLocationProvider.overrideWithValue('/welcome')],
+      child: const MyApp(),
+    ),
+  );
 }
 
 /// Auth error codes that mean a saved anonymous session can never refresh its token.

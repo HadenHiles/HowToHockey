@@ -272,7 +272,7 @@ void main() {
     testWidgets('the Train tab shows today\'s generated workout', (tester) async {
       final (container, _) = await mount(tester);
       final routine = container.read(generatedRoutineProvider).requireValue;
-      expect(find.text('View workout'), findsOneWidget);
+      expect(find.text('Start workout'), findsOneWidget);
       expect(find.text('${routine.estimatedMinutes}'), findsWidgets);
     });
   });

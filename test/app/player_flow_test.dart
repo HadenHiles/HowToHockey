@@ -73,9 +73,6 @@ void main() {
   testWidgets('starting a workout from Train keeps navigator page keys unique', (tester) async {
     phoneSize(tester);
     final container = await mountApp(tester);
-    await tester.tap(find.text('View workout'));
-    await tester.pumpAndSettle();
-    expect(tester.takeException(), isNull);
     await tester.ensureVisible(find.text('Start workout'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Start workout'));
@@ -92,7 +89,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('workout-status-header')).hitTestable(), findsOneWidget);
     expect(find.textContaining('Your session').hitTestable(), findsNothing);
-    expect(find.text('View workout'), findsOneWidget);
+    expect(find.text('Resume workout'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -177,7 +174,7 @@ void main() {
     expect(container.read(appearanceProvider), AppAppearance.dark);
     router.go('/train');
     await tester.pumpAndSettle();
-    expect(find.text('Basement'), findsOneWidget);
+    expect(find.textContaining('Basement'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

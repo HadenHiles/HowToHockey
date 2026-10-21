@@ -12,6 +12,7 @@ import '../design/tokens/app_shapes.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/drills/drill_catalog.dart';
 import '../features/drills/models/drill.dart';
+import '../features/coach/outcomes.dart';
 import '../features/accounts/auth_service.dart';
 import 'commerce_pages.dart';
 import '../features/profiles/active_player.dart';
@@ -42,29 +43,27 @@ class TrainPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final setup = ref.watch(trainingSetupProvider);
+    final focus = ref.watch(trainingFocusProvider);
     return AppPage(
       title: 'Train',
       appBarTitle: const BrandWordmark(),
       centerAppBarTitle: true,
       children: [
+        Text('What do you want to get better at?', style: theme.textTheme.headlineSmall),
+        const SizedBox(height: AppSpacing.sm),
+        _OutcomePicker(selected: outcomeFor(focus)),
+        const SizedBox(height: AppSpacing.lg),
         _TodayWorkoutCard(),
         const SizedBox(height: AppSpacing.xl),
-        SectionHeading(title: 'Your setup', action: 'Edit', onAction: () => context.push('/setup')),
-        const SizedBox(height: AppSpacing.sm),
-        Wrap(
-          spacing: AppSpacing.xs,
-          runSpacing: AppSpacing.xs,
-          children: [
-            ActionChip(label: Text(setup.location.label), avatar: const Icon(Icons.place_outlined), onPressed: () => context.push('/setup')),
-            ActionChip(label: Text(setup.inventory.label), avatar: const Icon(Icons.sports_hockey_outlined), onPressed: () => context.push('/setup')),
-          ],
-        ),
-        const SizedBox(height: AppSpacing.md),
-        OutlinedButton.icon(onPressed: () => context.push('/setup'), icon: const Icon(Icons.tune), label: const Text('Build a workout')),
-        const SizedBox(height: AppSpacing.sm),
-        OutlinedButton.icon(onPressed: () => context.push('/routines'), icon: const Icon(Icons.view_list_outlined), label: const Text('Manage routines')),
-        const SizedBox(height: AppSpacing.xl),
         const _WeekCard(),
+        const SizedBox(height: AppSpacing.xl),
+        const SectionHeading(title: 'Customize'),
+        const SizedBox(height: AppSpacing.sm),
+        _CustomizeRow(icon: Icons.place_outlined, title: 'Where you train', detail: '${setup.location.label} · ${setup.inventory.label}', onTap: () => context.push('/setup')),
+        const SizedBox(height: AppSpacing.xs),
+        _CustomizeRow(icon: Icons.tune, title: 'Mix your skills', detail: 'Choose how much of each skill', onTap: () => context.push('/focus')),
+        const SizedBox(height: AppSpacing.xs),
+        _CustomizeRow(icon: Icons.view_list_outlined, title: 'My routines', detail: 'Workouts you saved', onTap: () => context.push('/routines')),
         const SizedBox(height: AppSpacing.xl),
         SectionHeading(title: 'Explore drills', action: 'See all', onAction: () => context.push('/library')),
         const SizedBox(height: AppSpacing.md),
@@ -668,18 +667,127 @@ class _MeEntryCard extends StatelessWidget {
   );
 }
 
+/// The skills a player can point today's workout at, as big buttons. One tap changes the workout below.
+class _OutcomePicker extends ConsumerWidget {
+  const _OutcomePicker({required this.selected});
+
+  final Outcome? selected;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final pillars = theme.extension<PillarColors>()!;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const gap = AppSpacing.xs;
+        final width = (constraints.maxWidth - gap) / 2;
+        return Wrap(
+          spacing: gap,
+          runSpacing: gap,
+          children: [
+            for (final outcome in outcomes)
+              SizedBox(
+                width: width,
+                child: Semantics(
+                  button: true,
+                  selected: selected == outcome,
+                  label: outcome.label,
+                  excludeSemantics: true,
+                  child: Material(
+                    key: ValueKey('outcome-${outcome.pillar.name}'),
+                    color: selected == outcome ? outcome.pillar.color(pillars).withValues(alpha: .16) : theme.colorScheme.surface,
+                    shape: RoundedRectangleBorder(
+                      side: BorderSide(color: selected == outcome ? outcome.pillar.color(pillars) : theme.dividerColor, width: selected == outcome ? 2 : 1),
+                      borderRadius: BorderRadius.circular(AppRadii.control),
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      // Tapping the chosen one again goes back to a balanced workout.
+                      onTap: () => ref.read(trainingFocusProvider.notifier).apply(selected == outcome ? defaultTrainingFocus : focusForOutcome(outcome.pillar, defaultTrainingFocus)),
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(minHeight: 72),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.sm, vertical: AppSpacing.xs),
+                          child: Row(
+                            children: [
+                              Icon(outcome.pillar.icon, color: outcome.pillar.color(pillars), size: 28),
+                              const SizedBox(width: AppSpacing.xs),
+                              Expanded(child: Text(outcome.label, style: theme.textTheme.titleSmall)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _CustomizeRow extends StatelessWidget {
+  const _CustomizeRow({required this.icon, required this.title, required this.detail, required this.onTap});
+
+  final IconData icon;
+  final String title;
+  final String detail;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return TrainingCard(
+      onTap: onTap,
+      child: Row(
+        children: [
+          Icon(icon, color: theme.colorScheme.primary),
+          const SizedBox(width: AppSpacing.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: theme.textTheme.titleMedium),
+                Text(detail, style: theme.textTheme.bodySmall),
+              ],
+            ),
+          ),
+          Icon(Icons.chevron_right, color: theme.colorScheme.onSurfaceVariant),
+        ],
+      ),
+    );
+  }
+}
+
 class _TodayWorkoutCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final focus = ref.watch(trainingFocusProvider);
+    final outcome = outcomeFor(focus);
+    final session = ref.watch(trainingSessionProvider);
+    // A workout already under way is resumed, never silently replaced by a new one.
+    final underway = session.startedAt != null && !session.dismissed;
     return switch (ref.watch(generatedRoutineProvider)) {
-      AsyncData(:final value) when value.drills.isNotEmpty => TrainingHeroCard(
-        eyebrow: 'Today\'s workout',
-        title: routineTitle(focus),
-        detail: routineDetail(focus),
-        metrics: [('${value.estimatedMinutes}', 'minutes'), (value.drills.length.toString().padLeft(2, '0'), 'drills'), ('${value.totalSets}', 'sets')],
-        actionLabel: 'View workout',
-        onTap: () => context.push('/routine'),
+      AsyncData(:final value) when value.drills.isNotEmpty => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TrainingHeroCard(
+            eyebrow: underway ? 'Workout in progress' : 'Today\'s workout',
+            title: underway ? 'Pick up\nwhere you left off' : (outcome?.headline ?? routineTitle(focus)),
+            detail: underway ? 'Your sets so far are saved.' : routineDetail(focus),
+            metrics: [('${value.estimatedMinutes}', 'minutes'), (value.drills.length.toString().padLeft(2, '0'), 'drills'), ('${value.totalSets}', 'sets')],
+            actionLabel: underway ? 'Resume workout' : 'Start workout',
+            onTap: () {
+              if (!underway) ref.read(trainingSessionProvider.notifier).start(value.drills);
+              context.go('/train/session');
+            },
+          ),
+          Center(
+            child: TextButton(onPressed: () => context.push('/routine'), child: const Text('See the plan')),
+          ),
+        ],
       ),
       AsyncData() => TrainingCard(
         child: Column(

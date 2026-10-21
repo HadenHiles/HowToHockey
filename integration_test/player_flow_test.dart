@@ -22,7 +22,7 @@ void main() {
     expect(Firebase.apps, isNotEmpty);
     expect(FirebaseAuth.instance.currentUser, isNotNull);
     expect(find.byType(HockeyApp), findsOneWidget);
-    expect(find.text('View workout'), findsOneWidget);
+    expect(find.text('Start workout'), findsOneWidget);
     final container = ProviderScope.containerOf(tester.element(find.byType(HockeyApp)));
     final router = container.read(appRouterProvider);
     await container.read(drillRestSettingsProvider.notifier).configure(sampleDrills.first.id, (enabled: false, seconds: 45));
