@@ -11,7 +11,6 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 
 import '../design/components/training_components.dart';
 import '../design/theme/app_theme.dart';
-import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/drills/drill_media.dart';
 import '../features/drills/drill_catalog.dart';
@@ -22,8 +21,8 @@ import '../features/drills/set_summary.dart';
 import '../features/session/rest_notifications.dart';
 import '../features/session/session_cues.dart';
 import '../features/session/set_countdown.dart';
-import 'sample_data.dart';
 import 'drill_picker.dart';
+import 'drill_media_card.dart';
 import 'routine_state.dart';
 import 'workout_overview.dart';
 import 'workout_history.dart';
@@ -52,18 +51,16 @@ class WorkoutSessionPanel extends ConsumerStatefulWidget {
 
 class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> with WidgetsBindingObserver {
   late final PageController _pages = PageController(initialPage: ref.read(trainingSessionProvider).drillIndex);
-  final ScrollController _previews = ScrollController();
   final DraggableScrollableController _sheet = DraggableScrollableController();
   final ValueNotifier<_DrillAction?> _drillAction = ValueNotifier(null);
   Timer? _ticker;
   double _minimumSheetSize = .2;
   double _maximumSheetSize = .96;
-  late bool _overview = !ref.read(workoutFocusPreferenceProvider);
+
+  /// True on the Standard view (the list of sets); false on the Simple guided view, the default.
+  late bool _overview = ref.read(workoutStandardViewProvider);
   bool _detailsOpen = false;
   bool _expanded = false;
-  double _previewWidth = 0;
-  double _previewViewport = 0;
-  int? _centeredPreview;
 
   @override
   void initState() {
@@ -135,7 +132,6 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> with 
     _ticker?.cancel();
     _sheet.removeListener(_syncSheetProgress);
     _pages.dispose();
-    _previews.dispose();
     _sheet.dispose();
     _drillAction.dispose();
     super.dispose();
@@ -162,17 +158,6 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> with 
           _sheet.jumpTo(widget.expandRequested ? _maximumSheetSize : _minimumSheetSize);
         }
       });
-    }
-  }
-
-  void _centerPreview(int index) {
-    if (!mounted || !_previews.hasClients || _centeredPreview == index) return;
-    _centeredPreview = index;
-    final target = (index * (_previewWidth + AppSpacing.sm) - (_previewViewport - _previewWidth) / 2).clamp(0.0, _previews.position.maxScrollExtent).toDouble();
-    if (MediaQuery.disableAnimationsOf(context)) {
-      _previews.jumpTo(target);
-    } else {
-      _previews.animateTo(target, duration: const Duration(milliseconds: 220), curve: Curves.easeOutCubic);
     }
   }
 
@@ -241,8 +226,6 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> with 
     final elapsed = session.elapsedSeconds;
     final remaining = session.restEndsAt == null ? 0 : (session.restEndsAt!.difference(clock.now().toUtc()).inMilliseconds / 1000).ceil().clamp(0, 600);
     final totalSets = session.drills.fold<int>(0, (sum, drill) => sum + drill.defaultPrescription.sets);
-    final pillars = HockeyTheme.dark.extension<PillarColors>()!;
-    final textScale = MediaQuery.textScalerOf(context).scale(1);
     final statusHeaderHeight = WorkoutSessionPanel.headerHeightOf(context);
     final topInset = MediaQuery.paddingOf(context).top;
     return Theme(
@@ -258,12 +241,11 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> with 
           _minimumSheetSize = minSheetSize;
           _maximumSheetSize = maxSheetSize;
           WidgetsBinding.instance.addPostFrameCallback((_) => _syncSheetProgress());
-          final screenWidth = MediaQuery.sizeOf(context).width;
-          final cardWidth = (screenWidth - AppSpacing.screen * 2 - AppSpacing.sm * ((textScale > 1 ? 4 : 5) - 1)) / (textScale > 1 ? 4 : 5);
           const titleRowHeight = 48.0;
-          final actionHeight = 56 + AppSpacing.sm + math.max(MediaQuery.paddingOf(context).bottom, AppSpacing.lg);
-          // Fit title, previews, drill body, and the Log action on one screen.
-          final drillBodyHeight = math.max(260.0, viewport - topInset - statusHeaderHeight - titleRowHeight - cardWidth * 16 / 9 - AppSpacing.xs - actionHeight - (remaining > 0 ? 76 : 0));
+          const stepsHeight = 28.0;
+          final actionHeight = _actionBarHeight(context);
+          // The Simple view fits its drill, a pinned action and a progress strip on one screen where it can.
+          final drillBodyHeight = math.max(380.0, viewport - topInset - statusHeaderHeight - titleRowHeight - stepsHeight - actionHeight - (remaining > 0 ? 76 : 0));
           return DraggableScrollableSheet(
             controller: _sheet,
             initialChildSize: widget.expandRequested ? maxSheetSize : minSheetSize,
@@ -275,232 +257,197 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> with 
               color: Theme.of(context).scaffoldBackgroundColor,
               clipBehavior: Clip.antiAlias,
               borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: statusHeaderHeight,
-                    child: _WorkoutStatusHeader(
-                      elapsed: elapsed,
-                      active: session.activeSeconds,
-                      setsLogged: session.logs.length,
-                      totalSets: totalSets,
-                      estimated: session.hasEstimatedTime,
-                      onHandleDrag: _dragHandle,
-                      onHandleDragEnd: _settleHandleDrag,
+              child: LayoutBuilder(
+                builder: (context, box) => Column(
+                  children: [
+                    SizedBox(
+                      height: statusHeaderHeight,
+                      child: _WorkoutStatusHeader(
+                        elapsed: elapsed,
+                        active: session.activeSeconds,
+                        setsLogged: session.logs.length,
+                        totalSets: totalSets,
+                        estimated: session.hasEstimatedTime,
+                        onHandleDrag: _dragHandle,
+                        onHandleDragEnd: _settleHandleDrag,
+                      ),
                     ),
-                  ),
-                  Expanded(
-                    child: CustomScrollView(
-                      key: const ValueKey('workout-session-scroll'),
-                      controller: scrollController,
-                      slivers: [
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.sm, 0),
-                            child: Row(
+                    Expanded(
+                      child: CustomScrollView(
+                        key: const ValueKey('workout-session-scroll'),
+                        controller: scrollController,
+                        slivers: [
+                          SliverToBoxAdapter(
+                            child: Padding(
+                              padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.sm, 0),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: SizedBox(
+                                      height: titleRowHeight,
+                                      child: Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Text(
+                                          _overview ? 'Workout' : 'Drill ${session.drillIndex + 1} of ${session.drills.length}',
+                                          style: Theme.of(context).textTheme.titleMedium,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    tooltip: _overview ? 'Simple view' : 'Standard view',
+                                    onPressed: () {
+                                      // Switching with the toggle is a choice worth remembering; jumping to one drill from the list is not.
+                                      ref.read(workoutStandardViewProvider.notifier).choose(!_overview);
+                                      setState(() {
+                                        _overview = !_overview;
+                                        _drillAction.value = null;
+                                      });
+                                    },
+                                    icon: Icon(_overview ? Icons.crop_portrait : Icons.list_alt),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          if (!_overview) SliverToBoxAdapter(child: _DrillSteps(session: session)),
+                          if (remaining > 0)
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.sm, AppSpacing.screen, 0),
+                                child: TrainingCard(
+                                  child: Wrap(
+                                    spacing: AppSpacing.sm,
+                                    crossAxisAlignment: WrapCrossAlignment.center,
+                                    children: [
+                                      Text('Rest ${_time(remaining)}'),
+                                      TextButton(onPressed: () => ref.read(trainingSessionProvider.notifier).adjustRest(-15), child: const Text('−15s')),
+                                      TextButton(onPressed: () => ref.read(trainingSessionProvider.notifier).adjustRest(15), child: const Text('+15s')),
+                                      TextButton(onPressed: () => ref.read(trainingSessionProvider.notifier).skipRest(), child: const Text('Skip rest')),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          SliverToBoxAdapter(
+                            // Keyed: slivers appear and disappear around it, which must not remount the drill pages.
+                            key: const ValueKey('workout-body'),
+                            child: Column(
                               children: [
-                                Expanded(
+                                if (_overview)
+                                  WorkoutOverview(session: session, onFocus: _select, onDetails: _showDetails, onRest: (drill) => showDrillRestSettings(context, drill), onEdited: _syncPage),
+                                // Kept alive while hidden so a half-entered count survives a trip to the list.
+                                Offstage(
+                                  key: const ValueKey('focus-pages'),
+                                  offstage: _overview,
                                   child: SizedBox(
-                                    height: titleRowHeight,
-                                    child: Align(
-                                      alignment: Alignment.centerLeft,
-                                      child: Text(
-                                        _overview ? 'Workout' : 'Your session · Drill ${session.drillIndex + 1} of ${session.drills.length}',
-                                        style: Theme.of(context).textTheme.titleMedium,
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                    height: drillBodyHeight,
+                                    child: PageView.builder(
+                                      controller: _pages,
+                                      itemCount: session.drills.length,
+                                      onPageChanged: _onPageChanged,
+                                      itemBuilder: (_, index) => _ActiveDrill(
+                                        key: ValueKey('${session.drills[index].id}-${session.setsLogged(index)}-${session.drills[index].defaultPrescription.sets}'),
+                                        session: session.copyWith(drillIndex: index),
+                                        active: _expanded && !_overview && !_detailsOpen && index == session.drillIndex,
+                                        onSelect: _select,
+                                        onShowDetails: () => _showDetails(session.drills[index]),
+                                        actionNotifier: _drillAction,
                                       ),
                                     ),
                                   ),
                                 ),
-                                IconButton(
-                                  tooltip: _overview ? 'Focus view' : 'Workout overview',
-                                  onPressed: () {
-                                    // Switching with the toggle is a choice worth remembering; jumping to one drill from the list is not.
-                                    ref.read(workoutFocusPreferenceProvider.notifier).choose(_overview);
-                                    setState(() {
-                                      _overview = !_overview;
-                                      _drillAction.value = null;
-                                    });
-                                  },
-                                  icon: Icon(_overview ? Icons.view_carousel_outlined : Icons.list_alt),
-                                ),
                               ],
                             ),
                           ),
-                        ),
-                        if (!_overview)
-                          SliverToBoxAdapter(
-                            child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                final available = constraints.maxWidth - AppSpacing.screen * 2;
-                                final visibleCards = textScale > 1 ? 4 : 5;
-                                final width = (available - AppSpacing.sm * (visibleCards - 1)) / visibleCards;
-                                if (_previewWidth != width || _previewViewport != available) _centeredPreview = null;
-                                _previewWidth = width;
-                                _previewViewport = available;
-                                WidgetsBinding.instance.addPostFrameCallback((_) => _centerPreview(session.drillIndex));
-                                return Padding(
-                                  padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.xs, AppSpacing.screen, 0),
-                                  child: SizedBox(
-                                    height: width * 16 / 9,
-                                    child: ListView.separated(
-                                      key: const ValueKey('workout-drill-previews'),
-                                      controller: _previews,
-                                      scrollDirection: Axis.horizontal,
-                                      padding: EdgeInsets.zero,
-                                      separatorBuilder: (_, _) => const SizedBox(width: AppSpacing.sm),
-                                      itemCount: session.drills.length,
-                                      itemBuilder: (context, index) {
-                                        final drill = session.drills[index];
-                                        final selected = index == session.drillIndex;
-                                        final color = drill.pillar.color(pillars);
-                                        return SizedBox(
-                                          width: width,
-                                          child: Semantics(
-                                            key: ValueKey('workout-preview-${drill.id}'),
-                                            button: true,
-                                            selected: selected,
-                                            label: '${drill.pillar.label}: ${drill.title}, ${session.setsLogged(index)} of ${drill.defaultPrescription.sets} sets',
-                                            child: Material(
-                                              color: selected ? color.withValues(alpha: .2) : Theme.of(context).colorScheme.surface,
-                                              shape: RoundedRectangleBorder(
-                                                side: BorderSide(color: selected ? color : Theme.of(context).dividerColor, width: selected ? 2 : 1),
-                                                borderRadius: BorderRadius.circular(16),
-                                              ),
-                                              clipBehavior: Clip.antiAlias,
-                                              child: InkWell(
-                                                onTap: () => _select(index),
-                                                child: Padding(
-                                                  padding: const EdgeInsets.all(AppSpacing.xs),
-                                                  child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                                                    children: [
-                                                      Expanded(
-                                                        child: DecoratedBox(
-                                                          decoration: BoxDecoration(color: color.withValues(alpha: .16), borderRadius: BorderRadius.circular(11)),
-                                                          child: Center(child: Icon(drill.pillar.icon, color: color, size: 26)),
-                                                        ),
-                                                      ),
-                                                      const SizedBox(height: AppSpacing.xxs),
-                                                      Text(drill.title, maxLines: textScale > 1 ? 1 : 2, overflow: TextOverflow.ellipsis, style: Theme.of(context).textTheme.labelSmall),
-                                                      Text(
-                                                        '${session.setsLogged(index)}/${drill.defaultPrescription.sets} sets',
-                                                        maxLines: 1,
-                                                        overflow: TextOverflow.ellipsis,
-                                                        style: Theme.of(context).textTheme.labelSmall,
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        if (remaining > 0)
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.sm, AppSpacing.screen, 0),
-                              child: TrainingCard(
-                                child: Wrap(
-                                  spacing: AppSpacing.sm,
-                                  crossAxisAlignment: WrapCrossAlignment.center,
-                                  children: [
-                                    Text('Rest ${_time(remaining)}'),
-                                    TextButton(onPressed: () => ref.read(trainingSessionProvider.notifier).adjustRest(-15), child: const Text('−15s')),
-                                    TextButton(onPressed: () => ref.read(trainingSessionProvider.notifier).adjustRest(15), child: const Text('+15s')),
-                                    TextButton(onPressed: () => ref.read(trainingSessionProvider.notifier).skipRest(), child: const Text('Skip rest')),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        SliverToBoxAdapter(
-                          // Keyed: slivers appear and disappear around it, which must not remount the drill pages.
-                          key: const ValueKey('workout-body'),
-                          child: Column(
-                            children: [
-                              if (_overview)
-                                WorkoutOverview(session: session, onFocus: _select, onDetails: _showDetails, onRest: (drill) => showDrillRestSettings(context, drill), onEdited: _syncPage),
-                              // Kept alive while hidden so a half-entered count survives a trip to the list.
-                              Offstage(
-                                key: const ValueKey('focus-pages'),
-                                offstage: _overview,
-                                child: SizedBox(
-                                  height: drillBodyHeight,
-                                  child: PageView.builder(
-                                    controller: _pages,
-                                    itemCount: session.drills.length,
-                                    onPageChanged: _onPageChanged,
-                                    itemBuilder: (_, index) => _ActiveDrill(
-                                      key: ValueKey('${session.drills[index].id}-${session.setsLogged(index)}-${session.drills[index].defaultPrescription.sets}'),
-                                      session: session.copyWith(drillIndex: index),
-                                      active: _expanded && !_overview && !_detailsOpen && index == session.drillIndex,
-                                      onSelect: _select,
-                                      onShowDetails: () => _showDetails(session.drills[index]),
-                                      actionNotifier: _drillAction,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        if (!_overview)
-                          SliverToBoxAdapter(
-                            child: SafeArea(
-                              top: false,
-                              minimum: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.sm, AppSpacing.screen, AppSpacing.lg),
-                              child: ValueListenableBuilder<_DrillAction?>(
-                                valueListenable: _drillAction,
-                                builder: (context, action, _) {
-                                  final label = session.finished ? 'Finish workout' : action?.label;
-                                  final onPressed = session.finished
-                                      ? () {
-                                          ref.read(trainingSessionProvider.notifier).dismissFinishedWorkout();
-                                          context.go('/summary');
-                                        }
-                                      : action?.onPressed;
-                                  return SizedBox(
-                                    width: double.infinity,
-                                    child: FilledButton.icon(onPressed: onPressed, icon: const Icon(Icons.check), label: Text(label ?? 'Log set')),
-                                  );
-                                },
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  // On the list the finish button stays in reach, however long the workout is.
-                  if (_overview && session.finished)
-                    SafeArea(
-                      top: false,
-                      minimum: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.sm, AppSpacing.screen, AppSpacing.lg),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: FilledButton.icon(
-                          onPressed: () {
-                            ref.read(trainingSessionProvider.notifier).dismissFinishedWorkout();
-                            context.go('/summary');
-                          },
-                          icon: const Icon(Icons.check),
-                          label: const Text('Finish workout'),
-                        ),
+                        ],
                       ),
                     ),
-                ],
+                    // The one big action stays pinned in reach, however tall the drill or long the workout is. It waits
+                    // until the sheet has room for it, so a half-dragged or collapsing sheet never has to squeeze it in.
+                    if ((!_overview || session.finished) && box.maxHeight >= statusHeaderHeight + _actionBarHeight(context) + 160)
+                      SafeArea(
+                        top: false,
+                        minimum: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.sm, AppSpacing.screen, AppSpacing.lg),
+                        child: ValueListenableBuilder<_DrillAction?>(
+                          valueListenable: _drillAction,
+                          builder: (context, action, _) {
+                            final finishing = session.finished;
+                            final label = finishing ? 'Finish workout' : action?.label;
+                            final onPressed = finishing
+                                ? () {
+                                    ref.read(trainingSessionProvider.notifier).dismissFinishedWorkout();
+                                    context.go('/summary');
+                                  }
+                                : action?.onPressed;
+                            return FilledButton.icon(
+                              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(_actionHeight), textStyle: Theme.of(context).textTheme.titleMedium),
+                              onPressed: onPressed,
+                              icon: const Icon(Icons.check, size: 28),
+                              label: Text(label ?? 'Done'),
+                            );
+                          },
+                        ),
+                      ),
+                  ],
+                ),
               ),
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+/// The height of the big pinned action, the biggest thing on the screen on purpose: it has to be easy to hit.
+const _actionHeight = 64.0;
+
+double _actionBarHeight(BuildContext context) => _actionHeight + AppSpacing.sm + math.max(MediaQuery.paddingOf(context).bottom, AppSpacing.lg);
+
+/// A strip with one segment per drill, filling as sets are done, so a player can see how far along they are
+/// without reading anything.
+class _DrillSteps extends StatelessWidget {
+  const _DrillSteps({required this.session});
+
+  final TrainingSession session;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final totalSets = session.drills.fold<int>(0, (sum, drill) => sum + drill.defaultPrescription.sets);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(AppSpacing.screen, 0, AppSpacing.screen, AppSpacing.xs),
+      child: Semantics(
+        label: 'Drill ${session.drillIndex + 1} of ${session.drills.length}, ${session.logs.length} of $totalSets sets done',
+        child: SizedBox(
+          height: 20,
+          child: Row(
+            key: const ValueKey('drill-steps'),
+            children: [
+              for (final (index, drill) in session.drills.indexed) ...[
+                if (index > 0) const SizedBox(width: 4),
+                Expanded(
+                  child: Center(
+                    child: Container(
+                      height: index == session.drillIndex ? 10 : 6,
+                      decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(5)),
+                      child: FractionallySizedBox(
+                        alignment: Alignment.centerLeft,
+                        widthFactor: (session.setsLogged(index) / drill.defaultPrescription.sets).clamp(0, 1).toDouble(),
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(color: theme.colorScheme.primary, borderRadius: BorderRadius.circular(5)),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -862,7 +809,7 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> with AutomaticKeepAl
     final nextIncomplete = _nextIncomplete;
     final action = widget.active && !widget.session.finished
         ? _DrillAction(
-            label: _drillComplete ? 'Next drill' : 'Log set',
+            label: _drillComplete ? 'Next drill' : 'Done',
             onPressed: _drillComplete
                 ? (nextIncomplete == null ? null : () => widget.onSelect(nextIncomplete))
                 : _canLog
@@ -873,103 +820,115 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> with AutomaticKeepAl
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && widget.active) widget.actionNotifier.value = action;
     });
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.xs, AppSpacing.screen, AppSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          LinearProgressIndicator(value: widget.session.logs.length / widget.session.drills.fold<int>(0, (total, drill) => total + drill.defaultPrescription.sets)),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // The demo is the biggest thing after the action, but never so tall that it pushes the controls away.
+        final videoHeight = (constraints.maxHeight.isFinite ? constraints.maxHeight * .34 : 200.0).clamp(110.0, 260.0).toDouble();
+        final cue = drill.formCues.isEmpty ? null : drill.formCues.first;
+        final resting = widget.session.restEndsAt != null && widget.session.restEndsAt!.isAfter(clock.now().toUtc());
+        return SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(AppSpacing.screen, AppSpacing.xs, AppSpacing.screen, AppSpacing.sm),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(drill.title, style: theme.textTheme.titleLarge, maxLines: 2, overflow: TextOverflow.ellipsis),
-                    Text(_drillComplete ? 'All sets logged' : 'Set ${widget.session.setIndex + 1} of ${drill.defaultPrescription.sets}', style: theme.textTheme.bodyMedium),
-                    if (ref.watch(lastResultsProvider)[drill.id] case final last?)
-                      Text('Last time: ${drillTotalsLabel(drill, summarizeDrill(drill, last.sets))}', style: theme.textTheme.bodySmall, maxLines: 2, overflow: TextOverflow.ellipsis),
-                  ],
+              Center(
+                child: SizedBox(height: videoHeight, child: DrillMediaCard.forDrill(drill)),
+              ),
+              const SizedBox(height: AppSpacing.sm),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(drill.title, style: theme.textTheme.headlineSmall, maxLines: 2, overflow: TextOverflow.ellipsis),
+                        Text(
+                          _drillComplete ? 'All sets done' : 'Set ${widget.session.setIndex + 1} of ${drill.defaultPrescription.sets}',
+                          style: theme.textTheme.titleMedium?.copyWith(color: theme.colorScheme.primary),
+                        ),
+                      ],
+                    ),
+                  ),
+                  PopupMenuButton<_DrillMore>(
+                    key: const ValueKey('drill-more-menu'),
+                    tooltip: 'More options',
+                    onSelected: (choice) => switch (choice) {
+                      _DrillMore.details => widget.onShowDetails(),
+                      _DrillMore.swap => _swapDrill(),
+                      _DrillMore.rest => _startRest(),
+                      _DrillMore.restSettings => showDrillRestSettings(context, drill),
+                    },
+                    itemBuilder: (_) => [
+                      const PopupMenuItem(value: _DrillMore.details, child: Text('Drill details')),
+                      if (widget.session.setsLogged(widget.session.drillIndex) == 0) const PopupMenuItem(value: _DrillMore.swap, child: Text('Swap drill')),
+                      if (!resting) const PopupMenuItem(value: _DrillMore.rest, child: Text('Start rest')),
+                      const PopupMenuItem(value: _DrillMore.restSettings, child: Text('Rest settings')),
+                    ],
+                  ),
+                ],
+              ),
+              if (cue != null && !_drillComplete) ...[const SizedBox(height: AppSpacing.xxs), Text(cue, style: theme.textTheme.bodyLarge)],
+              const SizedBox(height: AppSpacing.md),
+              if (_drillComplete)
+                const TrainingCard(child: Text('Drill done! Tap Next drill.'))
+              else if (_timed) ...[
+                Center(
+                  child: Semantics(
+                    liveRegion: _countdown.phase == CountdownPhase.leadIn,
+                    child: TrainingProgressRing(
+                      progress: _countdown.phase == CountdownPhase.leadIn ? 0 : _countdown.progress,
+                      value: _countdown.phase == CountdownPhase.leadIn
+                          ? '${_countdown.leadInSecondsLeft}'
+                          : '${_countdown.remainingSeconds ~/ 60}:${(_countdown.remainingSeconds % 60).toString().padLeft(2, '0')}',
+                      label: switch (_countdown.phase) {
+                        CountdownPhase.leadIn => 'Get ready',
+                        CountdownPhase.done => 'Set complete',
+                        CountdownPhase.paused => 'Paused',
+                        _ => 'seconds remaining',
+                      },
+                    ),
+                  ),
                 ),
-              ),
-              IconButton(tooltip: 'Drill details', onPressed: widget.onShowDetails, icon: const Icon(Icons.play_circle_outline)),
-              IconButton(
-                tooltip: ref.watch(drillRestSettingsProvider)[drill.id]?.enabled == true ? 'Drill settings · Rest on' : 'Drill settings · Rest off',
-                onPressed: () => showDrillRestSettings(context, drill),
-                icon: const Icon(Icons.tune),
-              ),
+                const SizedBox(height: AppSpacing.md),
+                if (!_countdown.isDone)
+                  FilledButton.tonalIcon(
+                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(_countButtonHeight)),
+                    onPressed: _toggleTimer,
+                    icon: Icon(_countdown.isActive ? Icons.pause : Icons.play_arrow, size: 32),
+                    label: Text(switch (_countdown.phase) {
+                      CountdownPhase.leadIn => 'Cancel',
+                      CountdownPhase.running => 'Pause timer',
+                      CountdownPhase.paused => 'Resume timer',
+                      _ => 'Start timer',
+                    }),
+                  ),
+                if (type == TrackingType.density && _countdown.isDone) ...[const SizedBox(height: AppSpacing.md), _counter('Shots in this window', 999)],
+              ] else if (type == TrackingType.binary)
+                SwitchListTile.adaptive(
+                  contentPadding: EdgeInsets.zero,
+                  title: const Text('Drill completed'),
+                  subtitle: const Text('Mark it when you finish this set.'),
+                  value: _completed,
+                  onChanged: (value) => setState(() => _completed = value),
+                )
+              else
+                _counter(switch (type) {
+                  TrackingType.accuracy => 'Hits out of ${drill.defaultPrescription.reps}',
+                  TrackingType.streak => 'Best consecutive passes',
+                  _ => 'Reps completed',
+                }, type == TrackingType.accuracy ? drill.defaultPrescription.reps! : 999),
+              if (type == TrackingType.accuracy) ...[
+                const SizedBox(height: AppSpacing.md),
+                Text('${(_count / drill.defaultPrescription.reps! * 100).round()}% accuracy', textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
+              ],
+              if (type == TrackingType.density && _countdown.isDone) ...[
+                const SizedBox(height: AppSpacing.md),
+                Text('${(_count / drill.defaultPrescription.seconds! * 60).round()} shots / min', textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
+              ],
             ],
           ),
-          Wrap(
-            spacing: AppSpacing.xs,
-            children: [
-              if (widget.session.setsLogged(widget.session.drillIndex) == 0) TextButton.icon(onPressed: _swapDrill, icon: const Icon(Icons.swap_horiz), label: const Text('Swap drill')),
-              TextButton.icon(
-                onPressed: widget.session.restEndsAt != null && widget.session.restEndsAt!.isAfter(clock.now().toUtc()) ? null : _startRest,
-                icon: const Icon(Icons.timer_outlined),
-                label: const Text('Start rest'),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          if (_drillComplete)
-            const TrainingCard(child: Text('Drill done. Swipe to the next drill or open the workout overview.'))
-          else if (_timed) ...[
-            Center(
-              child: Semantics(
-                liveRegion: _countdown.phase == CountdownPhase.leadIn,
-                child: TrainingProgressRing(
-                  progress: _countdown.phase == CountdownPhase.leadIn ? 0 : _countdown.progress,
-                  value: _countdown.phase == CountdownPhase.leadIn
-                      ? '${_countdown.leadInSecondsLeft}'
-                      : '${_countdown.remainingSeconds ~/ 60}:${(_countdown.remainingSeconds % 60).toString().padLeft(2, '0')}',
-                  label: switch (_countdown.phase) {
-                    CountdownPhase.leadIn => 'Get ready',
-                    CountdownPhase.done => 'Set complete',
-                    CountdownPhase.paused => 'Paused',
-                    _ => 'seconds remaining',
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: AppSpacing.md),
-            if (!_countdown.isDone)
-              OutlinedButton.icon(
-                onPressed: _toggleTimer,
-                icon: Icon(_countdown.isActive ? Icons.pause : Icons.play_arrow),
-                label: Text(switch (_countdown.phase) {
-                  CountdownPhase.leadIn => 'Cancel',
-                  CountdownPhase.running => 'Pause timer',
-                  CountdownPhase.paused => 'Resume timer',
-                  _ => 'Start timer',
-                }),
-              ),
-            if (type == TrackingType.density && _countdown.isDone) ...[const SizedBox(height: AppSpacing.md), _counter('Shots in this window', 999)],
-          ] else if (type == TrackingType.binary)
-            SwitchListTile.adaptive(
-              contentPadding: EdgeInsets.zero,
-              title: const Text('Drill completed'),
-              subtitle: const Text('Mark it when you finish this set.'),
-              value: _completed,
-              onChanged: (value) => setState(() => _completed = value),
-            )
-          else
-            _counter(switch (type) {
-              TrackingType.accuracy => 'Hits out of ${drill.defaultPrescription.reps}',
-              TrackingType.streak => 'Best consecutive passes',
-              _ => 'Reps completed',
-            }, type == TrackingType.accuracy ? drill.defaultPrescription.reps! : 999),
-          if (type == TrackingType.accuracy) ...[
-            const SizedBox(height: AppSpacing.md),
-            Text('${(_count / drill.defaultPrescription.reps! * 100).round()}% accuracy', textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
-          ],
-          if (type == TrackingType.density && _countdown.isDone) ...[
-            const SizedBox(height: AppSpacing.md),
-            Text('${(_count / drill.defaultPrescription.seconds! * 60).round()} shots / min', textAlign: TextAlign.center, style: theme.textTheme.titleLarge),
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -982,7 +941,7 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> with AutomaticKeepAl
         child: Semantics(
           liveRegion: true,
           label: '$label: $_count. Tap to enter a number.',
-          child: Text('$_count', style: Theme.of(context).textTheme.displayMedium),
+          child: Text('$_count', style: Theme.of(context).textTheme.displayLarge),
         ),
       ),
       const SizedBox(height: AppSpacing.xs),
@@ -990,17 +949,17 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> with AutomaticKeepAl
         children: [
           Expanded(
             child: OutlinedButton(
-              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(_countButtonHeight)),
               onPressed: _count == 0 ? null : () => setState(() => _count--),
-              child: const Icon(Icons.remove, semanticLabel: 'Decrease count'),
+              child: const Icon(Icons.remove, size: 36, semanticLabel: 'Decrease count'),
             ),
           ),
           const SizedBox(width: AppSpacing.md),
           Expanded(
-            child: OutlinedButton(
-              style: OutlinedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
+            child: FilledButton.tonal(
+              style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(_countButtonHeight)),
               onPressed: _count == max ? null : () => setState(() => _count++),
-              child: const Icon(Icons.add, semanticLabel: 'Increase count'),
+              child: const Icon(Icons.add, size: 36, semanticLabel: 'Increase count'),
             ),
           ),
         ],
@@ -1008,6 +967,11 @@ class _ActiveDrillState extends ConsumerState<_ActiveDrill> with AutomaticKeepAl
     ],
   );
 }
+
+/// The height of the plus and minus buttons: big enough for a small child to hit without trying.
+const _countButtonHeight = 72.0;
+
+enum _DrillMore { details, swap, rest, restSettings }
 
 class _CountDialog extends StatefulWidget {
   const _CountDialog({required this.label, required this.max, required this.initial});

@@ -115,7 +115,7 @@ void main() {
 
   group('screens', () {
     Future<ProviderContainer> mount(WidgetTester tester) async {
-      SharedPreferences.setMockInitialValues({'workoutFocusView': true});
+      SharedPreferences.setMockInitialValues({});
       final preferences = await SharedPreferences.getInstance();
       final container = ProviderContainer(
         overrides: [
@@ -139,14 +139,20 @@ void main() {
       return container;
     }
 
+    Future<void> chooseFromMenu(WidgetTester tester, String item) async {
+      await tester.tap(find.byKey(const ValueKey('drill-more-menu')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(item));
+      await tester.pumpAndSettle();
+    }
+
     testWidgets('Swap drill offers fitting drills and swaps the chosen one in', (tester) async {
       final container = await mount(tester);
       container.read(trainingSessionProvider.notifier).start([drill('pick-your-corner'), drill('toe-drag-reps')]);
       container.read(appRouterProvider).go('/train/session');
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Swap drill'));
-      await tester.pumpAndSettle();
+      await chooseFromMenu(tester, 'Swap drill');
       expect(find.text('Suggested'), findsOneWidget);
       expect(find.text('Bottom-shelf snap shots'), findsOneWidget);
       expect(find.text('Top-shelf lifts'), findsOneWidget);
@@ -167,14 +173,15 @@ void main() {
       container.read(trainingSessionProvider.notifier).start([drill('one-timer-reps'), drill('toe-drag-reps')]);
       container.read(appRouterProvider).go('/train/session');
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Swap drill'));
-      await tester.pumpAndSettle();
+      await chooseFromMenu(tester, 'Swap drill');
       expect(find.textContaining('No other drills fit your setup'), findsOneWidget);
       expect(find.text('Suggested'), findsNothing);
       Navigator.of(tester.element(find.text('Swap drill').last)).pop();
       await tester.pumpAndSettle();
 
       container.read(trainingSessionProvider.notifier).logSet(reps: 8);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('drill-more-menu')));
       await tester.pumpAndSettle();
       expect(find.text('Swap drill'), findsNothing);
     });
@@ -185,15 +192,21 @@ void main() {
       container.read(appRouterProvider).go('/train/session');
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Start rest'));
+      await chooseFromMenu(tester, 'Start rest');
       await tester.pump();
       expect(container.read(trainingSessionProvider).restEndsAt, isNotNull);
       expect(find.textContaining('Rest 0:'), findsOneWidget);
-      expect(tester.widget<TextButton>(find.ancestor(of: find.text('Start rest'), matching: find.byType(TextButton))).onPressed, isNull);
+      await tester.tap(find.byKey(const ValueKey('drill-more-menu')));
+      await tester.pumpAndSettle();
+      expect(find.text('Start rest'), findsNothing, reason: 'a rest is already running');
+      await tester.tapAt(const Offset(5, 5));
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('Skip rest'));
       await tester.pumpAndSettle();
       expect(container.read(trainingSessionProvider).restEndsAt, isNull);
+      await tester.tap(find.byKey(const ValueKey('drill-more-menu')));
+      await tester.pumpAndSettle();
       expect(find.text('Start rest'), findsOneWidget);
     });
 
@@ -206,12 +219,8 @@ void main() {
         container.read(trainingSessionProvider.notifier).start([drill('pick-your-corner'), drill('quiet-hands-quick-feet')]);
         container.read(appRouterProvider).go('/train/session');
         await tester.pumpAndSettle();
-        final scroll = find.descendant(of: find.byKey(const ValueKey('workout-session-scroll')), matching: find.byType(Scrollable)).first;
-        final position = tester.state<ScrollableState>(scroll).position;
-        position.jumpTo(position.maxScrollExtent);
-        await tester.pumpAndSettle();
-        expect(find.text('Swap drill'), findsOneWidget);
-        expect(find.text('Start rest'), findsOneWidget);
+        expect(find.text('Done').hitTestable(), findsOneWidget, reason: 'the big action is always in reach');
+        expect(find.byKey(const ValueKey('drill-more-menu')), findsOneWidget);
         expect(tester.takeException(), isNull);
       });
     }

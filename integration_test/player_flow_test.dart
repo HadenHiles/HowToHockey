@@ -35,15 +35,15 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Start workout'));
     await tester.pumpAndSettle();
-    await tapWorkoutAction(tester, 'Log set');
-    await tapWorkoutAction(tester, 'Log set');
+    await tapWorkoutAction(tester, 'Done');
+    await tapWorkoutAction(tester, 'Done');
     expect(container.read(trainingSessionProvider).logs.length, 2);
     expect(find.text('Skip rest'), findsNothing);
 
     container.read(trainingSessionProvider.notifier).start([sampleDrills.first.copyWith(defaultPrescription: sampleDrills.first.defaultPrescription.copyWith(sets: 1))]);
     router.go('/train/session');
     await tester.pumpAndSettle();
-    await tapWorkoutAction(tester, 'Log set');
+    await tapWorkoutAction(tester, 'Done');
     await tapWorkoutAction(tester, 'Finish workout');
     expect(find.text('Shots logged'), findsOneWidget);
     expect(container.read(trainingSessionProvider).finished, isTrue);

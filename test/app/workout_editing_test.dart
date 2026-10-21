@@ -329,7 +329,7 @@ void main() {
 
   group('screens', () {
     Future<ProviderContainer> mount(WidgetTester tester, {Size size = const Size(1000, 3000), double scale = 1}) async {
-      final container = await open();
+      final container = await open({'workoutStandardView': true});
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 2;
       tester.platformDispatcher.textScaleFactorTestValue = scale;
@@ -507,9 +507,9 @@ void main() {
       notifier.selectDrill(1);
       await tester.pumpAndSettle();
       await tapVisible(tester, find.byKey(const ValueKey('overview-menu-1')));
-      await tester.tap(find.text('Focus view'));
+      await tester.tap(find.text('Simple view'));
       await tester.pumpAndSettle();
-      expect(find.textContaining('Your session · Drill 2 of 2'), findsOneWidget);
+      expect(find.textContaining('Drill 2 of 2'), findsOneWidget);
       expect(container.read(trainingSessionProvider).drill.id, wrist.id);
       expect(tester.takeException(), isNull);
     });

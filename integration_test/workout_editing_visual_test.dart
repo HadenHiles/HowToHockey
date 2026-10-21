@@ -69,9 +69,9 @@ void main() {
 
     await tapKey('overview-menu-1');
     await shot('05-drill-menu');
-    await tester.tap(find.text('Focus view'));
+    await tester.tap(find.text('Simple view'));
     await shot('06-focus-view');
-    await tester.tap(find.byTooltip('Workout overview'));
+    await tester.tap(find.byTooltip('Standard view'));
     await shot('07-back-to-list');
 
     final addDrills = find.text('Add drills');

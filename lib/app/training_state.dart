@@ -510,21 +510,21 @@ class TrainingSessionNotifier extends Notifier<TrainingSession> {
 
 final trainingSessionProvider = NotifierProvider<TrainingSessionNotifier, TrainingSession>(TrainingSessionNotifier.new);
 
-/// Whether workouts open on the one-drill focus view (timers and big counters) instead of the
-/// scrolling list of sets. The list is the default; this remembers a player's choice on the device.
-class WorkoutFocusPreference extends Notifier<bool> {
-  static const storageKey = 'workoutFocusView';
+/// Whether workouts open on the Standard view (the scrolling list of sets) instead of the Simple guided
+/// view, one drill at a time. Simple is the default; this remembers a player's choice on the device.
+class WorkoutStandardViewPreference extends Notifier<bool> {
+  static const storageKey = 'workoutStandardView';
 
   @override
   bool build() => ref.read(sharedPreferencesProvider).getBool(storageKey) ?? false;
 
-  void choose(bool focus) {
-    state = focus;
-    unawaited(ref.read(sharedPreferencesProvider).setBool(storageKey, focus));
+  void choose(bool standard) {
+    state = standard;
+    unawaited(ref.read(sharedPreferencesProvider).setBool(storageKey, standard));
   }
 }
 
-final workoutFocusPreferenceProvider = NotifierProvider<WorkoutFocusPreference, bool>(WorkoutFocusPreference.new);
+final workoutStandardViewProvider = NotifierProvider<WorkoutStandardViewPreference, bool>(WorkoutStandardViewPreference.new);
 
 class WorkoutSheetProgress extends Notifier<double> {
   @override

@@ -284,7 +284,7 @@ class _DrillSection extends StatelessWidget {
                 onSelected: onMenu,
                 itemBuilder: (_) => [
                   const PopupMenuItem(value: _DrillMenu.details, child: Text('Drill details')),
-                  const PopupMenuItem(value: _DrillMenu.focus, child: Text('Focus view')),
+                  const PopupMenuItem(value: _DrillMenu.focus, child: Text('Simple view')),
                   const PopupMenuItem(value: _DrillMenu.rest, child: Text('Rest timer')),
                   if (index > 0) const PopupMenuItem(value: _DrillMenu.moveUp, child: Text('Move up')),
                   if (index < session.drills.length - 1) const PopupMenuItem(value: _DrillMenu.moveDown, child: Text('Move down')),
