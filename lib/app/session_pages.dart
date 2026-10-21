@@ -432,8 +432,9 @@ class _DrillSteps extends StatelessWidget {
                 Expanded(
                   child: Center(
                     child: Container(
+                      width: double.infinity,
                       height: index == session.drillIndex ? 10 : 6,
-                      decoration: BoxDecoration(color: theme.colorScheme.surfaceContainerHighest, borderRadius: BorderRadius.circular(5)),
+                      decoration: BoxDecoration(color: theme.colorScheme.outlineVariant, borderRadius: BorderRadius.circular(5)),
                       child: FractionallySizedBox(
                         alignment: Alignment.centerLeft,
                         widthFactor: (session.setsLogged(index) / drill.defaultPrescription.sets).clamp(0, 1).toDouble(),
