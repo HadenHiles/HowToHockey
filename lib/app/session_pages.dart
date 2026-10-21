@@ -27,6 +27,7 @@ import 'routine_state.dart';
 import 'workout_overview.dart';
 import 'workout_history.dart';
 import 'app_page.dart';
+import 'parent_review_page.dart';
 import '../features/share/share_data.dart';
 import 'progress_state.dart';
 import 'share_sheet.dart';
@@ -375,9 +376,13 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> with 
                           valueListenable: _drillAction,
                           builder: (context, action, _) {
                             final finishing = session.finished;
-                            final label = finishing ? 'Finish workout' : action?.label;
+                            final label = finishing ? (ref.watch(needsParentConfirmationProvider) ? 'Hand to a grown-up' : 'Finish workout') : action?.label;
                             final onPressed = finishing
                                 ? () {
+                                    if (ref.read(needsParentConfirmationProvider)) {
+                                      context.go('/train/review');
+                                      return;
+                                    }
                                     ref.read(trainingSessionProvider.notifier).dismissFinishedWorkout();
                                     context.go('/summary');
                                   }

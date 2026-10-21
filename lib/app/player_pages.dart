@@ -17,6 +17,7 @@ import '../features/accounts/auth_service.dart';
 import 'commerce_pages.dart';
 import '../features/profiles/active_player.dart';
 import '../features/profiles/display_name.dart';
+import 'parent_review_page.dart';
 import '../features/profiles/player_profile.dart';
 import '../features/session/rest_notifications.dart';
 import '../features/session/session_cues.dart';
@@ -44,16 +45,19 @@ class TrainPage extends ConsumerWidget {
     final theme = Theme.of(context);
     final setup = ref.watch(trainingSetupProvider);
     final focus = ref.watch(trainingFocusProvider);
+    final session = ref.watch(trainingSessionProvider);
+    // A finished workout waiting for a grown-up comes first, so Review & save is never out of reach.
+    final waiting = session.startedAt != null && !session.dismissed && session.finished && ref.watch(needsParentConfirmationProvider);
     return AppPage(
       title: 'Train',
       appBarTitle: const BrandWordmark(),
       centerAppBarTitle: true,
       children: [
+        if (waiting) ...[_TodayWorkoutCard(), const SizedBox(height: AppSpacing.lg)],
         Text('What do you want to get better at?', style: theme.textTheme.headlineSmall),
         const SizedBox(height: AppSpacing.sm),
         _OutcomePicker(selected: outcomeFor(focus)),
-        const SizedBox(height: AppSpacing.lg),
-        _TodayWorkoutCard(),
+        if (!waiting) ...[const SizedBox(height: AppSpacing.lg), _TodayWorkoutCard()],
         const SizedBox(height: AppSpacing.xl),
         const _WeekCard(),
         const SizedBox(height: AppSpacing.xl),
@@ -769,6 +773,16 @@ class _TodayWorkoutCard extends ConsumerWidget {
     final session = ref.watch(trainingSessionProvider);
     // A workout already under way is resumed, never silently replaced by a new one.
     final underway = session.startedAt != null && !session.dismissed;
+    if (underway && session.finished && ref.watch(needsParentConfirmationProvider)) {
+      return TrainingHeroCard(
+        eyebrow: 'Waiting for a grown-up',
+        title: 'Great work!\nHand it over',
+        detail: 'A grown-up checks the results and saves the workout.',
+        metrics: [(session.drills.length.toString().padLeft(2, '0'), 'drills'), ('${session.logs.length}', 'sets')],
+        actionLabel: 'Review & save',
+        onTap: () => context.go('/train/review'),
+      );
+    }
     return switch (ref.watch(generatedRoutineProvider)) {
       AsyncData(:final value) when value.drills.isNotEmpty => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

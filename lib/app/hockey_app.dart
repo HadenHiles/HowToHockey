@@ -15,6 +15,7 @@ import 'parent_pages.dart';
 import 'player_pages.dart';
 import 'progress_pages.dart';
 import 'app_page.dart';
+import 'parent_review_page.dart';
 import 'session_pages.dart';
 import 'training_pages.dart';
 import 'training_state.dart';
@@ -210,6 +211,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/rest', redirect: (_, _) => '/train/session'),
       GoRoute(path: '/session', redirect: (_, _) => '/train/session'),
+      GoRoute(path: '/train/review', builder: (_, _) => const ParentReviewPage()),
       GoRoute(path: '/summary', builder: (_, _) => const SummaryPage()),
       GoRoute(path: '/history', builder: (_, _) => const HistoryListPage()),
       GoRoute(path: '/progress/drills', builder: (_, _) => const DrillBreakdownPage()),
@@ -264,7 +266,9 @@ class _PlayerShell extends ConsumerWidget {
       listenable: routerDelegate,
       builder: (context, _) {
         final sessionActive = routerDelegate.currentConfiguration.uri.path == '/train/session';
-        final showSession = !session.dismissed && (session.startedAt != null || sessionActive);
+        // A child's finished workout waits on Train and the review page, not in the sheet.
+        final waitingForGrownUp = session.finished && !sessionActive && ref.watch(needsParentConfirmationProvider);
+        final showSession = !session.dismissed && (session.startedAt != null || sessionActive) && !waitingForGrownUp;
         final sheetProgress = showSession ? progress : 0.0;
         final deviceBottom = MediaQuery.paddingOf(context).bottom;
         final navigationHeight = 80 + deviceBottom;
