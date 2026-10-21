@@ -115,6 +115,7 @@ void main() {
   testWidgets('membership follows the chosen player and parent can remove a child after confirmation', (tester) async {
     final (container, teams, _) = await mount(tester);
     teams.teams = [team];
+    container.invalidate(memberTeamsProvider);
     container.read(appRouterProvider).go('/team');
     await tester.pumpAndSettle();
     expect(find.text('North Stars'), findsNothing, reason: 'parent is not a member');

@@ -18,6 +18,7 @@ import 'commerce_pages.dart';
 import '../features/profiles/active_player.dart';
 import '../features/profiles/display_name.dart';
 import 'parent_review_page.dart';
+import 'team_routine_card.dart';
 import '../features/profiles/player_profile.dart';
 import '../features/session/rest_notifications.dart';
 import '../features/session/session_cues.dart';
@@ -54,6 +55,7 @@ class TrainPage extends ConsumerWidget {
       centerAppBarTitle: true,
       children: [
         const PendingWorkoutsCard(),
+        if (!waiting) const TeamRoutineCard(),
         if (waiting) ...[_TodayWorkoutCard(), const SizedBox(height: AppSpacing.lg)],
         Text('What do you want to get better at?', style: theme.textTheme.headlineSmall),
         const SizedBox(height: AppSpacing.sm),

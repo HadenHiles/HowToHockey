@@ -4,7 +4,7 @@ import { HttpsError } from 'firebase-functions/v2/https';
 
 import { requireAccount, type CallerAuth } from './profiles';
 
-type Input = { teamId?: unknown; profileId?: unknown; code?: unknown; name?: unknown; visibility?: unknown; approve?: unknown };
+type Input = { routine?: unknown; teamId?: unknown; profileId?: unknown; code?: unknown; name?: unknown; visibility?: unknown; approve?: unknown };
 const codeKey = (code: string) => createHash('sha256').update(code).digest('hex');
 const newCode = () => randomBytes(8).toString('hex').toUpperCase();
 
@@ -254,4 +254,51 @@ export async function removeAccountFromTeams(db: Firestore, caller: CallerAuth) 
     await db.doc(`teamDirectory/${team.id}`).delete();
     await db.recursiveDelete(team.ref);
   }
+}
+
+const MAX_ROUTINE_DRILLS = 10;
+
+/** A routine from a coach: a short name and catalog drills with set counts. Nothing else is stored, so there is no free text but the name. */
+function cleanRoutine(raw: unknown) {
+  const routine = raw as { name?: unknown; drills?: unknown } | null;
+  const name = typeof routine?.name === 'string' ? routine.name.trim().replace(/\s+/g, ' ') : '';
+  if (name.length < 2 || name.length > 40 || /[\p{C}<>]/u.test(name)) throw new HttpsError('invalid-argument', 'Use a routine name between 2 and 40 characters, without special markup.');
+  if (!Array.isArray(routine?.drills) || routine.drills.length < 1 || routine.drills.length > MAX_ROUTINE_DRILLS) throw new HttpsError('invalid-argument', `A team routine has 1 to ${MAX_ROUTINE_DRILLS} drills.`);
+  const drills = routine.drills.map((entry: { drillId?: unknown; sets?: unknown }) => {
+    if (typeof entry?.drillId !== 'string' || !/^[a-z0-9-]{1,80}$/.test(entry.drillId)) throw new HttpsError('invalid-argument', 'Team routines use drills from the How To Hockey library.');
+    if (typeof entry.sets !== 'number' || !Number.isInteger(entry.sets) || entry.sets < 1 || entry.sets > 10) throw new HttpsError('invalid-argument', 'Use 1 to 10 sets per drill.');
+    return { drillId: entry.drillId, sets: entry.sets };
+  });
+  return { name, drills };
+}
+
+/** A team has one active routine at a time. Setting a new one archives the previous one. */
+export async function setTeamRoutine(db: Firestore, caller: CallerAuth | undefined, data: Input) {
+  const auth = requireAccount(caller);
+  const routine = cleanRoutine(data.routine);
+  const ref = db.doc(`teams/${id(data.teamId)}`);
+  await db.runTransaction(async (tx) => {
+    const team = await tx.get(ref);
+    await requireActiveAccount(db, tx, auth.uid);
+    coach(team, auth.uid);
+    const previous = team.data()!.activeRoutine;
+    if (previous) tx.create(ref.collection('routineArchive').doc(), { ...previous, archivedAt: new Date() });
+    tx.update(ref, { activeRoutine: { ...routine, sharedAt: new Date(), sharedBy: auth.uid } });
+  });
+  return { shared: true };
+}
+
+export async function clearTeamRoutine(db: Firestore, caller: CallerAuth | undefined, data: Input) {
+  const auth = requireAccount(caller);
+  const ref = db.doc(`teams/${id(data.teamId)}`);
+  await db.runTransaction(async (tx) => {
+    const team = await tx.get(ref);
+    await requireActiveAccount(db, tx, auth.uid);
+    coach(team, auth.uid);
+    const previous = team.data()!.activeRoutine;
+    if (!previous) return;
+    tx.create(ref.collection('routineArchive').doc(), { ...previous, archivedAt: new Date() });
+    tx.update(ref, { activeRoutine: FieldValue.delete() });
+  });
+  return { cleared: true };
 }

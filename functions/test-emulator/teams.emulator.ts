@@ -33,6 +33,45 @@ beforeEach(async () => {
   code = (await db.doc(`teams/${teamId}`).get()).data()!.joinCode as string;
 });
 
+describe('team routine', () => {
+  const routine = { name: 'Quick hands night', drills: [{ drillId: 'pick-your-corner', sets: 3 }, { drillId: 'ball-bounce-streak', sets: 2 }] };
+
+  it('lets a coach share one active routine, archiving the one it replaces', async () => {
+    await expect(teams.setTeamRoutine(db, stranger, { teamId, routine })).rejects.toMatchObject({ code: 'permission-denied' });
+    await expect(teams.setTeamRoutine(db, parent, { teamId, routine })).rejects.toMatchObject({ code: 'permission-denied' });
+    await teams.setTeamRoutine(db, coach, { teamId, routine });
+    expect((await db.doc(`teams/${teamId}`).get()).data()!.activeRoutine).toMatchObject({ name: 'Quick hands night', drills: routine.drills, sharedBy: 'coach' });
+    expect((await db.collection(`teams/${teamId}/routineArchive`).get()).size).toBe(0);
+
+    await teams.setTeamRoutine(db, coach, { teamId, routine: { name: 'Shooting night', drills: [{ drillId: 'wrist-shot-reps', sets: 4 }] } });
+    expect((await db.doc(`teams/${teamId}`).get()).data()!.activeRoutine.name).toBe('Shooting night');
+    const archived = await db.collection(`teams/${teamId}/routineArchive`).get();
+    expect(archived.docs.map((d) => d.data().name)).toEqual(['Quick hands night']);
+
+    await teams.clearTeamRoutine(db, coach, { teamId });
+    expect((await db.doc(`teams/${teamId}`).get()).data()!.activeRoutine).toBeUndefined();
+    expect((await db.collection(`teams/${teamId}/routineArchive`).get()).size).toBe(2);
+    await expect(teams.clearTeamRoutine(db, stranger, { teamId })).rejects.toMatchObject({ code: 'permission-denied' });
+  });
+
+  it('only accepts short names and library drills with sane set counts', async () => {
+    const bad = [
+      { name: 'x', drills: routine.drills },
+      { name: '<b>hi</b>', drills: routine.drills },
+      { name: 'a'.repeat(41), drills: routine.drills },
+      { name: 'Fine', drills: [] },
+      { name: 'Fine', drills: Array.from({ length: 11 }, () => routine.drills[0]) },
+      { name: 'Fine', drills: [{ drillId: 'Has Spaces', sets: 3 }] },
+      { name: 'Fine', drills: [{ drillId: 'pick-your-corner', sets: 0 }] },
+      { name: 'Fine', drills: [{ drillId: 'pick-your-corner', sets: 11 }] },
+      { name: 'Fine', drills: [{ drillId: 'pick-your-corner', sets: 2.5 }] },
+      null,
+    ];
+    for (const value of bad) await expect(teams.setTeamRoutine(db, coach, { teamId, routine: value })).rejects.toMatchObject({ code: 'invalid-argument' });
+    expect((await db.doc(`teams/${teamId}`).get()).data()!.activeRoutine).toBeUndefined();
+  });
+});
+
 describe('core teams', () => {
   it('creates a private team and gives only coaches permission to change visibility', async () => {
     expect((await db.doc(`teams/${teamId}`).get()).data()).toMatchObject({ visibility: 'private', memberCount: 0, coachUids: ['coach'] });

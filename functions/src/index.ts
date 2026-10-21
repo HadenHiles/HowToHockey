@@ -42,6 +42,8 @@ export const previewTeamInvite = onCall((request) => teams.previewTeamInvite(get
 export const joinTeam = onCall((request) => teams.joinTeam(getFirestore(), callerOf(request), request.data ?? {}));
 export const acceptCoachInvite = onCall((request) => teams.acceptCoachInvite(getFirestore(), callerOf(request), request.data ?? {}));
 export const reviewTeamRequest = onCall((request) => teams.reviewTeamRequest(getFirestore(), callerOf(request), request.data ?? {}));
+export const setTeamRoutine = onCall((request) => teams.setTeamRoutine(getFirestore(), callerOf(request), request.data ?? {}));
+export const clearTeamRoutine = onCall((request) => teams.clearTeamRoutine(getFirestore(), callerOf(request), request.data ?? {}));
 export const removeTeamMember = onCall((request) => teams.removeTeamMember(getFirestore(), callerOf(request), request.data ?? {}));
 
 // Runs next to the database (Toronto), which Firestore triggers require. Credits a finished workout to the profile's lifetime stats and personal bests, once.

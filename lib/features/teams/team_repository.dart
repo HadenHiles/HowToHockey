@@ -14,8 +14,34 @@ class TeamException implements Exception {
   final String message;
 }
 
+/// The one routine a coach shares with the whole team: catalog drills and set counts, nothing else.
+class TeamRoutine {
+  const TeamRoutine({required this.name, required this.drills});
+
+  final String name;
+  final List<({String drillId, int sets})> drills;
+
+  static TeamRoutine? fromJson(Object? json) {
+    if (json is! Map || json['name'] is! String || json['drills'] is! List) return null;
+    final drills = [
+      for (final entry in json['drills'] as List)
+        if (entry is Map && entry['drillId'] is String && entry['sets'] is num) (drillId: entry['drillId'] as String, sets: (entry['sets'] as num).toInt()),
+    ];
+    return drills.isEmpty ? null : TeamRoutine(name: json['name'] as String, drills: drills);
+  }
+}
+
 class Team {
-  const Team({required this.id, required this.name, required this.memberCount, this.coachName = 'Coach', this.visibility = 'private', this.joinCode = '', this.memberProfileIds = const []});
+  const Team({
+    required this.id,
+    required this.name,
+    required this.memberCount,
+    this.coachName = 'Coach',
+    this.visibility = 'private',
+    this.joinCode = '',
+    this.memberProfileIds = const [],
+    this.routine,
+  });
 
   final String id;
   final String name;
@@ -24,6 +50,7 @@ class Team {
   final String visibility;
   final String joinCode;
   final List<String> memberProfileIds;
+  final TeamRoutine? routine;
 
   factory Team.fromJson(String id, Map<String, dynamic> data) => Team(
     id: id,
@@ -33,6 +60,7 @@ class Team {
     visibility: data['visibility'] as String? ?? 'public',
     joinCode: data['joinCode'] as String? ?? '',
     memberProfileIds: (data['memberProfileIds'] as List?)?.cast<String>() ?? const [],
+    routine: TeamRoutine.fromJson(data['activeRoutine']),
   );
 }
 
@@ -143,6 +171,16 @@ class TeamRepository {
 
   Future<void> create(String name) => _mutate('createTeam', {'name': name}, (data) => data['teamId'] is String && (data['teamId'] as String).isNotEmpty);
   Future<void> setVisibility(String teamId, bool isPublic) => _mutate('updateTeam', {'teamId': teamId, 'visibility': isPublic ? 'public' : 'private'}, (data) => data['updated'] == true);
+  Future<void> shareRoutine(String teamId, TeamRoutine routine) => _mutate('setTeamRoutine', {
+    'teamId': teamId,
+    'routine': {
+      'name': routine.name,
+      'drills': [
+        for (final drill in routine.drills) {'drillId': drill.drillId, 'sets': drill.sets},
+      ],
+    },
+  }, (data) => data['shared'] == true);
+  Future<void> stopSharingRoutine(String teamId) => _mutate('clearTeamRoutine', {'teamId': teamId}, (data) => data['cleared'] == true);
   Future<String> createInvite(String teamId, {required bool coach}) async {
     final result = await _run('createTeamInvite', {'teamId': teamId, 'kind': coach ? 'coach' : 'player'});
     if (result['code'] case final String code) return code;

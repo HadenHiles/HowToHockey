@@ -1,0 +1,73 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import '../design/components/training_components.dart';
+import '../design/tokens/app_spacing.dart';
+import '../features/accounts/auth_service.dart';
+import '../features/drills/drill_catalog.dart';
+import '../features/drills/models/drill.dart';
+import '../features/profiles/active_player.dart';
+import '../features/teams/team_repository.dart';
+import 'manual_logger_pages.dart';
+import 'training_state.dart';
+
+/// The drills of a team routine, from the library, with the coach's set counts. Drills this app doesn't know are left out.
+List<Drill> drillsForTeamRoutine(TeamRoutine routine, List<Drill> catalog) {
+  final byId = {for (final drill in catalog) drill.id: drill};
+  return [
+    for (final entry in routine.drills)
+      if (byId[entry.drillId] case final drill?) drill.copyWith(defaultPrescription: drill.defaultPrescription.copyWith(sets: entry.sets)),
+  ];
+}
+
+/// "Coach's routine": the one routine a team's coach shares, with a big Start.
+class TeamRoutineCard extends ConsumerWidget {
+  const TeamRoutineCard({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final player = ref.watch(activePlayerProvider);
+    // Guests have no teams, so there is nothing to look up.
+    final auth = ref.watch(authStateProvider).value;
+    if (auth is! SignedInAccount && auth is! KidDeviceSession) return const SizedBox.shrink();
+    final teams = (ref.watch(memberTeamsProvider).value ?? const <Team>[]).where((team) => team.routine != null && (player == null || team.memberProfileIds.contains(player.id))).toList();
+    final catalog = ref.watch(drillCatalogProvider).value;
+    if (teams.isEmpty || catalog == null) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final team in teams)
+            TrainingCard(
+              key: ValueKey('team-routine-${team.id}'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text('Coach’s routine · ${team.name}', style: theme.textTheme.labelLarge?.copyWith(color: theme.colorScheme.primary)),
+                  const SizedBox(height: AppSpacing.xs),
+                  Text(team.routine!.name, style: theme.textTheme.titleLarge),
+                  Text('${team.routine!.drills.length} drills · ${team.routine!.drills.fold<int>(0, (sum, d) => sum + d.sets)} sets', style: theme.textTheme.bodyMedium),
+                  const SizedBox(height: AppSpacing.md),
+                  FilledButton.icon(
+                    style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+                    onPressed: () async {
+                      final drills = drillsForTeamRoutine(team.routine!, catalog);
+                      if (drills.isEmpty) return;
+                      if (!await confirmReplaceWorkout(context, ref)) return;
+                      ref.read(trainingSessionProvider.notifier).start(drills);
+                      if (context.mounted) context.go('/train/session');
+                    },
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('Start'),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}

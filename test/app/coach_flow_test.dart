@@ -85,7 +85,9 @@ void main() {
     await tester.tap(navLabel('Team'));
     await tester.pumpAndSettle();
     expect(find.text('ABCDEF0123456789'), findsOneWidget);
-    await tester.ensureVisible(find.text('Make public'));
+    await tester.dragUntilVisible(find.text('Make public'), find.byType(Scrollable).first, const Offset(0, -200));
+    await tester.drag(find.byType(Scrollable).first, const Offset(0, -200));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Make public'));
     await tester.pumpAndSettle();
     expect(testTeams.calls, contains('public:t1:true'));

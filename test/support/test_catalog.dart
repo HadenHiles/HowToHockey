@@ -234,6 +234,18 @@ class FakeTeamRepository extends TeamRepository {
   @override
   Stream<List<TeamRequest>> watchParentRequests(String uid) => Stream.value(requests);
   @override
+  Future<void> shareRoutine(String teamId, TeamRoutine routine) async {
+    check();
+    calls.add('shareRoutine:$teamId:${routine.name}:${routine.drills.map((d) => '${d.drillId}x${d.sets}').join(',')}');
+  }
+
+  @override
+  Future<void> stopSharingRoutine(String teamId) async {
+    check();
+    calls.add('stopSharing:$teamId');
+  }
+
+  @override
   Future<void> create(String name) async {
     check();
     calls.add('create:$name');

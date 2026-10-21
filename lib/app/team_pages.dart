@@ -9,7 +9,9 @@ import '../design/tokens/app_spacing.dart';
 import '../features/accounts/auth_service.dart';
 import '../features/profiles/active_player.dart';
 import '../features/teams/team_repository.dart';
+import '../features/drills/drill_catalog.dart';
 import 'app_page.dart';
+import 'routine_state.dart';
 
 class TeamAction extends ConsumerStatefulWidget {
   const TeamAction({required this.label, required this.action, this.enabled = true, super.key});
@@ -235,7 +237,13 @@ class _JoinTeamPageState extends ConsumerState<JoinTeamPage> {
                 initialValue: selected?.id,
                 decoration: const InputDecoration(labelText: 'Player joining'),
                 isExpanded: true,
-                items: [for (final player in players) DropdownMenuItem(value: player.id, child: Text(player.displayName, maxLines: 1, overflow: TextOverflow.ellipsis))],
+                items: [
+                  for (final player in players)
+                    DropdownMenuItem(
+                      value: player.id,
+                      child: Text(player.displayName, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    ),
+                ],
                 onChanged: _submitting ? null : (id) => setState(() => _profileId = id),
               ),
               if (auth is KidDeviceSession) const Text('Your parent must approve before you join.'),
@@ -331,7 +339,13 @@ class CoachTeamPicker extends ConsumerWidget {
             initialValue: selected.id,
             isExpanded: true,
             decoration: const InputDecoration(labelText: 'Coaching team'),
-            items: [for (final team in teams.value!) DropdownMenuItem(value: team.id, child: Text(team.name, maxLines: 1, overflow: TextOverflow.ellipsis))],
+            items: [
+              for (final team in teams.value!)
+                DropdownMenuItem(
+                  value: team.id,
+                  child: Text(team.name, maxLines: 1, overflow: TextOverflow.ellipsis),
+                ),
+            ],
             onChanged: (value) {
               if (value != null) ref.read(selectedCoachTeamIdProvider.notifier).choose(value);
             },
@@ -381,6 +395,43 @@ class _CreateTeamPageState extends ConsumerState<CreateTeamPage> {
   );
 }
 
+/// Lets a coach pick one of their saved routines to share. Only library drills can be shared with a team.
+Future<void> _shareRoutine(BuildContext context, WidgetRef ref, Team team) async {
+  final catalog = await ref.read(drillCatalogProvider.future);
+  final inLibrary = {for (final drill in catalog) drill.id};
+  final routines = ref.read(routineLibraryProvider).where((routine) => routine.drills.every((drill) => inLibrary.contains(drill.id))).toList();
+  if (!context.mounted) return;
+  if (routines.isEmpty) {
+    showFeatureMessage(context, 'Save a routine first, using drills from the library. Your own custom drills can’t be shared.');
+    return;
+  }
+  final chosen = await showModalBottomSheet<RoutinePlan>(
+    context: context,
+    builder: (sheetContext) => SafeArea(
+      child: ListView(
+        shrinkWrap: true,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(AppSpacing.md),
+            child: Text(team.routine == null ? 'Share which routine?' : 'Replace “${team.routine!.name}” with…', style: Theme.of(sheetContext).textTheme.titleMedium),
+          ),
+          for (final routine in routines)
+            ListTile(
+              key: ValueKey('share-${routine.id}'),
+              minTileHeight: 56,
+              title: Text(routine.name),
+              subtitle: Text('${routine.drills.length} drills'),
+              onTap: () => Navigator.of(sheetContext).pop(routine),
+            ),
+        ],
+      ),
+    ),
+  );
+  if (chosen == null) return;
+  await ref.read(teamRepositoryProvider).shareRoutine(team.id, TeamRoutine(name: chosen.name, drills: [for (final drill in chosen.drills) (drillId: drill.id, sets: drill.defaultPrescription.sets)]));
+  if (context.mounted) showFeatureMessage(context, 'Shared with the team.');
+}
+
 class LiveCoachTeamPage extends ConsumerWidget {
   const LiveCoachTeamPage({super.key});
   @override
@@ -391,6 +442,16 @@ class LiveCoachTeamPage extends ConsumerWidget {
       children: [
         const CoachTeamPicker(),
         if (team != null) ...[
+          const SizedBox(height: AppSpacing.lg),
+          Text('Team routine', style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: AppSpacing.xs),
+          if (team.routine != null) ...[
+            Text('${team.routine!.name} · ${team.routine!.drills.length} drills', key: const ValueKey('team-routine-name')),
+            const SizedBox(height: AppSpacing.xs),
+          ] else
+            const Text('Share one routine and every player and parent on the team sees it on Train.'),
+          TeamAction(label: team.routine == null ? 'Share a routine' : 'Replace routine', action: (ref) => _shareRoutine(context, ref, team)),
+          if (team.routine != null) TeamAction(label: 'Stop sharing', action: (ref) => ref.read(teamRepositoryProvider).stopSharingRoutine(team.id)),
           const SizedBox(height: AppSpacing.lg),
           Text('Player join code', style: Theme.of(context).textTheme.titleLarge),
           SelectableText(team.joinCode),

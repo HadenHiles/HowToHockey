@@ -38,6 +38,7 @@ Future<ProviderContainer> open([Map<String, Object> saved = const {}]) async {
       testAuthOverride,
       testProfilesOverride,
       testSessionsOverride,
+      testTeamsOverride,
     ],
   );
   addTearDown(container.dispose);
