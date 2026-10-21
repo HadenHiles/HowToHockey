@@ -291,6 +291,10 @@ final testTeamsOverride = teamRepositoryProvider.overrideWithValue(testTeams);
 /// Keeps widget tests off Firestore: uploads are recorded, and stats come from whatever a test puts in [stats].
 class FakeSessionRepository extends SessionRepository {
   final uploads = <(String, String)>[];
+  final pendingUploads = <String>[];
+  final pending = <String, List<PendingWorkout>>{};
+  final pendingDrills = <PendingDrill>[];
+  final reviewed = <String>[];
   final stats = <String, LifetimeStats>{};
   final _changes = StreamController<String>.broadcast();
   Object? failWith;
@@ -304,6 +308,41 @@ class FakeSessionRepository extends SessionRepository {
   Future<void> upload(String profileId, SessionUpload upload) async {
     if (failWith != null) throw failWith!;
     uploads.add((profileId, upload.record.id));
+    if (upload.pending) pendingUploads.add(upload.record.id);
+  }
+
+  void setPending(String profileId, List<PendingWorkout> workouts) {
+    pending[profileId] = workouts;
+    _changes.add('pending:$profileId');
+  }
+
+  @override
+  Stream<List<PendingWorkout>> watchPending(String profileId) async* {
+    yield pending[profileId] ?? const [];
+    await for (final changed in _changes.stream) {
+      if (changed == 'pending:$profileId') yield pending[profileId] ?? const [];
+    }
+  }
+
+  @override
+  Future<List<PendingDrill>> loadPendingDrills(String profileId, String sessionId) async => pendingDrills;
+
+  @override
+  Future<void> confirm(PendingWorkout workout) async {
+    reviewed.add('confirm:${workout.id}');
+    setPending(workout.profileId, [
+      for (final w in pending[workout.profileId] ?? const <PendingWorkout>[])
+        if (w.id != workout.id) w,
+    ]);
+  }
+
+  @override
+  Future<void> discard(PendingWorkout workout) async {
+    reviewed.add('discard:${workout.id}');
+    setPending(workout.profileId, [
+      for (final w in pending[workout.profileId] ?? const <PendingWorkout>[])
+        if (w.id != workout.id) w,
+    ]);
   }
 
   @override

@@ -23,7 +23,7 @@ service cloud.firestore {
     function validSession(data) {
       return data.keys().hasOnly(['status', 'startedAt', 'endedAt', 'tzOffsetMinutes', 'routineName', 'setup', 'focus', 'drillCount', 'activeSeconds'])
         && data.keys().hasAll(['status', 'startedAt', 'endedAt', 'tzOffsetMinutes'])
-        && data.status == 'completed'
+        && data.status in ['completed', 'pending']
         && data.startedAt is timestamp
         && data.endedAt is timestamp
         && data.tzOffsetMinutes is int && data.tzOffsetMinutes >= -840 && data.tzOffsetMinutes <= 840
@@ -86,17 +86,24 @@ service cloud.firestore {
         : (resource == null ? request.auth.uid == profileId : resource.data.ownerUid == request.auth.uid));
       allow write: if false;
 
-      // A finished workout is written once, and never edited. The Cloud Function that credits it adds
-      // `processedAt` and `credit` itself; clients can't set those, so they can't award themselves anything.
+      // A finished workout is written once. A child's device can only write it as `pending`: a parent confirms
+      // it (flipping `status` to `completed`) or discards it, and only then does the Cloud Function credit it.
+      // `processedAt` and `credit` are added by the function; clients can't set them, so they can't award themselves anything.
       match /sessions/{sessionId} {
         allow read: if canActAs(profileId);
-        allow create: if canActAs(profileId) && validSession(request.resource.data);
-        allow update, delete: if false;
+        allow create: if canActAs(profileId) && validSession(request.resource.data) && (request.resource.data.status == 'pending' || !isKidDevice());
+        allow update: if ownsProfile(profileId)
+          && resource.data.status == 'pending'
+          && request.resource.data.status == 'completed'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'confirmedAt'])
+          && request.resource.data.confirmedAt == request.time;
+        allow delete: if ownsProfile(profileId) && resource.data.status == 'pending';
 
         match /drills/{index} {
           allow read: if canActAs(profileId);
           allow create: if canActAs(profileId) && index.matches('[0-9]{1,2}') && validSessionDrill(request.resource.data);
-          allow update, delete: if false;
+          allow update: if false;
+          allow delete: if ownsProfile(profileId) && get(/databases/$(database)/documents/profiles/$(profileId)/sessions/$(sessionId)).data.status == 'pending';
         }
       }
 

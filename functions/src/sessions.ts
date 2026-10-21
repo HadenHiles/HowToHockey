@@ -51,6 +51,8 @@ export async function processSession(db: Firestore, profileId: string, sessionId
     const session = await tx.get(sessionRef);
     if (!session.exists || session.data()?.processedAt) return { status: 'skipped' };
     const data = session.data()!;
+    // A child's workout waits for a parent to confirm it; nothing is credited until then.
+    if (data.status === 'pending') return { status: 'skipped' };
     const drillDocs = await tx.get(sessionRef.collection('drills'));
     const ids = [...new Set(drillDocs.docs.map((d) => d.data().drillId).filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length < 100 && !id.includes('/')))];
     const catalog = new Map((await Promise.all(ids.map((id) => tx.get(db.collection('drills').doc(id))))).filter((d) => d.exists).map((d) => [d.id, d.data()!]));

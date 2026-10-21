@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { after, before, beforeEach, describe, it } from 'node:test';
 
 import { assertFails, assertSucceeds, initializeTestEnvironment } from '@firebase/rules-unit-testing';
-import { Timestamp, collection, deleteDoc, doc, getDoc, getDocs, query, setDoc, updateDoc, where } from 'firebase/firestore';
+import { Timestamp, collection, deleteDoc, doc, getDoc, getDocs, query, serverTimestamp, setDoc, updateDoc, where } from 'firebase/firestore';
 
 const projectId = 'demo-how-to-hockey';
 
@@ -211,7 +211,7 @@ describe('account and profile rules', () => {
       for (const path of Object.values(paths('kid-a'))) {
         await assertSucceeds(getDoc(doc(kid, path)));
       }
-      await assertSucceeds(setDoc(doc(kid, 'profiles/kid-a/sessions/s2'), finishedSession()));
+      await assertSucceeds(setDoc(doc(kid, 'profiles/kid-a/sessions/s2'), finishedSession({ status: 'pending' })));
       for (const path of Object.values(paths('kid-b'))) {
         await assertFails(getDoc(doc(kid, path)));
       }
@@ -223,6 +223,46 @@ describe('account and profile rules', () => {
       await assertSucceeds(getDocs(collection(parent(), 'profiles/kid-a/sessions')));
       await assertFails(getDocs(collection(stranger(), 'profiles/kid-a/sessions')));
       await assertFails(getDocs(collection(kidDevice('kid-b'), 'profiles/kid-a/sessions')));
+    });
+
+    it('keeps a child device\'s workout pending until a parent confirms it', async () => {
+      const kid = kidDevice('kid-a');
+      await assertFails(setDoc(doc(kid, 'profiles/kid-a/sessions/c1'), finishedSession()));
+      await assertSucceeds(setDoc(doc(kid, 'profiles/kid-a/sessions/p1'), finishedSession({ status: 'pending' })));
+      await assertSucceeds(setDoc(doc(kid, 'profiles/kid-a/sessions/p1/drills/0'), sessionDrill()));
+      await assertFails(setDoc(doc(kid, 'profiles/kid-a/sessions/p2'), finishedSession({ status: 'pending', processedAt: Timestamp.now() })));
+      await assertFails(setDoc(doc(kid, 'profiles/kid-a/sessions/p3'), finishedSession({ status: 'done' })));
+
+      // The kid cannot confirm or discard their own workout.
+      await assertFails(updateDoc(doc(kid, 'profiles/kid-a/sessions/p1'), { status: 'completed', confirmedAt: Timestamp.now() }));
+      await assertFails(deleteDoc(doc(kid, 'profiles/kid-a/sessions/p1')));
+      await assertFails(updateDoc(doc(kid, 'profiles/kid-b/sessions/p1'), { status: 'completed' }));
+      // Neither can a stranger or another parent.
+      await assertFails(updateDoc(doc(stranger(), 'profiles/kid-a/sessions/p1'), { status: 'completed', confirmedAt: serverTimestamp() }));
+      await assertFails(deleteDoc(doc(stranger(), 'profiles/kid-a/sessions/p1')));
+
+      // The parent can confirm only by flipping the status, and only while it is pending.
+      await assertFails(updateDoc(doc(parent(), 'profiles/kid-a/sessions/p1'), { status: 'completed', confirmedAt: serverTimestamp(), activeSeconds: 99 }));
+      await assertFails(updateDoc(doc(parent(), 'profiles/kid-a/sessions/p1'), { status: 'completed' }));
+      await assertFails(updateDoc(doc(parent(), 'profiles/kid-a/sessions/p1'), { status: 'completed', confirmedAt: Timestamp.fromMillis(1) }));
+      await assertSucceeds(updateDoc(doc(parent(), 'profiles/kid-a/sessions/p1'), { status: 'completed', confirmedAt: serverTimestamp() }));
+      await assertFails(updateDoc(doc(parent(), 'profiles/kid-a/sessions/p1'), { status: 'pending' }));
+      await assertFails(deleteDoc(doc(parent(), 'profiles/kid-a/sessions/p1')));
+      await assertFails(deleteDoc(doc(parent(), 'profiles/kid-a/sessions/p1/drills/0')));
+    });
+
+    it('lets a parent discard a pending workout and its drills', async () => {
+      await assertSucceeds(setDoc(doc(kidDevice('kid-a'), 'profiles/kid-a/sessions/p9'), finishedSession({ status: 'pending' })));
+      await assertSucceeds(setDoc(doc(kidDevice('kid-a'), 'profiles/kid-a/sessions/p9/drills/0'), sessionDrill()));
+      await assertSucceeds(deleteDoc(doc(parent(), 'profiles/kid-a/sessions/p9/drills/0')));
+      await assertSucceeds(deleteDoc(doc(parent(), 'profiles/kid-a/sessions/p9')));
+    });
+
+    it('lets a parent list their child\'s pending workouts', async () => {
+      const pending = (db) => query(collection(db, 'profiles/kid-a/sessions'), where('status', '==', 'pending'));
+      await assertSucceeds(getDocs(pending(parent())));
+      await assertSucceeds(getDocs(pending(kidDevice('kid-a'))));
+      await assertFails(getDocs(pending(stranger())));
     });
   });
 });

@@ -376,7 +376,9 @@ class _WorkoutSessionPanelState extends ConsumerState<WorkoutSessionPanel> with 
                           valueListenable: _drillAction,
                           builder: (context, action, _) {
                             final finishing = session.finished;
-                            final label = finishing ? (ref.watch(needsParentConfirmationProvider) ? 'Hand to a grown-up' : 'Finish workout') : action?.label;
+                            final label = finishing
+                                ? (ref.watch(needsParentConfirmationProvider) ? 'Hand to a grown-up' : (ref.watch(sendsToGrownUpProvider) ? 'Send to a grown-up' : 'Finish workout'))
+                                : action?.label;
                             final onPressed = finishing
                                 ? () {
                                     if (ref.read(needsParentConfirmationProvider)) {
@@ -1114,12 +1116,25 @@ class SummaryPage extends ConsumerWidget {
       );
     }
     final shots = shotsLogged(session);
+    final waitingForGrownUp = ref.watch(workoutSyncProvider)["${session.startedAt!.millisecondsSinceEpoch}"]?.pending ?? false;
     return AppPage(
       title: saved ? 'Workout summary' : 'You showed up.',
       subtitle: saved ? '${workoutDateLabel(session.startedAt!.toLocal(), clock.now())} · ${workoutTitle(session)}' : 'That’s how you get better.',
       action: FilledButton(onPressed: () => context.go(saved ? '/progress' : '/train'), child: Text(saved ? 'Back to Progress' : 'Back to Train')),
       children: [
         Icon(Icons.check_circle_outline, size: 64, color: theme.colorScheme.primary),
+        if (waitingForGrownUp) ...[
+          const SizedBox(height: AppSpacing.md),
+          TrainingCard(
+            child: Row(
+              children: [
+                Icon(Icons.hourglass_top, color: theme.colorScheme.primary),
+                const SizedBox(width: AppSpacing.sm),
+                const Expanded(child: Text('Waiting for a grown-up to check it. Then it counts!')),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: AppSpacing.xl),
         Wrap(
           spacing: AppSpacing.md,
@@ -1150,7 +1165,7 @@ class SummaryPage extends ConsumerWidget {
           icon: const Icon(Icons.ios_share),
           label: const Text('Share this workout'),
         ),
-        ..._personalBests(context, ref, session, saved),
+        if (!waitingForGrownUp) ..._personalBests(context, ref, session, saved),
         if (saved) ...[
           const SizedBox(height: AppSpacing.md),
           OutlinedButton.icon(onPressed: () => _repeat(context, ref, session), icon: const Icon(Icons.replay), label: const Text('Repeat this workout')),

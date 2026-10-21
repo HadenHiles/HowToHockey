@@ -211,6 +211,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(path: '/rest', redirect: (_, _) => '/train/session'),
       GoRoute(path: '/session', redirect: (_, _) => '/train/session'),
+      GoRoute(
+        path: '/review/:profileId/:id',
+        builder: (_, state) => PendingReviewPage(profileId: state.pathParameters['profileId']!, sessionId: state.pathParameters['id']!),
+      ),
       GoRoute(path: '/train/review', builder: (_, _) => const ParentReviewPage()),
       GoRoute(path: '/summary', builder: (_, _) => const SummaryPage()),
       GoRoute(path: '/history', builder: (_, _) => const HistoryListPage()),

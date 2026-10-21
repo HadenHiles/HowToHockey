@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/accounts/auth_service.dart';
 import '../features/drills/models/drill.dart';
 import '../features/profiles/active_player.dart';
 import '../features/progress/progress_stats.dart';
@@ -18,7 +19,10 @@ import 'workout_history.dart';
 
 /// A finished workout waiting to reach (or waiting to be counted by) the player's account.
 class SyncEntry {
-  const SyncEntry({this.profileId, this.uploadedAtMs, required this.queuedAtMs});
+  const SyncEntry({this.profileId, this.uploadedAtMs, required this.queuedAtMs, this.pending = false});
+
+  /// Sent from a child's device: it only counts once a grown-up confirms it.
+  final bool pending;
 
   /// The profile it belongs to. Null for workouts done as a guest: the account's own profile claims those.
   final String? profileId;
@@ -27,12 +31,13 @@ class SyncEntry {
   final int? uploadedAtMs;
   final int queuedAtMs;
 
-  SyncEntry copyWith({String? profileId, int? uploadedAtMs}) => SyncEntry(profileId: profileId ?? this.profileId, uploadedAtMs: uploadedAtMs ?? this.uploadedAtMs, queuedAtMs: queuedAtMs);
+  SyncEntry copyWith({String? profileId, int? uploadedAtMs}) =>
+      SyncEntry(profileId: profileId ?? this.profileId, uploadedAtMs: uploadedAtMs ?? this.uploadedAtMs, queuedAtMs: queuedAtMs, pending: pending);
 
-  Map<String, Object?> toJson() => {'profileId': profileId, 'uploadedAtMs': uploadedAtMs, 'queuedAtMs': queuedAtMs};
+  Map<String, Object?> toJson() => {'profileId': profileId, 'uploadedAtMs': uploadedAtMs, 'queuedAtMs': queuedAtMs, if (pending) 'pending': true};
 
   static SyncEntry? fromJson(Object? json) => json is Map<String, dynamic> && json['queuedAtMs'] is int
-      ? SyncEntry(profileId: json['profileId'] as String?, uploadedAtMs: json['uploadedAtMs'] as int?, queuedAtMs: json['queuedAtMs'] as int)
+      ? SyncEntry(profileId: json['profileId'] as String?, uploadedAtMs: json['uploadedAtMs'] as int?, queuedAtMs: json['queuedAtMs'] as int, pending: json['pending'] == true)
       : null;
 }
 
@@ -101,7 +106,7 @@ class WorkoutSync extends Notifier<Map<String, SyncEntry>> {
   void enqueue(TrainingSession session) {
     final id = workoutId(session);
     if (state.containsKey(id)) return;
-    _store({...state, id: SyncEntry(profileId: ref.read(activePlayerProvider)?.id, queuedAtMs: clock.now().millisecondsSinceEpoch)});
+    _store({...state, id: SyncEntry(profileId: ref.read(activePlayerProvider)?.id, queuedAtMs: clock.now().millisecondsSinceEpoch, pending: ref.read(authStateProvider).value is KidDeviceSession)});
     unawaited(flush());
   }
 
@@ -133,7 +138,7 @@ class WorkoutSync extends Notifier<Map<String, SyncEntry>> {
         try {
           await repository.upload(
             target,
-            SessionUpload(record: session.toRecord(), endedAt: session.endedAt ?? session.startedAt!, routineName: workoutTitle(session), activeSeconds: session.activeSeconds),
+            SessionUpload(record: session.toRecord(), endedAt: session.endedAt ?? session.startedAt!, routineName: workoutTitle(session), activeSeconds: session.activeSeconds, pending: value.pending),
           );
           next[key] = value.copyWith(profileId: target, uploadedAtMs: now.millisecondsSinceEpoch);
         } on Object catch (error) {
@@ -180,7 +185,7 @@ final progressStatsProvider = Provider<LifetimeStats>((ref) {
   ref.watch(workoutHistoryProvider);
   final ownId = ref.watch(switchablePlayersProvider).where((p) => !p.isChild).firstOrNull?.id;
   for (final MapEntry(:key, :value) in ref.watch(workoutSyncProvider).entries) {
-    if ((value.profileId ?? ownId) != player.id) continue;
+    if (value.pending || (value.profileId ?? ownId) != player.id) continue;
     final session = history.byId(key);
     if (session != null) stats = stats.add(session.toRecord(), tuning: tuning).stats;
   }

@@ -53,6 +53,7 @@ class TrainPage extends ConsumerWidget {
       appBarTitle: const BrandWordmark(),
       centerAppBarTitle: true,
       children: [
+        const PendingWorkoutsCard(),
         if (waiting) ...[_TodayWorkoutCard(), const SizedBox(height: AppSpacing.lg)],
         Text('What do you want to get better at?', style: theme.textTheme.headlineSmall),
         const SizedBox(height: AppSpacing.sm),

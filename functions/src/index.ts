@@ -1,7 +1,7 @@
 import { getFirestore } from 'firebase-admin/firestore';
 import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import { onDocumentCreated } from 'firebase-functions/v2/firestore';
+import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onCall, onRequest } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 
@@ -45,7 +45,11 @@ export const reviewTeamRequest = onCall((request) => teams.reviewTeamRequest(get
 export const removeTeamMember = onCall((request) => teams.removeTeamMember(getFirestore(), callerOf(request), request.data ?? {}));
 
 // Runs next to the database (Toronto), which Firestore triggers require. Credits a finished workout to the profile's lifetime stats and personal bests, once.
-export const onSessionCompleted = onDocumentCreated({ document: 'profiles/{profileId}/sessions/{sessionId}', region: 'northamerica-northeast2' }, async (event) => {
+// Runs when a session is created as completed, or when a parent confirms a pending one. Pending drafts and
+// sessions that were already credited are skipped.
+export const onSessionCompleted = onDocumentWritten({ document: 'profiles/{profileId}/sessions/{sessionId}', region: 'northamerica-northeast2' }, async (event) => {
+  const after = event.data?.after;
+  if (!after?.exists || after.data()?.status !== 'completed' || after.data()?.processedAt) return;
   await processSession(getFirestore(), event.params.profileId, event.params.sessionId, new Date(), await loadTuning());
 });
 

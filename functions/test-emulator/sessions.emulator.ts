@@ -59,6 +59,17 @@ describe('processSession', () => {
     expect(session.credit).toMatchObject({ seconds: 105, shots: 10 });
   });
 
+  it('credits nothing while a child\'s workout is pending, and counts it once a parent confirms', async () => {
+    await writeSession('p1', [corner(7)], { status: 'pending' });
+    expect(await processSession(db, 'kid-a', 'p1', now)).toEqual({ status: 'skipped' });
+    expect((await db.doc('profiles/kid-a/stats/lifetime').get()).exists).toBe(false);
+    expect((await db.doc('profiles/kid-a/sessions/p1').get()).data()!.processedAt).toBeUndefined();
+
+    await db.doc('profiles/kid-a/sessions/p1').update({ status: 'completed', confirmedAt: Timestamp.fromDate(now) });
+    expect((await processSession(db, 'kid-a', 'p1', now)).status).toBe('processed');
+    expect((await db.doc('profiles/kid-a/stats/lifetime').get()).data()!.workouts).toBe(1);
+  });
+
   it('counts a session only once', async () => {
     await writeSession('s1', [corner(7)]);
     await processSession(db, 'kid-a', 's1', now);
