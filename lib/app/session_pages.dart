@@ -1083,7 +1083,7 @@ class SummaryPage extends ConsumerWidget {
   Future<void> _saveAsRoutine(BuildContext context, WidgetRef ref, TrainingSession workout) async {
     try {
       final name = 'Repeat: ${workoutTitle(workout)}';
-      await ref.read(routineLibraryProvider.notifier).save(RoutinePlan(id: 'routine-${DateTime.now().microsecondsSinceEpoch}', name: name, drills: workout.drills));
+      await ref.read(routineStoreProvider).save(RoutinePlan(id: 'routine-${DateTime.now().microsecondsSinceEpoch}', name: name, drills: workout.drills));
       if (context.mounted) showFeatureMessage(context, 'Saved "$name" to My routines.');
     } on StateError catch (error) {
       if (context.mounted) showFeatureMessage(context, error.message);

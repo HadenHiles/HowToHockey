@@ -3,9 +3,13 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../features/accounts/auth_service.dart';
 import '../features/drills/drill_catalog.dart';
 import '../features/drills/models/drill.dart';
+import '../features/profiles/active_player.dart';
+import '../features/routines/profile_routine_repository.dart';
 import '../features/settings/appearance_settings_controller.dart';
+import '../features/teams/team_repository.dart';
 import 'sample_data.dart';
 
 class RoutinePlan {
@@ -88,6 +92,99 @@ class RoutineLibrary extends Notifier<List<RoutinePlan>> {
 }
 
 final routineLibraryProvider = NotifierProvider<RoutineLibrary, List<RoutinePlan>>(RoutineLibrary.new);
+
+/// The drills of a shared routine, from the library, with the saved set counts. Drills this app doesn't know are left out.
+List<Drill> drillsForTeamRoutine(TeamRoutine routine, List<Drill> catalog) {
+  final byId = {for (final drill in catalog) drill.id: drill};
+  return [
+    for (final entry in routine.drills)
+      if (byId[entry.drillId] case final drill?) drill.copyWith(defaultPrescription: drill.defaultPrescription.copyWith(sets: entry.sets)),
+  ];
+}
+
+const cloudRoutinePrefix = 'cloud:';
+
+/// Everything on "My routines": routines saved on this device, plus, for a signed-in account, the ones saved on the
+/// player's profile, which follow them to any device and are capped by the server.
+final allRoutinesProvider = Provider<List<RoutinePlan>>((ref) {
+  final local = ref.watch(routineLibraryProvider);
+  final player = ref.watch(activePlayerProvider);
+  if (ref.watch(authStateProvider).value is! SignedInAccount || player == null) return local;
+  final catalog = ref.watch(drillCatalogProvider).value;
+  if (catalog == null) return local;
+  final cloud = ref.watch(profileRoutinesProvider(player.id)).value ?? const <ProfileRoutine>[];
+  return [...local, for (final item in cloud) RoutinePlan(id: '$cloudRoutinePrefix${item.id}', name: item.routine.name, drills: drillsForTeamRoutine(item.routine, catalog))];
+});
+
+/// Saves, replaces and deletes routines, putting each where it belongs: routines made only of library drills go on the
+/// signed-in player's profile (any device, server-checked cap); routines with the player's own drills stay on this device.
+/// The free-plan cap counts both.
+class RoutineStore {
+  RoutineStore(this._ref);
+
+  final Ref _ref;
+
+  String? get _cloudProfileId => _ref.read(authStateProvider).value is SignedInAccount ? _ref.read(activePlayerProvider)?.id : null;
+
+  /// Everything saved, waiting for the account's routines to load so the count is right.
+  Future<List<RoutinePlan>> _all() async {
+    final profileId = _cloudProfileId;
+    if (profileId != null) {
+      await _ref.read(drillCatalogProvider.future);
+      await _ref.read(profileRoutinesProvider(profileId).future);
+    }
+    return _ref.read(allRoutinesProvider);
+  }
+
+  Future<bool> isAtLimit() async => !_ref.read(drillFiltersUnlockedProvider) && (await _all()).length >= RoutineLibrary.freeRoutineLimit;
+
+  bool _libraryOnly(RoutinePlan plan) {
+    final catalog = _ref.read(drillCatalogProvider).value;
+    return catalog != null && plan.drills.every((drill) => catalog.any((known) => known.id == drill.id));
+  }
+
+  TeamRoutine _asShared(RoutinePlan plan) => TeamRoutine(name: plan.name, drills: [for (final drill in plan.drills) (drillId: drill.id, sets: drill.defaultPrescription.sets)]);
+
+  Future<void> _cloud(String profileId, RoutinePlan plan, {String? routineId}) async {
+    try {
+      await _ref.read(profileRoutineRepositoryProvider).save(profileId, _asShared(plan), routineId: routineId);
+    } on RoutineException catch (error) {
+      throw StateError(error.message);
+    }
+  }
+
+  Future<void> save(RoutinePlan plan) async {
+    if (plan.drills.isEmpty) throw ArgumentError('A routine must contain at least one drill.');
+    final exists = (await _all()).any((item) => item.id == plan.id);
+    if (!exists && await isAtLimit()) throw StateError('You can keep up to ${RoutineLibrary.freeRoutineLimit} saved routines. Delete one to save another.');
+    final profileId = _cloudProfileId;
+    if (plan.id.startsWith(cloudRoutinePrefix)) {
+      if (profileId == null) throw StateError('Sign in to change this routine.');
+      return _cloud(profileId, plan, routineId: plan.id.substring(cloudRoutinePrefix.length));
+    }
+    if (!exists && profileId != null && _libraryOnly(plan)) return _cloud(profileId, plan);
+    await _ref.read(routineLibraryProvider.notifier).save(plan);
+  }
+
+  /// Swaps a saved routine for a new one when the free limit is reached.
+  Future<void> replace(String oldId, RoutinePlan plan) async {
+    await remove(oldId);
+    await save(plan);
+  }
+
+  Future<void> remove(String id) async {
+    if (!id.startsWith(cloudRoutinePrefix)) return _ref.read(routineLibraryProvider.notifier).remove(id);
+    final profileId = _cloudProfileId;
+    if (profileId == null) throw StateError('Sign in to change this routine.');
+    try {
+      await _ref.read(profileRoutineRepositoryProvider).delete(profileId, id.substring(cloudRoutinePrefix.length));
+    } on RoutineException catch (error) {
+      throw StateError(error.message);
+    }
+  }
+}
+
+final routineStoreProvider = Provider<RoutineStore>(RoutineStore.new);
 
 /// How a template drill can be measured. Players choose from these; nothing here is typed in.
 const templateTrackingTypes = [TrackingType.volume, TrackingType.accuracy, TrackingType.duration, TrackingType.streak, TrackingType.binary];

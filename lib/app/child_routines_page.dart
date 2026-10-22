@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../design/components/training_components.dart';
 import '../design/tokens/app_spacing.dart';
@@ -30,7 +31,7 @@ class ChildRoutinesPage extends ConsumerWidget {
   Future<void> _send(BuildContext context, WidgetRef ref) async {
     final catalog = await ref.read(drillCatalogProvider.future);
     final inLibrary = {for (final drill in catalog) drill.id};
-    final routines = ref.read(routineLibraryProvider).where((routine) => routine.drills.every((drill) => inLibrary.contains(drill.id))).toList();
+    final routines = ref.read(allRoutinesProvider).where((routine) => routine.drills.every((drill) => inLibrary.contains(drill.id))).toList();
     if (!context.mounted) return;
     if (routines.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Save a routine first, using drills from the library. Custom drills can’t be sent.')));
@@ -72,11 +73,18 @@ class ChildRoutinesPage extends ConsumerWidget {
     return AppPage(
       title: 'Routines',
       subtitle: kid == null ? null : 'These show up on ${kid.displayName}’s Train screen, on any device they use.',
-      action: FilledButton.icon(
-        style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
-        onPressed: () => _send(context, ref),
-        icon: const Icon(Icons.send_outlined),
-        label: const Text('Send one of my routines'),
+      action: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FilledButton.icon(
+            style: FilledButton.styleFrom(minimumSize: const Size.fromHeight(56)),
+            onPressed: () => context.push('/parent/kids/$kidId/routines/new'),
+            icon: const Icon(Icons.add),
+            label: const Text('Create a routine'),
+          ),
+          TextButton(onPressed: () => _send(context, ref), child: const Text('Send one of my routines')),
+        ],
       ),
       children: [
         switch (routines) {
@@ -98,6 +106,7 @@ class ChildRoutinesPage extends ConsumerWidget {
                           ],
                         ),
                       ),
+                      IconButton(tooltip: 'Edit ${item.routine.name}', onPressed: () => context.push('/parent/kids/$kidId/routines/${item.id}/edit'), icon: const Icon(Icons.edit_outlined)),
                       IconButton(tooltip: 'Delete ${item.routine.name}', onPressed: () => _run(context, () => repository.delete(kidId, item.id), 'Deleted.'), icon: const Icon(Icons.delete_outline)),
                     ],
                   ),

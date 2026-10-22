@@ -299,6 +299,7 @@ void main() {
       container.listen(workoutSyncProvider, (_, _) {});
       container.listen(lastResultsProvider, (_, _) {});
       await flush();
+      addTearDown(() => testAuth.signOutSilently(const GuestSession('guest')));
       testAuth.signInSilently(const SignedInAccount(uid: 'parent-uid', email: 'p@example.com', emailVerified: true));
       await flush();
       await flush();

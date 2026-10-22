@@ -399,7 +399,7 @@ class _CreateTeamPageState extends ConsumerState<CreateTeamPage> {
 Future<void> _shareRoutine(BuildContext context, WidgetRef ref, Team team) async {
   final catalog = await ref.read(drillCatalogProvider.future);
   final inLibrary = {for (final drill in catalog) drill.id};
-  final routines = ref.read(routineLibraryProvider).where((routine) => routine.drills.every((drill) => inLibrary.contains(drill.id))).toList();
+  final routines = ref.read(allRoutinesProvider).where((routine) => routine.drills.every((drill) => inLibrary.contains(drill.id))).toList();
   if (!context.mounted) return;
   if (routines.isEmpty) {
     showFeatureMessage(context, 'Save a routine first, using drills from the library. Your own custom drills can’t be shared.');

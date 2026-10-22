@@ -6,21 +6,12 @@ import '../design/components/training_components.dart';
 import '../design/tokens/app_spacing.dart';
 import '../features/accounts/auth_service.dart';
 import '../features/drills/drill_catalog.dart';
-import '../features/drills/models/drill.dart';
 import '../features/profiles/active_player.dart';
 import '../features/routines/profile_routine_repository.dart';
 import '../features/teams/team_repository.dart';
 import 'manual_logger_pages.dart';
+import 'routine_state.dart';
 import 'training_state.dart';
-
-/// The drills of a team routine, from the library, with the coach's set counts. Drills this app doesn't know are left out.
-List<Drill> drillsForTeamRoutine(TeamRoutine routine, List<Drill> catalog) {
-  final byId = {for (final drill in catalog) drill.id: drill};
-  return [
-    for (final entry in routine.drills)
-      if (byId[entry.drillId] case final drill?) drill.copyWith(defaultPrescription: drill.defaultPrescription.copyWith(sets: entry.sets)),
-  ];
-}
 
 /// "Coach's routine": the one routine a team's coach shares, with a big Start.
 class TeamRoutineCard extends ConsumerWidget {

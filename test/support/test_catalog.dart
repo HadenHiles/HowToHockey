@@ -423,8 +423,12 @@ class FakeProfileRoutineRepository extends ProfileRoutineRepository {
   @override
   Future<void> save(String profileId, TeamRoutine routine, {String? routineId}) async {
     if (failWith != null) throw failWith!;
-    calls.add('save:$profileId:${routine.name}:${routine.drills.map((d) => '${d.drillId}x${d.sets}').join(',')}');
-    set(profileId, [...routines[profileId] ?? const <ProfileRoutine>[], ProfileRoutine(id: 'r${calls.length}', routine: routine)]);
+    calls.add('save:$profileId:${routine.name}:${routine.drills.map((d) => '${d.drillId}x${d.sets}').join(',')}${routineId == null ? '' : ':$routineId'}');
+    final others = [
+      for (final r in routines[profileId] ?? const <ProfileRoutine>[])
+        if (r.id != routineId) r,
+    ];
+    set(profileId, [...others, ProfileRoutine(id: routineId ?? 'r${calls.length}', routine: routine)]);
   }
 
   @override

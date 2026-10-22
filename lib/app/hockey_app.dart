@@ -99,6 +99,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                       GoRoute(
                         path: 'routines',
                         builder: (_, state) => ChildRoutinesPage(kidId: state.pathParameters['id']!),
+                        routes: [
+                          GoRoute(
+                            path: 'new',
+                            builder: (_, state) => RoutineBuilderPage(profileId: state.pathParameters['id']!),
+                          ),
+                          GoRoute(
+                            path: ':routineId/edit',
+                            builder: (_, state) => RoutineBuilderPage(profileId: state.pathParameters['id']!, routineId: state.pathParameters['routineId']!),
+                          ),
+                        ],
                       ),
                       GoRoute(
                         path: 'workouts',

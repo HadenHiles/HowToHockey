@@ -7,9 +7,12 @@ import 'package:go_router/go_router.dart';
 import '../design/components/training_components.dart';
 import '../design/tokens/app_colors.dart';
 import '../design/tokens/app_spacing.dart';
+import '../features/accounts/auth_service.dart';
 import '../features/coach/routine_generator.dart';
 import '../features/drills/drill_catalog.dart';
 import '../features/drills/models/drill.dart';
+import '../features/routines/profile_routine_repository.dart';
+import '../features/teams/team_repository.dart';
 import 'coach_state.dart';
 import 'drill_picker.dart';
 import 'drill_media_card.dart';
@@ -291,17 +294,18 @@ class RoutinePage extends ConsumerWidget {
 
   Future<void> _save(BuildContext context, WidgetRef ref, GeneratedRoutine routine, Map<SkillPillar, int> focus) async {
     final messenger = ScaffoldMessenger.of(context);
-    final library = ref.read(routineLibraryProvider.notifier);
+    final library = ref.read(routineStoreProvider);
     final plan = RoutinePlan(id: 'workout-${clock.now().microsecondsSinceEpoch}', name: '${topPillar(focus).label} · ${routine.estimatedMinutes} min', drills: routine.drills);
     try {
-      if (library.atLimit) {
+      if (await library.isAtLimit()) {
+        if (!context.mounted) return;
         final replace = await showDialog<String>(
           context: context,
           builder: (dialogContext) => SimpleDialog(
             title: const Text('Replace a saved routine?'),
             children: [
               const Padding(padding: EdgeInsets.symmetric(horizontal: 24), child: Text('You can keep up to 3 saved routines. Pick one to replace with this workout.')),
-              for (final saved in ref.read(routineLibraryProvider)) SimpleDialogOption(onPressed: () => Navigator.of(dialogContext).pop(saved.id), child: Text(saved.name)),
+              for (final saved in ref.read(allRoutinesProvider)) SimpleDialogOption(onPressed: () => Navigator.of(dialogContext).pop(saved.id), child: Text(saved.name)),
               SimpleDialogOption(onPressed: () => Navigator.of(dialogContext).pop(), child: const Text('Cancel')),
             ],
           ),
@@ -323,7 +327,7 @@ class RoutineLibraryPage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final routines = ref.watch(routineLibraryProvider);
+    final routines = ref.watch(allRoutinesProvider);
     final theme = Theme.of(context);
     return AppPage(
       title: 'My routines',
@@ -372,7 +376,7 @@ class RoutineLibraryPage extends ConsumerWidget {
 
   Future<void> _duplicate(BuildContext context, WidgetRef ref, RoutinePlan routine) async {
     try {
-      await ref.read(routineLibraryProvider.notifier).save(RoutinePlan(id: 'routine-${DateTime.now().microsecondsSinceEpoch}', name: '${routine.name} copy', drills: routine.drills));
+      await ref.read(routineStoreProvider).save(RoutinePlan(id: 'routine-${DateTime.now().microsecondsSinceEpoch}', name: '${routine.name} copy', drills: routine.drills));
       if (context.mounted) showFeatureMessage(context, 'Duplicated "${routine.name}".');
     } on StateError catch (error) {
       if (context.mounted) showFeatureMessage(context, error.message);
@@ -386,7 +390,7 @@ class RoutineLibraryPage extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Delete ${routine.name}?'),
-        content: const Text('This removes the routine from this device.'),
+        content: Text(routine.id.startsWith(cloudRoutinePrefix) ? 'This removes the routine from your account.' : 'This removes the routine from this device.'),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
           FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
@@ -395,7 +399,7 @@ class RoutineLibraryPage extends ConsumerWidget {
     );
     if (confirmed != true || !context.mounted) return;
     try {
-      await ref.read(routineLibraryProvider.notifier).remove(routine.id);
+      await ref.read(routineStoreProvider).remove(routine.id);
     } on StateError catch (error) {
       if (context.mounted) showFeatureMessage(context, error.message);
     } on PlatformException catch (error) {
@@ -405,9 +409,12 @@ class RoutineLibraryPage extends ConsumerWidget {
 }
 
 class RoutineBuilderPage extends ConsumerStatefulWidget {
-  const RoutineBuilderPage({super.key, this.routineId});
+  const RoutineBuilderPage({super.key, this.routineId, this.profileId});
 
   final String? routineId;
+
+  /// Set when a parent builds or edits a routine on a child's profile, rather than on their own My routines.
+  final String? profileId;
 
   @override
   ConsumerState<RoutineBuilderPage> createState() => _RoutineBuilderPageState();
@@ -418,18 +425,33 @@ class _RoutineBuilderPageState extends ConsumerState<RoutineBuilderPage> {
   late final String _id;
   late String _name;
   late final List<Drill> _drills;
+  late final TextEditingController _nameController;
+  late bool _hydrated;
+  var _missing = false;
   bool _saving = false;
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    final plans = ref.read(routineLibraryProvider);
-    final existing = widget.routineId == null ? null : plans.where((plan) => plan.id == widget.routineId).firstOrNull;
+    RoutinePlan? existing;
+    if (widget.routineId != null && widget.profileId == null) existing = ref.read(allRoutinesProvider).where((plan) => plan.id == widget.routineId).firstOrNull;
     _id = existing?.id ?? 'routine-${DateTime.now().microsecondsSinceEpoch}';
     _name = existing?.name ?? _routineNames.first;
+    _nameController = TextEditingController(text: _name);
     _drills = [...?existing?.drills];
+    // A routine on a child's profile arrives from the server, so it is filled in once it has loaded.
+    _hydrated = widget.profileId == null || widget.routineId == null;
   }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  /// Adults may name a routine freely, within a short limit; everyone else picks a style.
+  bool get _freeName => ref.read(authStateProvider).value is SignedInAccount;
 
   Future<void> _addDrills() async {
     final chosen = await showDrillPicker(context, title: 'Add drills', excludeIds: _drills.map((drill) => drill.id).toSet());
@@ -448,8 +470,13 @@ class _RoutineBuilderPageState extends ConsumerState<RoutineBuilderPage> {
   }
 
   Future<void> _save() async {
+    if (_freeName) _name = _nameController.text.trim().replaceAll(RegExp(r'\s+'), ' ');
     if (_drills.isEmpty) {
       setState(() => _error = 'Add at least one drill to this routine.');
+      return;
+    }
+    if (_freeName && (_name.length < 2 || RegExp(r'[<>]').hasMatch(_name))) {
+      setState(() => _error = 'Use a routine name between 2 and 40 characters, without < or >.');
       return;
     }
     setState(() {
@@ -457,8 +484,22 @@ class _RoutineBuilderPageState extends ConsumerState<RoutineBuilderPage> {
       _error = null;
     });
     try {
-      await ref.read(routineLibraryProvider.notifier).save(RoutinePlan(id: _id, name: _name, drills: _drills));
+      final profileId = widget.profileId;
+      if (profileId != null) {
+        final shared = TeamRoutine(name: _name, drills: [for (final drill in _drills) (drillId: drill.id, sets: drill.defaultPrescription.sets)]);
+        await ref.read(profileRoutineRepositoryProvider).save(profileId, shared, routineId: widget.routineId);
+        if (mounted) context.go('/parent/kids/$profileId/routines');
+        return;
+      }
+      await ref.read(routineStoreProvider).save(RoutinePlan(id: _id, name: _name, drills: _drills));
       if (mounted) context.go('/routines');
+    } on RoutineException catch (error) {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _error = error.message;
+        });
+      }
     } on StateError catch (error) {
       if (mounted) {
         setState(() {
@@ -479,22 +520,63 @@ class _RoutineBuilderPageState extends ConsumerState<RoutineBuilderPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    if (!_hydrated) {
+      final saved = ref.watch(profileRoutinesProvider(widget.profileId!));
+      final catalog = ref.watch(drillCatalogProvider);
+      if (saved.hasValue && catalog.hasValue) {
+        final item = saved.requireValue.where((entry) => entry.id == widget.routineId).firstOrNull;
+        _hydrated = true;
+        if (item == null) {
+          _missing = true;
+        } else {
+          _name = item.routine.name;
+          _nameController.text = _name;
+          _drills.addAll(drillsForTeamRoutine(item.routine, catalog.requireValue));
+        }
+      } else {
+        return const AppPage(
+          title: 'Edit routine',
+          children: [Center(child: CircularProgressIndicator())],
+        );
+      }
+    }
+    if (_missing) {
+      return AppPage(
+        title: 'Routine not found',
+        action: FilledButton(onPressed: () => context.go('/parent/kids/${widget.profileId}/routines'), child: const Text('Back to Routines')),
+        children: const [Text('This routine was deleted.')],
+      );
+    }
     final pillars = theme.extension<PillarColors>()!;
     return AppPage(
       title: widget.routineId == null ? 'Create routine' : 'Edit routine',
-      subtitle: 'Pick a routine style, then add drills in the order you like.',
+      subtitle: _freeName ? 'Name it, then add drills in the order you like.' : 'Pick a routine style, then add drills in the order you like.',
       action: FilledButton.icon(onPressed: _saving ? null : _save, icon: const Icon(Icons.save_outlined), label: Text(_saving ? 'Saving…' : 'Save routine')),
       children: [
-        DropdownButtonFormField<String>(
-          isExpanded: true,
-          initialValue: _name,
-          decoration: const InputDecoration(labelText: 'Routine style'),
-          // A routine saved under another name (the starter routine, a copy, or one made from history) keeps it.
-          items: [
-            for (final name in {..._routineNames, _name}) DropdownMenuItem(value: name, child: Text(name)),
-          ],
-          onChanged: _saving ? null : (value) => setState(() => _name = value!),
-        ),
+        if (_freeName) ...[
+          TextField(
+            key: const ValueKey('routine-name'),
+            controller: _nameController,
+            enabled: !_saving,
+            maxLength: 40,
+            textCapitalization: TextCapitalization.sentences,
+            decoration: const InputDecoration(labelText: 'Routine name'),
+          ),
+          Wrap(
+            spacing: AppSpacing.xs,
+            children: [for (final name in _routineNames) ActionChip(label: Text(name), onPressed: _saving ? null : () => setState(() => _nameController.text = name))],
+          ),
+        ] else
+          DropdownButtonFormField<String>(
+            isExpanded: true,
+            initialValue: _name,
+            decoration: const InputDecoration(labelText: 'Routine style'),
+            // A routine saved under another name (the starter routine, a copy, or one made from history) keeps it.
+            items: [
+              for (final name in {..._routineNames, _name}) DropdownMenuItem(value: name, child: Text(name)),
+            ],
+            onChanged: _saving ? null : (value) => setState(() => _name = value!),
+          ),
         const SizedBox(height: AppSpacing.xl),
         SectionHeading(title: 'Drills (${_drills.length})'),
         const SizedBox(height: AppSpacing.sm),
@@ -538,7 +620,11 @@ class _RoutineBuilderPageState extends ConsumerState<RoutineBuilderPage> {
         FilledButton.tonalIcon(onPressed: _addDrills, icon: const Icon(Icons.add), label: const Text('Add drills')),
         if (_error != null) ...[const SizedBox(height: AppSpacing.md), Text(_error!, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error))],
         const SizedBox(height: AppSpacing.md),
-        const Text('Routines and your own drills are saved on this device. Cloud sync and plan checks are coming soon.'),
+        Text(
+          widget.profileId != null || (ref.watch(authStateProvider).value is SignedInAccount && !_drills.any((d) => d.id.startsWith('custom-') || d.id.startsWith('manual-')))
+              ? 'Saved to the account, so it follows the player to any device.'
+              : 'Routines with your own drills are saved on this device.',
+        ),
       ],
     );
   }
