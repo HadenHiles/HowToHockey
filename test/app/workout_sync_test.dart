@@ -22,13 +22,14 @@ final catalog = {for (final d in parseDrillCatalog(File(drillCatalogAsset).readA
 const own = PlayerProfile(id: 'parent-uid', ownerUid: 'parent-uid', displayName: 'Pat H.', birthYear: 1985, isChild: false);
 const kid = PlayerProfile(id: 'child-1', ownerUid: 'parent-uid', displayName: 'Avery H.', birthYear: 2015, isChild: true);
 
-TrainingSession workout(DateTime at, {int hits = 6}) {
+TrainingSession workout(DateTime at, {int hits = 6, String? programRunId}) {
   final drill = catalog['pick-your-corner']!.copyWith(defaultPrescription: catalog['pick-your-corner']!.defaultPrescription.copyWith(sets: 1));
   return TrainingSession(
     drills: [drill],
     startedAt: at.toUtc(),
     endedAt: at.toUtc().add(const Duration(minutes: 5)),
     logs: [(drillId: drill.id, log: SetLog(setIndex: 0, reps: 10, hits: hits, loggedAt: at.toUtc()))],
+    programRunId: programRunId,
   );
 }
 
@@ -47,6 +48,7 @@ Future<ProviderContainer> open({AuthState auth = const GuestSession('guest'), Ma
     ..clear()
     ..add(kid);
   testSessions.uploads.clear();
+  testSessions.uploadedSessions.clear();
   testSessions.stats.clear();
   testSessions.failWith = null;
   final container = ProviderContainer(overrides: [sharedPreferencesProvider.overrideWithValue(preferences), testCatalogOverride, testAuthOverride, testProfilesOverride, testSessionsOverride]);
@@ -83,6 +85,17 @@ void main() {
     expect(entry.uploadedAtMs, isNotNull);
     expect(entry.profileId, 'parent-uid');
     expect(container.read(progressStatsProvider).workouts, 1, reason: 'still shown while the server catches up');
+  });
+
+  test('program run IDs are included when finished workouts are uploaded', () async {
+    final container = await open(
+      auth: const SignedInAccount(uid: 'parent-uid', email: 'p@example.com', emailVerified: true),
+    );
+    final session = workout(day, programRunId: 'program-run-1');
+    container.read(workoutHistoryProvider.notifier).add(session);
+    await settle();
+
+    expect(testSessions.uploadedSessions.single.programRunId, 'program-run-1');
   });
 
   test('the server\'s count takes over without counting a workout twice', () async {

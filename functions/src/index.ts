@@ -13,6 +13,7 @@ import { createChildProfile as createChildProfileFor, createOwnProfile as create
 import { deleteAccount as deleteAccountFor } from './accounts';
 import { handleRevenueCatWebhook, revenueCatFetcher } from './entitlements';
 import { processSession } from './sessions';
+import { getProgramCatalog as getProgramCatalogData, getProgramDashboard as getProgramDashboardFor, startProgramDay as startProgramDayFor } from './programs';
 import { loadTuning } from './tuning';
 import { createPairingCode as createPairingCodeFor, redeemPairingCode as redeemPairingCodeFor } from './pairing';
 import * as teams from './teams';
@@ -47,6 +48,9 @@ export const reviewTeamRequest = onCall((request) => teams.reviewTeamRequest(get
 export const correctSession = onCall(async (request) => correctSessionFor(getFirestore(), callerOf(request), request.data ?? {}, new Date(), await loadTuning()));
 export const saveProfileRoutine = onCall((request) => saveProfileRoutineFor(getFirestore(), callerOf(request), request.data ?? {}));
 export const deleteProfileRoutine = onCall((request) => deleteProfileRoutineFor(getFirestore(), callerOf(request), request.data ?? {}));
+export const getProgramCatalog = onCall(() => ({ programs: getProgramCatalogData() }));
+export const getProgramDashboard = onCall((request) => getProgramDashboardFor(getFirestore(), callerOf(request), request.data ?? {}));
+export const startProgramDay = onCall((request) => startProgramDayFor(getFirestore(), callerOf(request), request.data ?? {}));
 export const setTeamRoutine = onCall((request) => teams.setTeamRoutine(getFirestore(), callerOf(request), request.data ?? {}));
 export const clearTeamRoutine = onCall((request) => teams.clearTeamRoutine(getFirestore(), callerOf(request), request.data ?? {}));
 export const removeTeamMember = onCall((request) => teams.removeTeamMember(getFirestore(), callerOf(request), request.data ?? {}));

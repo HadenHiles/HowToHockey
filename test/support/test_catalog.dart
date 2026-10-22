@@ -16,6 +16,7 @@ import 'package:how_to_hockey/features/profiles/display_name.dart';
 import 'package:how_to_hockey/features/profiles/player_profile.dart';
 import 'package:how_to_hockey/features/profiles/profile_repository.dart';
 import 'package:how_to_hockey/features/progress/progress_stats.dart';
+import 'package:how_to_hockey/features/programs/program_repository.dart';
 import 'package:how_to_hockey/features/session/rest_notifications.dart';
 import 'package:how_to_hockey/features/routines/profile_routine_repository.dart';
 import 'package:how_to_hockey/features/sessions/session_repository.dart';
@@ -304,6 +305,7 @@ final testTeamsOverride = teamRepositoryProvider.overrideWithValue(testTeams);
 /// Keeps widget tests off Firestore: uploads are recorded, and stats come from whatever a test puts in [stats].
 class FakeSessionRepository extends SessionRepository {
   final uploads = <(String, String)>[];
+  final uploadedSessions = <SessionUpload>[];
   final pendingUploads = <String>[];
   final pending = <String, List<PendingWorkout>>{};
   final pendingDrills = <PendingDrill>[];
@@ -323,6 +325,7 @@ class FakeSessionRepository extends SessionRepository {
   Future<void> upload(String profileId, SessionUpload upload) async {
     if (failWith != null) throw failWith!;
     uploads.add((profileId, upload.record.id));
+    uploadedSessions.add(upload);
     if (upload.pending) pendingUploads.add(upload.record.id);
   }
 
@@ -444,6 +447,106 @@ class FakeProfileRoutineRepository extends ProfileRoutineRepository {
 
 final testProfileRoutines = FakeProfileRoutineRepository();
 final testProfileRoutinesOverride = profileRoutineRepositoryProvider.overrideWithValue(testProfileRoutines);
+
+class FakeProgramRepository implements ProgramRepository {
+  final owned = <String, Set<String>>{};
+  final progress = <(String, String), ProgramProgress>{};
+  final starts = <({String profileId, String programId, int day})>[];
+  ProgramException? failWith;
+
+  @override
+  Future<List<TrainingProgram>> loadCatalog() async => const [
+    TrainingProgram(
+      id: 'shooting-30',
+      title: '30 Days to a Harder Shot',
+      skill: 'Shot power',
+      detail: 'Build a quicker, stronger release.',
+      price: r'$29.99',
+      days: 30,
+      entitlement: 'program_shooting-30',
+      templates: [
+        ProgramDayContent(
+          lessonTitle: 'Build a quick release',
+          lessonMinutes: 8,
+          drills: [(drillId: 'quick-release-wrist-shots', sets: 3), (drillId: 'shot-burst-30', sets: 2)],
+          challengeTitle: 'Beat your best',
+          challengeDescription: 'Count your shots in 30 seconds.',
+        ),
+        ProgramDayContent(
+          lessonTitle: 'Pick your target',
+          lessonMinutes: 7,
+          drills: [(drillId: 'pick-your-corner', sets: 2), (drillId: 'quick-release-wrist-shots', sets: 3)],
+          challengeTitle: 'Pick a corner',
+          challengeDescription: 'Hit your target 5 times.',
+        ),
+      ],
+    ),
+    TrainingProgram(
+      id: 'hands-21',
+      title: 'Elite Hands in 21 Days',
+      skill: 'Quick hands',
+      detail: 'Build soft hands and faster puck control.',
+      price: r'$19.99',
+      days: 21,
+      entitlement: 'program_hands-21',
+      templates: [
+        ProgramDayContent(
+          lessonTitle: 'Soft hands',
+          lessonMinutes: 7,
+          drills: [(drillId: 'quiet-hands-quick-feet', sets: 3), (drillId: 'pass-and-settle', sets: 2)],
+          challengeTitle: 'Eyes up',
+          challengeDescription: 'Keep your eyes up for the whole final set.',
+        ),
+        ProgramDayContent(
+          lessonTitle: 'Quick feet, quick hands',
+          lessonMinutes: 6,
+          drills: [(drillId: 'quiet-hands-quick-feet', sets: 2), (drillId: 'athletic-stance-reset', sets: 2)],
+          challengeTitle: 'Quick feet',
+          challengeDescription: 'Stay light on your feet while keeping the puck close.',
+        ),
+      ],
+    ),
+    TrainingProgram(
+      id: 'power-skating-14',
+      title: 'Power Skating Kickstart',
+      skill: 'Speed & explosiveness',
+      detail: 'Practice a balanced stance, quick feet and powerful starts.',
+      price: r'$14.99',
+      days: 14,
+      entitlement: 'program_power-skating-14',
+      templates: [
+        ProgramDayContent(
+          lessonTitle: 'Build a strong position',
+          lessonMinutes: 7,
+          drills: [(drillId: 'athletic-stance-reset', sets: 3), (drillId: 'quiet-hands-quick-feet', sets: 2)],
+          challengeTitle: 'Strong position',
+          challengeDescription: 'Hold a balanced athletic stance.',
+        ),
+      ],
+    ),
+  ];
+
+  @override
+  Future<ProgramDashboard> loadDashboard(String profileId) async {
+    if (failWith case final error?) throw error;
+    return ProgramDashboard(ownedProgramIds: owned[profileId] ?? {});
+  }
+
+  @override
+  Stream<ProgramProgress?> watchProgress(String profileId, String programId) async* {
+    yield progress[(profileId, programId)];
+  }
+
+  @override
+  Future<String> startDay({required String profileId, required String programId, required int day}) async {
+    if (failWith case final error?) throw error;
+    starts.add((profileId: profileId, programId: programId, day: day));
+    return 'run-${starts.length}';
+  }
+}
+
+final testPrograms = FakeProgramRepository();
+final testProgramsOverride = programRepositoryProvider.overrideWithValue(testPrograms);
 
 /// A store that sells the four plans at the roadmap prices and remembers what was bought.
 class FakePurchases implements PurchasesService {

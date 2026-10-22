@@ -1,6 +1,7 @@
 import type { Firestore, Timestamp } from 'firebase-admin/firestore';
 
 import { addWorkout, DEFAULT_TUNING, emptyStats, PILLARS, type Best, type DrillSpec, type Pillar, type SetLog, type Stats, type Tracking, type Tuning, type WorkoutInput } from './progress';
+import { programContent } from './programs';
 
 const TRACKING: Tracking[] = ['volume', 'duration', 'density', 'accuracy', 'streak', 'binary'];
 const MAX_SETS = 300;
@@ -94,6 +95,35 @@ export async function processSession(db: Firestore, profileId: string, sessionId
     const drillDocs = (await tx.get(sessionRef.collection('drills'))).docs.map((d) => ({ id: d.id, data: d.data() }));
     const catalog = await knownDrills(db, drillDocs, (ref) => tx.get(ref));
     const statsSnap = await tx.get(statsRef);
+    let programRunRef: FirebaseFirestore.DocumentReference | undefined;
+    let programRun: FirebaseFirestore.DocumentData | undefined;
+    let programProgressRef: FirebaseFirestore.DocumentReference | undefined;
+    let programProgress: FirebaseFirestore.DocumentData | undefined;
+    if (typeof data.programRunId === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(data.programRunId)) {
+      programRunRef = profileRef.collection('programRuns').doc(data.programRunId);
+      const runSnap = await tx.get(programRunRef);
+      if (runSnap.exists && runSnap.data()?.status === 'started') {
+        programRun = runSnap.data();
+        if (typeof programRun?.programId === 'string' && typeof programRun.day === 'number') {
+          programProgressRef = profileRef.collection('programs').doc(programRun.programId);
+          programProgress = (await tx.get(programProgressRef)).data();
+          const expected = programContent(programRun.programId, programRun.day);
+          const orderedDrills = [...drillDocs].sort((a, b) => Number(a.id) - Number(b.id));
+          if (
+            !expected ||
+            orderedDrills.length !== expected.drillIds.length ||
+            orderedDrills.some((drill, index) => drill.data.drillId !== expected.drillIds[index] || !Array.isArray(drill.data.sets) || drill.data.sets.length < expected.sets[index])
+          ) {
+            programRun = undefined;
+            programRunRef = undefined;
+            programProgressRef = undefined;
+            programProgress = undefined;
+          }
+        } else {
+          programRun = undefined;
+        }
+      }
+    }
 
     const built = buildWorkout(sessionId, data, drillDocs, catalog, now);
     if ('reject' in built) {
@@ -106,7 +136,23 @@ export async function processSession(db: Firestore, profileId: string, sessionId
     const recent = [...(Array.isArray(statsSnap.data()?.recent) ? (statsSnap.data()!.recent as string[]) : []), sessionId].slice(-RECENT_IDS);
     tx.set(statsRef, { ...writeStats(stats), recent });
     for (const best of newBests) tx.set(profileRef.collection('prs').doc(best.key), bestDoc(best));
-    tx.update(sessionRef, { processedAt: now, credit: { seconds: Math.round(stats.seconds - before.seconds), shots: stats.shots - before.shots, newBestKeys: newBests.map((b) => b.key) } });
+    const sessionUpdate: Record<string, unknown> = { processedAt: now, credit: { seconds: Math.round(stats.seconds - before.seconds), shots: stats.shots - before.shots, newBestKeys: newBests.map((b) => b.key) } };
+    if (programRunRef && programRun && programProgressRef) {
+      const completed = Array.isArray(programProgress?.completedDays)
+        ? [...new Set((programProgress.completedDays as unknown[]).filter((value): value is number => typeof value === 'number' && Number.isInteger(value) && value > 0))].sort((a, b) => a - b)
+        : [];
+      const day = programRun.day as number;
+      if (day === completed.length + 1) completed.push(day);
+      const challengeDays = Array.isArray(programProgress?.completedChallenges)
+        ? [...new Set((programProgress.completedChallenges as unknown[]).filter((value): value is number => typeof value === 'number' && Number.isInteger(value) && value > 0))]
+        : [];
+      if (!challengeDays.includes(day)) challengeDays.push(day);
+      tx.set(programProgressRef, { completedDays: completed, completedChallenges: challengeDays.sort((a, b) => a - b), updatedAt: now }, { merge: true });
+      tx.update(programRunRef, { status: 'completed', completedAt: now, sessionId });
+      sessionUpdate.programCompletedDay = day;
+      sessionUpdate.programId = programRun.programId;
+    }
+    tx.update(sessionRef, sessionUpdate);
     return { status: 'processed', newBestKeys: newBests.map((b) => b.key) };
   });
 }

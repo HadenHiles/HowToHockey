@@ -26,6 +26,7 @@ Future<ProviderContainer> mount(WidgetTester tester) async {
       testProfilesOverride,
       testTeamsOverride,
       testSessionsOverride,
+      testProgramsOverride,
       purchasesProvider.overrideWithValue(FakePurchases()),
     ],
   );
@@ -114,9 +115,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Try Day 1 free'), findsNothing);
     expect(find.text('Today’s challenge'), findsOneWidget);
+    expect(find.text('Beat your best'), findsOneWidget);
     router.go('/programs/shooting-30/day/1/lesson');
     await tester.pumpAndSettle();
-    expect(find.text('Example lesson. Coach Jeremy’s lesson videos are coming soon.'), findsOneWidget);
+    expect(find.text('Build a quick release. Coach Jeremy’s lesson videos are coming soon.'), findsOneWidget);
     router.go('/programs/hands-21/day/2/lesson');
     await tester.pumpAndSettle();
     expect(find.text('Day 2 lesson'), findsWidgets);

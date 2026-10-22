@@ -172,7 +172,7 @@ class TrainingFocus extends Notifier<Map<SkillPillar, int>> {
 final trainingFocusProvider = NotifierProvider<TrainingFocus, Map<SkillPillar, int>>(TrainingFocus.new);
 
 class TrainingSession {
-  const TrainingSession({required this.drills, this.drillIndex = 0, this.setIndex = 0, this.logs = const [], this.startedAt, this.restEndsAt, this.endedAt, this.dismissed = false});
+  const TrainingSession({required this.drills, this.drillIndex = 0, this.setIndex = 0, this.logs = const [], this.startedAt, this.restEndsAt, this.endedAt, this.dismissed = false, this.programRunId});
 
   final List<Drill> drills;
   final int drillIndex;
@@ -182,6 +182,7 @@ class TrainingSession {
   final DateTime? restEndsAt;
   final DateTime? endedAt;
   final bool dismissed;
+  final String? programRunId;
   int get elapsedSeconds => startedAt == null ? 0 : (endedAt ?? clock.now().toUtc()).difference(startedAt!).inSeconds;
 
   int setsLogged(int index) => logs.where((entry) => entry.drillId == drills[index].id).length;
@@ -197,6 +198,7 @@ class TrainingSession {
     'restEndsAt': restEndsAt?.toIso8601String(),
     'endedAt': endedAt?.toIso8601String(),
     'dismissed': dismissed,
+    if (programRunId != null) 'programRunId': programRunId,
     'logs': [
       for (final entry in logs)
         {
@@ -244,6 +246,7 @@ class TrainingSession {
       restEndsAt: time('restEndsAt'),
       endedAt: time('endedAt'),
       dismissed: json['dismissed'] as bool,
+      programRunId: json['programRunId'] as String?,
     );
   }
 
@@ -267,6 +270,7 @@ class TrainingSession {
       startedAt: startedAt,
       endedAt: clearEnded ? null : endedAt ?? this.endedAt,
       restEndsAt: clearRest ? null : restEndsAt ?? this.restEndsAt,
+      programRunId: programRunId,
       setIndex: nextLogs.where((entry) => entry.drillId == nextDrills[nextIndex].id).length,
       dismissed: dismissed ?? this.dismissed,
     );
@@ -321,10 +325,10 @@ class TrainingSessionNotifier extends Notifier<TrainingSession> {
     );
   }
 
-  void start(List<Drill> drills) {
+  void start(List<Drill> drills, {String? programRunId}) {
     if (drills.isEmpty) throw ArgumentError('A session needs at least one drill.');
     if (drills.map((drill) => drill.id).toSet().length != drills.length) throw ArgumentError('Session drills must have unique IDs.');
-    _update(TrainingSession(drills: List.unmodifiable(drills), startedAt: clock.now().toUtc()));
+    _update(TrainingSession(drills: List.unmodifiable(drills), startedAt: clock.now().toUtc(), programRunId: programRunId));
   }
 
   void selectDrill(int index) {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { accountIdsInEvent, planFromSubscriber, revenueCatFetcher } from '../src/entitlements';
+import { accountIdsInEvent, planFromSubscriber, programsFromSubscriber, revenueCatFetcher } from '../src/entitlements';
 
 const now = new Date('2026-10-20T12:00:00Z');
 const future = '2027-01-01T00:00:00Z';
@@ -9,6 +9,25 @@ const past = '2026-01-01T00:00:00Z';
 describe('planFromSubscriber', () => {
   it('reads an active Player Pro plan', () => {
     expect(planFromSubscriber({ subscriber: { entitlements: { player_pro: { expires_date: future } } } }, now)).toEqual({ player: true, coach: false });
+  });
+
+  describe('programsFromSubscriber', () => {
+    it('keeps active program entitlements and drops expired or unrelated entitlements', () => {
+      expect(
+        programsFromSubscriber(
+          {
+            subscriber: {
+              entitlements: {
+                'program_shooting-30': { expires_date: future },
+                'program_hands-21': { expires_date: past },
+                player_pro: { expires_date: future },
+              },
+            },
+          },
+          now,
+        ),
+      ).toEqual(['program_shooting-30']);
+    });
   });
 
   it('lets Coach Pro include Player Pro even if only Coach Pro is listed', () => {

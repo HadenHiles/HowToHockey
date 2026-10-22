@@ -27,7 +27,7 @@ void main() {
   test('a workout in progress survives the app being killed and resumes where it left off', () async {
     final first = await openApp(preferences);
     final notifier = first.read(trainingSessionProvider.notifier);
-    notifier.start([sampleDrills.first, sampleDrills[3]]);
+    notifier.start([sampleDrills.first, sampleDrills[3]], programRunId: 'program-run-1');
     notifier.logSet(reps: 10);
     notifier.selectDrill(1);
     notifier.logSet(reps: 10, hits: 7);
@@ -41,6 +41,7 @@ void main() {
     expect(restored.drills.map((d) => d.id), before.drills.map((d) => d.id));
     expect(restored.drillIndex, 1);
     expect(restored.setIndex, 1);
+    expect(restored.programRunId, 'program-run-1');
     expect(restored.logs.map((e) => (e.drillId, e.log.reps, e.log.hits)), [(sampleDrills.first.id, 10, null), (sampleDrills[3].id, 10, 7)]);
     expect(restored.finished, isFalse);
 

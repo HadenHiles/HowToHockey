@@ -138,7 +138,14 @@ class WorkoutSync extends Notifier<Map<String, SyncEntry>> {
         try {
           await repository.upload(
             target,
-            SessionUpload(record: session.toRecord(), endedAt: session.endedAt ?? session.startedAt!, routineName: workoutTitle(session), activeSeconds: session.activeSeconds, pending: value.pending),
+            SessionUpload(
+              record: session.toRecord(),
+              endedAt: session.endedAt ?? session.startedAt!,
+              routineName: workoutTitle(session),
+              activeSeconds: session.activeSeconds,
+              pending: value.pending,
+              programRunId: session.programRunId,
+            ),
           );
           next[key] = value.copyWith(profileId: target, uploadedAtMs: now.millisecondsSinceEpoch);
         } on Object catch (error) {

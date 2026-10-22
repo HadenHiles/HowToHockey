@@ -7,7 +7,7 @@ import '../progress/progress_stats.dart';
 
 /// A finished workout, ready to store.
 class SessionUpload {
-  const SessionUpload({required this.record, required this.endedAt, required this.routineName, required this.activeSeconds, this.pending = false});
+  const SessionUpload({required this.record, required this.endedAt, required this.routineName, required this.activeSeconds, this.pending = false, this.programRunId});
 
   final WorkoutRecord record;
   final DateTime endedAt;
@@ -16,6 +16,7 @@ class SessionUpload {
 
   /// A child's device sends its workout as pending: a parent confirms it before it is counted.
   final bool pending;
+  final String? programRunId;
 }
 
 /// A workout a child finished that is waiting for a grown-up.
@@ -81,6 +82,7 @@ class SessionRepository {
       'routineName': upload.routineName.length > 80 ? upload.routineName.substring(0, 80) : upload.routineName,
       'drillCount': order.length,
       'activeSeconds': upload.activeSeconds.clamp(0, 86400),
+      if (upload.programRunId != null) 'programRunId': upload.programRunId,
     });
     for (final (index, id) in order.indexed) {
       final drill = byId[id]!;

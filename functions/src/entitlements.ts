@@ -10,6 +10,14 @@ export interface PlanState {
   coach: boolean;
 }
 
+export function programsFromSubscriber(body: unknown, now: Date): string[] {
+  const entitlements = ((body as { subscriber?: { entitlements?: Record<string, SubscriberEntitlement> } } | null)?.subscriber?.entitlements ?? {}) as Record<string, SubscriberEntitlement>;
+  return Object.entries(entitlements)
+    .filter(([id, entitlement]) => id.startsWith('program_') && stillActive(entitlement, now))
+    .map(([id]) => id)
+    .sort();
+}
+
 interface SubscriberEntitlement {
   expires_date?: string | null;
   grace_period_expires_date?: string | null;
@@ -43,12 +51,12 @@ export function accountIdsInEvent(event: Record<string, unknown> | undefined): s
  * A plan on the account covers its own profile and every child profile, so one flag on each is enough for a
  * kid device, which can't hold a plan itself. Accounts that no longer exist are left alone.
  */
-export async function applyPlan(db: Firestore, uid: string, plan: PlanState, now: Date): Promise<boolean> {
+export async function applyPlan(db: Firestore, uid: string, plan: PlanState, now: Date, programs: string[] = []): Promise<boolean> {
   const userRef = db.collection('users').doc(uid);
   const [user, owned] = await Promise.all([userRef.get(), db.collection('profiles').where('ownerUid', '==', uid).get()]);
   if (!user.exists && owned.empty) return false;
   const batch = db.batch();
-  batch.set(userRef, { entitlements: { playerPro: plan.player, coachPro: plan.coach, updatedAt: now } }, { merge: true });
+  batch.set(userRef, { entitlements: { playerPro: plan.player, coachPro: plan.coach, programs, updatedAt: now } }, { merge: true });
   for (const profile of owned.docs) batch.update(profile.ref, { pro: plan.player });
   await batch.commit();
   return true;
@@ -85,8 +93,9 @@ export async function handleRevenueCatWebhook(request: WebhookRequest, deps: Web
   const now = deps.now ?? new Date();
   let updated = 0;
   for (const uid of accountIdsInEvent(event)) {
-    const plan = planFromSubscriber(await deps.fetchSubscriber(uid), now);
-    if (await applyPlan(deps.db, uid, plan, now)) updated += 1;
+    const subscriber = await deps.fetchSubscriber(uid);
+    const plan = planFromSubscriber(subscriber, now);
+    if (await applyPlan(deps.db, uid, plan, now, programsFromSubscriber(subscriber, now))) updated += 1;
   }
   return { status: 200, message: `Updated ${updated}.` };
 }

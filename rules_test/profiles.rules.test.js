@@ -143,6 +143,7 @@ describe('account and profile rules', () => {
       stats: `profiles/${profile}/stats/lifetime`,
       pr: `profiles/${profile}/prs/accuracy`,
       preset: `profiles/${profile}/focusPresets/p1`,
+      program: `profiles/${profile}/programs/shooting-30`,
     });
 
     it('lets the owner read everything on their children', async () => {
@@ -153,11 +154,13 @@ describe('account and profile rules', () => {
 
     it('lets the owner save a finished workout and presets, but not the totals Functions compute', async () => {
       const p = paths('kid-a');
-      await assertSucceeds(setDoc(doc(parent(), 'profiles/kid-a/sessions/s2'), finishedSession({ routineName: 'Garage', drillCount: 1, activeSeconds: 600 })));
+      await assertSucceeds(setDoc(doc(parent(), 'profiles/kid-a/sessions/s2'), finishedSession({ routineName: 'Garage', drillCount: 1, activeSeconds: 600, programRunId: 'serverRun123' })));
       await assertSucceeds(setDoc(doc(parent(), 'profiles/kid-a/sessions/s2/drills/0'), sessionDrill({ title: 'Pick your corner', estimatedSecondsPerSet: 60, trackingType: 'accuracy', skillWeights: { shotAccuracy: 1 } })));
       await assertSucceeds(setDoc(doc(parent(), 'profiles/kid-a/focusPresets/p2'), { name: 'Rink' }));
       await assertFails(setDoc(doc(parent(), p.stats), { totalShots: 999999 }));
       await assertFails(updateDoc(doc(parent(), p.pr), { value: 100 }));
+      await assertFails(setDoc(doc(parent(), p.program), { completedDays: [1, 2] }));
+      await assertFails(setDoc(doc(parent(), 'profiles/kid-a/programRuns/run1'), { status: 'started' }));
       await assertFails(deleteDoc(doc(parent(), p.session)));
     });
 

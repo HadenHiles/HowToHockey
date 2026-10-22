@@ -21,7 +21,7 @@ service cloud.firestore {
     }
 
     function validSession(data) {
-      return data.keys().hasOnly(['status', 'startedAt', 'endedAt', 'tzOffsetMinutes', 'routineName', 'setup', 'focus', 'drillCount', 'activeSeconds'])
+      return data.keys().hasOnly(['status', 'startedAt', 'endedAt', 'tzOffsetMinutes', 'routineName', 'setup', 'focus', 'drillCount', 'activeSeconds', 'programRunId'])
         && data.keys().hasAll(['status', 'startedAt', 'endedAt', 'tzOffsetMinutes'])
         && data.status in ['completed', 'pending']
         && data.startedAt is timestamp
@@ -29,6 +29,7 @@ service cloud.firestore {
         && data.tzOffsetMinutes is int && data.tzOffsetMinutes >= -840 && data.tzOffsetMinutes <= 840
         && (!('drillCount' in data) || (data.drillCount is int && data.drillCount >= 0 && data.drillCount <= 50))
         && (!('activeSeconds' in data) || (data.activeSeconds is int && data.activeSeconds >= 0 && data.activeSeconds <= 86400))
+        && (!('programRunId' in data) || (data.programRunId is string && data.programRunId.size() > 0 && data.programRunId.size() <= 128))
         && (!('routineName' in data) || (data.routineName is string && data.routineName.size() <= 80));
     }
 
@@ -117,6 +118,17 @@ service cloud.firestore {
       match /routines/{routineId} {
         allow read: if canActAs(profileId);
         allow write: if false;
+      }
+
+      // Program access is resolved by a callable against the profile owner's billing record. Progress is
+      // written only by the session processor; a paired device can read only its own profile's progress.
+      match /programs/{programId} {
+        allow read: if canActAs(profileId);
+        allow write: if false;
+      }
+
+      match /programRuns/{runId} {
+        allow read, write: if false;
       }
 
       // Totals and personal bests are computed by Cloud Functions.
