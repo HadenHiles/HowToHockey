@@ -32,6 +32,7 @@ Future<ProviderContainer> mount(WidgetTester tester, {AuthState initial = const 
       testProfilesOverride,
       testTeamsOverride,
       testSessionsOverride,
+      testProfileRoutinesOverride,
     ],
   );
   addTearDown(container.dispose);

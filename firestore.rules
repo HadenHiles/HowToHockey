@@ -113,6 +113,12 @@ service cloud.firestore {
         }
       }
 
+      // Routines a parent saves for a child: library drills and set counts. Written only by Cloud Functions, which keep the free-plan cap.
+      match /routines/{routineId} {
+        allow read: if canActAs(profileId);
+        allow write: if false;
+      }
+
       // Totals and personal bests are computed by Cloud Functions.
       match /stats/{doc} {
         allow read: if canActAs(profileId);

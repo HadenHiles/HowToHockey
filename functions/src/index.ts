@@ -5,6 +5,7 @@ import { onDocumentWritten } from 'firebase-functions/v2/firestore';
 import { onCall, onRequest } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 
+import { deleteProfileRoutine as deleteProfileRoutineFor, saveProfileRoutine as saveProfileRoutineFor } from './routines';
 import { correctSession as correctSessionFor } from './corrections';
 import { getHealthStatus } from './health';
 import { createChildProfile as createChildProfileFor, createOwnProfile as createOwnProfileFor, type CallerAuth } from './profiles';
@@ -44,6 +45,8 @@ export const joinTeam = onCall((request) => teams.joinTeam(getFirestore(), calle
 export const acceptCoachInvite = onCall((request) => teams.acceptCoachInvite(getFirestore(), callerOf(request), request.data ?? {}));
 export const reviewTeamRequest = onCall((request) => teams.reviewTeamRequest(getFirestore(), callerOf(request), request.data ?? {}));
 export const correctSession = onCall(async (request) => correctSessionFor(getFirestore(), callerOf(request), request.data ?? {}, new Date(), await loadTuning()));
+export const saveProfileRoutine = onCall((request) => saveProfileRoutineFor(getFirestore(), callerOf(request), request.data ?? {}));
+export const deleteProfileRoutine = onCall((request) => deleteProfileRoutineFor(getFirestore(), callerOf(request), request.data ?? {}));
 export const setTeamRoutine = onCall((request) => teams.setTeamRoutine(getFirestore(), callerOf(request), request.data ?? {}));
 export const clearTeamRoutine = onCall((request) => teams.clearTeamRoutine(getFirestore(), callerOf(request), request.data ?? {}));
 export const removeTeamMember = onCall((request) => teams.removeTeamMember(getFirestore(), callerOf(request), request.data ?? {}));

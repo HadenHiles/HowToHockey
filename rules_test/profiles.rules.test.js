@@ -276,5 +276,18 @@ describe('account and profile rules', () => {
       await assertFails(deleteDoc(doc(parent(), 'profiles/kid-a/sessions/s1/audits/a1')));
       await assertFails(updateDoc(doc(parent(), 'profiles/kid-a/sessions/s1'), { correctedSeconds: 1 }));
     });
+
+    it('lets a parent and the child\'s device read the child\'s routines, but only Functions write them', async () => {
+      await environment.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'profiles/kid-a/routines/r1'), { name: 'Hands', drills: [] });
+      });
+      await assertSucceeds(getDoc(doc(parent(), 'profiles/kid-a/routines/r1')));
+      await assertSucceeds(getDoc(doc(kidDevice('kid-a'), 'profiles/kid-a/routines/r1')));
+      await assertFails(getDoc(doc(kidDevice('kid-b'), 'profiles/kid-a/routines/r1')));
+      await assertFails(getDoc(doc(stranger(), 'profiles/kid-a/routines/r1')));
+      await assertFails(setDoc(doc(parent(), 'profiles/kid-a/routines/r2'), { name: 'x' }));
+      await assertFails(setDoc(doc(kidDevice('kid-a'), 'profiles/kid-a/routines/r2'), { name: 'x' }));
+      await assertFails(deleteDoc(doc(parent(), 'profiles/kid-a/routines/r1')));
+    });
   });
 });

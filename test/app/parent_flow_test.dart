@@ -24,6 +24,7 @@ Future<ProviderContainer> mount(WidgetTester tester, {double scale = 1}) async {
       testProfilesOverride,
       testTeamsOverride,
       testSessionsOverride,
+      testProfileRoutinesOverride,
     ],
   );
   addTearDown(container.dispose);

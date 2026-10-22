@@ -259,7 +259,7 @@ export async function removeAccountFromTeams(db: Firestore, caller: CallerAuth) 
 const MAX_ROUTINE_DRILLS = 10;
 
 /** A routine from a coach: a short name and catalog drills with set counts. Nothing else is stored, so there is no free text but the name. */
-function cleanRoutine(raw: unknown) {
+export function cleanRoutine(raw: unknown) {
   const routine = raw as { name?: unknown; drills?: unknown } | null;
   const name = typeof routine?.name === 'string' ? routine.name.trim().replace(/\s+/g, ' ') : '';
   if (name.length < 2 || name.length > 40 || /[\p{C}<>]/u.test(name)) throw new HttpsError('invalid-argument', 'Use a routine name between 2 and 40 characters, without special markup.');

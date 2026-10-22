@@ -17,6 +17,7 @@ import 'package:how_to_hockey/features/profiles/player_profile.dart';
 import 'package:how_to_hockey/features/profiles/profile_repository.dart';
 import 'package:how_to_hockey/features/progress/progress_stats.dart';
 import 'package:how_to_hockey/features/session/rest_notifications.dart';
+import 'package:how_to_hockey/features/routines/profile_routine_repository.dart';
 import 'package:how_to_hockey/features/sessions/session_repository.dart';
 import 'package:how_to_hockey/features/session/session_cues.dart';
 import 'package:how_to_hockey/features/teams/team_repository.dart';
@@ -399,6 +400,46 @@ class FakeSessionRepository extends SessionRepository {
 
 final testSessions = FakeSessionRepository();
 final testSessionsOverride = sessionRepositoryProvider.overrideWithValue(testSessions);
+
+class FakeProfileRoutineRepository extends ProfileRoutineRepository {
+  final routines = <String, List<ProfileRoutine>>{};
+  final calls = <String>[];
+  final _changes = StreamController<String>.broadcast();
+  RoutineException? failWith;
+
+  void set(String profileId, List<ProfileRoutine> value) {
+    routines[profileId] = value;
+    _changes.add(profileId);
+  }
+
+  @override
+  Stream<List<ProfileRoutine>> watch(String profileId) async* {
+    yield routines[profileId] ?? const [];
+    await for (final changed in _changes.stream) {
+      if (changed == profileId) yield routines[profileId] ?? const [];
+    }
+  }
+
+  @override
+  Future<void> save(String profileId, TeamRoutine routine, {String? routineId}) async {
+    if (failWith != null) throw failWith!;
+    calls.add('save:$profileId:${routine.name}:${routine.drills.map((d) => '${d.drillId}x${d.sets}').join(',')}');
+    set(profileId, [...routines[profileId] ?? const <ProfileRoutine>[], ProfileRoutine(id: 'r${calls.length}', routine: routine)]);
+  }
+
+  @override
+  Future<void> delete(String profileId, String routineId) async {
+    if (failWith != null) throw failWith!;
+    calls.add('delete:$routineId');
+    set(profileId, [
+      for (final r in routines[profileId] ?? const <ProfileRoutine>[])
+        if (r.id != routineId) r,
+    ]);
+  }
+}
+
+final testProfileRoutines = FakeProfileRoutineRepository();
+final testProfileRoutinesOverride = profileRoutineRepositoryProvider.overrideWithValue(testProfileRoutines);
 
 /// A store that sells the four plans at the roadmap prices and remembers what was bought.
 class FakePurchases implements PurchasesService {
