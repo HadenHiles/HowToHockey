@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:how_to_hockey/app/hockey_app.dart';
 import 'package:how_to_hockey/app/training_state.dart';
 import 'package:how_to_hockey/features/commerce/entitlements.dart';
+import 'package:how_to_hockey/features/commerce/purchases_service.dart';
 import 'package:how_to_hockey/features/settings/appearance_settings_controller.dart';
 import 'package:how_to_hockey/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -98,8 +99,8 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('Day 2'));
     await tester.pumpAndSettle();
-    expect(find.text('Paywall for program_hands-21'), findsOneWidget);
-    await tester.tap(find.text('Buy program_hands-21'));
+    expect(find.text('Paywall for program_hands-21_pro'), findsOneWidget);
+    await tester.tap(find.text('Buy program_hands-21_pro'));
     await tester.pumpAndSettle();
     expect(find.text('Start training'), findsOneWidget);
 
@@ -126,5 +127,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Program not found'), findsWidgets);
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Pro subscribers get the discounted one-time program offering', (tester) async {
+    final container = await mount(tester);
+    final purchases = container.read(purchasesProvider) as FakePurchases;
+    purchases.setActive({playerProEntitlement});
+    await tester.pumpAndSettle();
+
+    container.read(appRouterProvider).go('/programs/hands-21/purchase');
+    await tester.pumpAndSettle();
+    expect(find.text('Paywall for program_hands-21_pro'), findsOneWidget);
+    await tester.tap(find.text('Buy program_hands-21_pro'));
+    await tester.pumpAndSettle();
+    expect(find.text('Start training'), findsOneWidget);
+    expect(purchases.active, contains('program_hands-21'));
+    expect(purchases.active, contains(playerProEntitlement));
   });
 }

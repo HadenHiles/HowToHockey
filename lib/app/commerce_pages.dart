@@ -122,7 +122,7 @@ class _PaywallPageState extends ConsumerState<PaywallPage> {
   }
 }
 
-String programStoreOffering(String programId) => 'program_$programId';
+String programStoreOffering(String programId, {required bool proDiscountEligible}) => 'program_$programId${proDiscountEligible ? '_pro' : ''}';
 
 class ProgramsPage extends ConsumerWidget {
   const ProgramsPage({super.key});
@@ -134,6 +134,7 @@ class ProgramsPage extends ConsumerWidget {
     final player = ref.watch(activePlayerProvider);
     final dashboard = player == null ? null : ref.watch(programDashboardProvider(player.id));
     final entitlements = {...?ref.watch(purchasedEntitlementsProvider).value, ...?dashboard?.value?.ownedProgramIds};
+    final proDiscountEligible = ref.watch(accountPlansProvider).player || (dashboard?.value?.proDiscountEligible ?? false);
     return AppPage(
       title: 'Programs',
       subtitle: 'Pick what you want to get better at. Every program starts with a free training day.',
@@ -171,7 +172,14 @@ class ProgramsPage extends ConsumerWidget {
                   const SizedBox(height: AppSpacing.xs),
                   Text(program.detail, style: theme.textTheme.bodySmall),
                   const SizedBox(height: AppSpacing.sm),
-                  Text(entitlements.contains(program.entitlement) ? 'Owned · Continue training' : 'Day 1 free · ${program.price} to unlock all days', style: theme.textTheme.labelLarge),
+                  Text(
+                    entitlements.contains(program.entitlement)
+                        ? 'Owned · Continue training'
+                        : proDiscountEligible
+                        ? 'Day 1 free · Pro members save 20% on the one-time purchase'
+                        : 'Day 1 free · ${program.price} to unlock all days',
+                    style: theme.textTheme.labelLarge,
+                  ),
                 ],
               ),
             ),
@@ -199,6 +207,7 @@ class ProgramDetailPage extends ConsumerWidget {
     final dashboard = player == null ? null : ref.watch(programDashboardProvider(player.id));
     if (dashboard?.hasError == true) return _programAccessError(context, ref, player!.id);
     if (dashboard?.isLoading == true) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    final proDiscountEligible = ref.watch(accountPlansProvider).player || (dashboard?.value?.proDiscountEligible ?? false);
     final owned = (ref.watch(purchasedEntitlementsProvider).value ?? const <String>{}).contains(program.entitlement) || (dashboard?.value?.ownedProgramIds.contains(program.entitlement) ?? false);
     final progressState = player == null ? null : ref.watch(programProgressProvider((profileId: player.id, programId: program.id)));
     if (progressState?.hasError == true) {
@@ -229,7 +238,12 @@ class ProgramDetailPage extends ConsumerWidget {
           Text('Day ${progress.nextDay.clamp(1, program.days)} of ${program.days}', style: theme.textTheme.bodySmall),
         ] else ...[
           const SizedBox(height: AppSpacing.sm),
-          Text('Try the first day free. Unlock the full program with a one-time purchase.', style: theme.textTheme.bodySmall),
+          Text(
+            proDiscountEligible
+                ? 'Try the first day free. Pro members save 20% on the full program with a one-time purchase.'
+                : 'Try the first day free. Unlock the full program with a one-time purchase.',
+            style: theme.textTheme.bodySmall,
+          ),
         ],
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Plan'),
@@ -449,6 +463,7 @@ class _ProgramPurchasePageState extends ConsumerState<ProgramPurchasePage> {
     final dashboard = player == null ? null : ref.watch(programDashboardProvider(player.id));
     if (dashboard?.hasError == true) return _programAccessError(context, ref, player!.id);
     if (dashboard?.isLoading == true) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    final proDiscountEligible = ref.watch(accountPlansProvider).player || (dashboard?.value?.proDiscountEligible ?? false);
     final owned = ref.watch(purchasedEntitlementsProvider).value?.contains(program.entitlement) == true || (dashboard?.value?.ownedProgramIds.contains(program.entitlement) ?? false);
     if (owned) {
       return AppPage(
@@ -471,7 +486,7 @@ class _ProgramPurchasePageState extends ConsumerState<ProgramPurchasePage> {
     _paywall ??= ref
         .read(purchasesProvider)
         .paywall(
-          programStoreOffering(program.id),
+          programStoreOffering(program.id, proDiscountEligible: proDiscountEligible),
           onFinished: () {
             if (!mounted) return;
             if (player != null) ref.invalidate(programDashboardProvider(player.id));

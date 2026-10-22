@@ -48,9 +48,10 @@ class ProgramProgress {
 }
 
 class ProgramDashboard {
-  const ProgramDashboard({required this.ownedProgramIds});
+  const ProgramDashboard({required this.ownedProgramIds, this.proDiscountEligible = false});
 
   final Set<String> ownedProgramIds;
+  final bool proDiscountEligible;
 }
 
 class ProgramException implements Exception {
@@ -94,7 +95,10 @@ class FirebaseProgramRepository implements ProgramRepository {
     try {
       final result = await _functions.httpsCallable('getProgramDashboard').call<Map<Object?, Object?>>({'profileId': profileId});
       final ids = result.data['ownedProgramIds'];
-      return ProgramDashboard(ownedProgramIds: ids is List ? ids.whereType<String>().toSet() : const {});
+      return ProgramDashboard(
+        ownedProgramIds: ids is List ? ids.whereType<String>().toSet() : const {},
+        proDiscountEligible: result.data['proDiscountEligible'] == true,
+      );
     } on FirebaseFunctionsException catch (error) {
       throw ProgramException(_message(error));
     }

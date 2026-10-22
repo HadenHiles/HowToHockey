@@ -55,6 +55,9 @@ describe('program access and progress', () => {
   it('returns server-owned catalog content and checks ownership for dashboard reads', async () => {
     const dashboard = await getProgramDashboard(db, parent, { profileId: 'kid-a' });
     expect(dashboard.ownedProgramIds).toEqual([]);
+    expect(dashboard.proDiscountEligible).toBe(false);
+    await db.doc('users/parent').update({ 'entitlements.playerPro': true });
+    expect((await getProgramDashboard(db, kidDevice, { profileId: 'kid-a' })).proDiscountEligible).toBe(true);
     await expect(getProgramDashboard(db, { uid: 'stranger', isAnonymous: false }, { profileId: 'kid-a' })).rejects.toMatchObject({ code: 'permission-denied' });
     expect((await getProgramDashboard(db, kidDevice, { profileId: 'kid-a' })).ownedProgramIds).toEqual([]);
     await expect(getProgramDashboard(db, kidDevice, { profileId: 'another-kid' })).rejects.toMatchObject({ code: 'not-found' });

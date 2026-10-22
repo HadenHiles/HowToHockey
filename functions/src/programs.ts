@@ -123,10 +123,11 @@ export async function getProgramDashboard(db: Firestore, caller: CallerAuth | un
     db.collection('users').doc(ownerUid).get(),
     db.collection('profiles').doc(profileId).collection('programs').get(),
   ]);
-  const entitlements = user.data()?.entitlements as { programs?: unknown } | undefined;
+  const entitlements = user.data()?.entitlements as { programs?: unknown; playerPro?: unknown } | undefined;
   const owned = Array.isArray(entitlements?.programs) ? entitlements!.programs.filter((id): id is string => typeof id === 'string') : [];
   return {
     ownedProgramIds: owned,
+    proDiscountEligible: entitlements?.playerPro === true,
     progress: Object.fromEntries(progress.docs.map((doc) => [doc.id, { completedDays: completedDays(doc.data().completedDays) }])),
   };
 }

@@ -608,7 +608,7 @@ An account can hold multiple roles (e.g., a coach who is also a parent). Each ro
 - [ ] Firestore/Storage rules read entitlements (Pro drill media, Pro analytics endpoints)
 - [ ] **Effective Pro for a profile** = owner account has `player_pro` or `coach_pro` **OR** `profile.teamProGrant.expiresAt > now` **for that profile only** (a grant never extends to the owner account or sibling profiles); single resolver shared by client (UI gating) and rules/Functions (enforcement)
 - [x] Paywall: RevenueCat's own paywall (wording and plans editable in its dashboard, no app release), wrapped by the app for guests (create an account first), owners (manage and restore) and kid devices *(real purchase flow not yet exercised on a device)*
-- [ ] Program discount: show discounted product ID only when `player_pro` is active
+- [~] Program discount: the app selects `program_<id>_pro` only when the signed-in account or server-resolved player profile is Pro-eligible. For each program, create a full-price non-consumable product and a separate 20%-off Pro non-consumable product; both map to the same permanent `program_<id>` entitlement. Configure RevenueCat offerings `program_<id>` (standard) and `program_<id>_pro` (discounted). Pro is still a subscription and does not itself grant program access. Store products and offering pairs still need dashboard/store-console setup.
 - [ ] `coach_pro` entitlement **includes all `player_pro` features** (configure in RevenueCat: Coach Pro products grant both entitlements)
 - [ ] Sandbox/test-track purchase testing on both platforms
 

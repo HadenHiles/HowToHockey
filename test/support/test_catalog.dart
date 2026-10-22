@@ -450,6 +450,7 @@ final testProfileRoutinesOverride = profileRoutineRepositoryProvider.overrideWit
 
 class FakeProgramRepository implements ProgramRepository {
   final owned = <String, Set<String>>{};
+  final proDiscountProfiles = <String>{};
   final progress = <(String, String), ProgramProgress>{};
   final starts = <({String profileId, String programId, int day})>[];
   ProgramException? failWith;
@@ -529,7 +530,7 @@ class FakeProgramRepository implements ProgramRepository {
   @override
   Future<ProgramDashboard> loadDashboard(String profileId) async {
     if (failWith case final error?) throw error;
-    return ProgramDashboard(ownedProgramIds: owned[profileId] ?? {});
+    return ProgramDashboard(ownedProgramIds: owned[profileId] ?? {}, proDiscountEligible: proDiscountProfiles.contains(profileId));
   }
 
   @override
@@ -585,7 +586,7 @@ class FakePurchases implements PurchasesService {
             bought.add(offeringId);
             setActive(
               offeringId.startsWith('program_')
-                  ? {offeringId}
+                  ? {...active, offeringId.replaceFirst(RegExp(r'_pro$'), '')}
                   : offeringId == 'coach'
                   ? {playerProEntitlement, coachProEntitlement}
                   : {playerProEntitlement},
