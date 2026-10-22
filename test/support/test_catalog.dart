@@ -480,7 +480,13 @@ class FakePurchases implements PurchasesService {
         TextButton(
           onPressed: () {
             bought.add(offeringId);
-            setActive(offeringId == 'coach' ? {playerProEntitlement, coachProEntitlement} : {playerProEntitlement});
+            setActive(
+              offeringId.startsWith('program_')
+                  ? {offeringId}
+                  : offeringId == 'coach'
+                  ? {playerProEntitlement, coachProEntitlement}
+                  : {playerProEntitlement},
+            );
             onFinished();
           },
           child: Text('Buy $offeringId'),

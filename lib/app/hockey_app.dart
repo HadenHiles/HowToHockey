@@ -194,6 +194,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (_, _) => const ProgramsPage(),
         routes: [
           GoRoute(
+            path: ':id/purchase',
+            builder: (_, state) => ProgramPurchasePage(programId: state.pathParameters['id']!),
+          ),
+          GoRoute(
             path: ':id',
             builder: (_, state) => ProgramDetailPage(programId: state.pathParameters['id']!),
             routes: [

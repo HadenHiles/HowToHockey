@@ -61,6 +61,26 @@ class TrainPage extends ConsumerWidget {
         Text('What do you want to get better at?', style: theme.textTheme.headlineSmall),
         const SizedBox(height: AppSpacing.sm),
         _OutcomePicker(selected: outcomeFor(focus)),
+        const SizedBox(height: AppSpacing.md),
+        TrainingCard(
+          onTap: () => context.push('/programs'),
+          child: Row(
+            children: [
+              Icon(Icons.school_outlined, color: theme.colorScheme.primary, size: 28),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Follow a program', style: theme.textTheme.titleMedium),
+                    Text('Skill-focused plans with a free first day', style: theme.textTheme.bodySmall),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right),
+            ],
+          ),
+        ),
         if (!waiting) ...[const SizedBox(height: AppSpacing.lg), _TodayWorkoutCard()],
         const SizedBox(height: AppSpacing.xl),
         const _WeekCard(),
