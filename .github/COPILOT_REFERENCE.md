@@ -599,7 +599,7 @@ An account can hold multiple roles (e.g., a coach who is also a parent). Each ro
 ---
 
 ## Phase 8 — Monetization
-- [x] App Store Connect / Play Console products *(subscriptions created on both; Signature Programs one-time products are still to do)*:
+- [~] App Store Connect / Play Console products *(subscriptions created on both; Signature Programs one-time products still need to be created in both stores)*:
   - Player Pro: monthly $7.99, yearly $49.99
   - Coach Pro: monthly $12.99, yearly $99.99
   - Signature Programs: non-consumable IAPs $14.99–$39.99, plus discounted variants (−20%) for Pro subscribers
@@ -608,7 +608,7 @@ An account can hold multiple roles (e.g., a coach who is also a parent). Each ro
 - [ ] Firestore/Storage rules read entitlements (Pro drill media, Pro analytics endpoints)
 - [ ] **Effective Pro for a profile** = owner account has `player_pro` or `coach_pro` **OR** `profile.teamProGrant.expiresAt > now` **for that profile only** (a grant never extends to the owner account or sibling profiles); single resolver shared by client (UI gating) and rules/Functions (enforcement)
 - [x] Paywall: RevenueCat's own paywall (wording and plans editable in its dashboard, no app release), wrapped by the app for guests (create an account first), owners (manage and restore) and kid devices *(real purchase flow not yet exercised on a device)*
-- [~] Program discount: the app selects `program_<id>_pro` only when the signed-in account or server-resolved player profile is Pro-eligible. For each program, create a full-price non-consumable product and a separate 20%-off Pro non-consumable product; both map to the same permanent `program_<id>` entitlement. Configure RevenueCat offerings `program_<id>` (standard) and `program_<id>_pro` (discounted). Pro is still a subscription and does not itself grant program access. Store products and offering pairs still need dashboard/store-console setup.
+- [~] Program discount: the app selects `program_<id>_pro` only when the signed-in account or server-resolved player profile is Pro-eligible. RevenueCat is configured with entitlements `program_shooting-30`, `program_hands-21`, and `program_power-skating-14`; each has full-price and Pro-discount App Store and Play Store product records attached. The six offerings (`program_<id>` and `program_<id>_pro`) each have a `$rc_lifetime` package spanning both stores. Product ID pattern: iOS `com.howtohockey.app.program_<slug>[_pro]`, Play `program_<slug>[_pro]`, where slugs are `shooting_30`, `hands_21`, and `power_skating_14`. Still create those six one-time products in each store and set prices: $29.99/$23.99, $19.99/$15.99, and $14.99/$11.99 (standard/Pro). Both variants grant the same permanent `program_<id>` entitlement. Pro is still a subscription and does not itself grant program access.
 - [ ] `coach_pro` entitlement **includes all `player_pro` features** (configure in RevenueCat: Coach Pro products grant both entitlements)
 - [ ] Sandbox/test-track purchase testing on both platforms
 
