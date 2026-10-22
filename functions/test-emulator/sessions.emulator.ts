@@ -2,6 +2,7 @@ import { initializeApp, deleteApp, type App } from 'firebase-admin/app';
 import { getFirestore, Timestamp, type Firestore } from 'firebase-admin/firestore';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { correctSession } from '../src/corrections';
 import { processSession } from '../src/sessions';
 
 const now = new Date('2026-10-20T15:00:00Z');
@@ -147,5 +148,56 @@ describe('processSession', () => {
     await processSession(db, 'kid-b', 's1', now);
     expect((await db.doc('profiles/kid-a/stats/lifetime').get()).data()!.bests[0].value).toBe(70);
     expect((await db.doc('profiles/kid-b/stats/lifetime').get()).data()!.bests[0].value).toBe(90);
+  });
+});
+
+describe('correctSession', () => {
+  const parent = { uid: 'parent', isAnonymous: false };
+
+  beforeEach(async () => {
+    await db.doc('profiles/kid-a').set({ ownerUid: 'parent', isChild: true, displayName: 'Kid A.' });
+    await db.doc('profiles/grown').set({ ownerUid: 'parent', isChild: false, displayName: 'Pat H.' });
+    await writeSession('s1', [corner(7)]);
+    await writeSession('s2', [{ drillId: 'ball-bounce-streak', sets: [set({ streak: 18 })] }], { startedAt: Timestamp.fromDate(new Date('2026-10-20T14:00:00Z')) });
+    await processSession(db, 'kid-a', 's1', now);
+    await processSession(db, 'kid-a', 's2', now);
+  });
+
+  const stats = async () => (await db.doc('profiles/kid-a/stats/lifetime').get()).data()!;
+
+  it('changes the credited time, keeps an audit trail, and leaves the other workout alone', async () => {
+    expect((await stats()).seconds).toBe(105);
+    await correctSession(db, parent, { profileId: 'kid-a', sessionId: 's1', activeMinutes: 10 }, now);
+    const after = await stats();
+    expect(after.workouts).toBe(2);
+    expect(after.seconds).toBe(600 + 45);
+    expect(after.shots).toBe(10);
+    expect(after.pillarSeconds.shotAccuracy).toBeCloseTo(480);
+    expect(after.pillarSeconds.hands).toBeCloseTo(45);
+    const audits = await db.collection('profiles/kid-a/sessions/s1/audits').get();
+    expect(audits.docs.map((d) => d.data())).toMatchObject([{ by: 'parent', action: 'timeCorrected', beforeSeconds: null, afterSeconds: 600, creditedSecondsBefore: 60 }]);
+    await correctSession(db, parent, { profileId: 'kid-a', sessionId: 's1', activeMinutes: 5 }, now);
+    expect((await stats()).seconds).toBe(300 + 45);
+    expect((await db.collection('profiles/kid-a/sessions/s1/audits').get()).size).toBe(2);
+  });
+
+  it('removes a workout, takes its personal bests back, and never counts it again', async () => {
+    await correctSession(db, parent, { profileId: 'kid-a', sessionId: 's2', remove: true }, now);
+    const after = await stats();
+    expect(after.workouts).toBe(1);
+    expect((after.bests as { key: string }[]).map((b) => b.key)).toEqual(['accuracy:pick-your-corner']);
+    expect((await db.doc('profiles/kid-a/prs/streak:ball-bounce-streak').get()).exists).toBe(false);
+    expect((await db.doc('profiles/kid-a/prs/accuracy:pick-your-corner').get()).exists).toBe(true);
+    expect((await db.doc('profiles/kid-a/sessions/s2').get()).data()!.removed).toBe(true);
+    expect((await db.collection('profiles/kid-a/sessions/s2/audits').get()).docs[0].data()).toMatchObject({ action: 'removed', afterSeconds: null });
+    await expect(correctSession(db, parent, { profileId: 'kid-a', sessionId: 's2', activeMinutes: 5 }, now)).rejects.toMatchObject({ code: 'not-found' });
+  });
+
+  it('is only for the parent of a child, with sane times', async () => {
+    await expect(correctSession(db, { uid: 'stranger', isAnonymous: false }, { profileId: 'kid-a', sessionId: 's1', activeMinutes: 5 }, now)).rejects.toMatchObject({ code: 'permission-denied' });
+    await expect(correctSession(db, parent, { profileId: 'grown', sessionId: 's1', activeMinutes: 5 }, now)).rejects.toMatchObject({ code: 'permission-denied' });
+    await expect(correctSession(db, { uid: 'kid-a', isAnonymous: false, isKidDevice: true }, { profileId: 'kid-a', sessionId: 's1', activeMinutes: 5 }, now)).rejects.toBeTruthy();
+    for (const activeMinutes of [0, 181, 2.5, '5', null]) await expect(correctSession(db, parent, { profileId: 'kid-a', sessionId: 's1', activeMinutes }, now)).rejects.toMatchObject({ code: 'invalid-argument' });
+    expect((await stats()).seconds).toBe(105);
   });
 });

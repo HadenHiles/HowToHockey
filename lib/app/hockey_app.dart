@@ -7,6 +7,7 @@ import '../features/commerce/entitlements.dart';
 import '../features/settings/appearance_settings_controller.dart';
 import '../features/accounts/auth_service.dart';
 import 'account_pages.dart';
+import 'child_workouts_page.dart';
 import 'coach_pages.dart';
 import 'commerce_pages.dart';
 import 'manual_logger_pages.dart';
@@ -93,6 +94,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                       GoRoute(
                         path: 'teams',
                         builder: (_, state) => PlayerTeamsPage(profileId: state.pathParameters['id']!),
+                      ),
+                      GoRoute(
+                        path: 'workouts',
+                        builder: (_, state) => ChildWorkoutsPage(kidId: state.pathParameters['id']!),
                       ),
                       GoRoute(
                         path: 'pair',

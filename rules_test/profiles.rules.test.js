@@ -264,5 +264,17 @@ describe('account and profile rules', () => {
       await assertSucceeds(getDocs(pending(kidDevice('kid-a'))));
       await assertFails(getDocs(pending(stranger())));
     });
+
+    it('keeps the audit trail readable by the parent only, and writable by nobody', async () => {
+      await environment.withSecurityRulesDisabled(async (context) => {
+        await setDoc(doc(context.firestore(), 'profiles/kid-a/sessions/s1/audits/a1'), { by: 'parent', action: 'timeCorrected' });
+      });
+      await assertSucceeds(getDoc(doc(parent(), 'profiles/kid-a/sessions/s1/audits/a1')));
+      await assertFails(getDoc(doc(kidDevice('kid-a'), 'profiles/kid-a/sessions/s1/audits/a1')));
+      await assertFails(getDoc(doc(stranger(), 'profiles/kid-a/sessions/s1/audits/a1')));
+      await assertFails(setDoc(doc(parent(), 'profiles/kid-a/sessions/s1/audits/a2'), { by: 'parent' }));
+      await assertFails(deleteDoc(doc(parent(), 'profiles/kid-a/sessions/s1/audits/a1')));
+      await assertFails(updateDoc(doc(parent(), 'profiles/kid-a/sessions/s1'), { correctedSeconds: 1 }));
+    });
   });
 });

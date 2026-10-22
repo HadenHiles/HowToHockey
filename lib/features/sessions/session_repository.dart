@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../drills/models/drill.dart';
@@ -27,6 +28,26 @@ class PendingWorkout {
   final DateTime startedAt;
   final int drillCount;
   final int activeSeconds;
+}
+
+/// A counted workout of a child's, as a parent sees it when checking or fixing it.
+class ChildWorkout {
+  const ChildWorkout({required this.profileId, required this.id, required this.startedAt, required this.routineName, required this.drillCount, required this.seconds, required this.corrected});
+
+  final String profileId;
+  final String id;
+  final DateTime startedAt;
+  final String routineName;
+  final int drillCount;
+
+  /// Training time: what a grown-up set it to, or what the phone measured.
+  final int seconds;
+  final bool corrected;
+}
+
+class SessionCorrectionException implements Exception {
+  const SessionCorrectionException(this.message);
+  final String message;
 }
 
 /// One drill of a pending workout, with the child's sets, for the grown-up to check.
@@ -107,6 +128,49 @@ class SessionRepository {
     ];
     return workouts..sort((a, b) => a.startedAt.compareTo(b.startedAt));
   });
+
+  /// A child's most recent counted workouts, newest first. Removed ones are left out.
+  Stream<List<ChildWorkout>> watchRecent(String profileId) => _db
+      .collection('profiles')
+      .doc(profileId)
+      .collection('sessions')
+      .orderBy('startedAt', descending: true)
+      .limit(30)
+      .snapshots()
+      .map(
+        (snapshot) => [
+          for (final doc in snapshot.docs)
+            if (doc.data()['status'] == 'completed' && doc.data()['removed'] != true && doc.data()['rejected'] == null)
+              ChildWorkout(
+                profileId: profileId,
+                id: doc.id,
+                startedAt: (doc.data()['startedAt'] as Timestamp).toDate(),
+                routineName: (doc.data()['routineName'] as String?) ?? 'Workout',
+                drillCount: (doc.data()['drillCount'] as num?)?.toInt() ?? 0,
+                seconds: ((doc.data()['correctedSeconds'] ?? doc.data()['activeSeconds'] ?? 0) as num).toInt(),
+                corrected: doc.data()['correctedSeconds'] != null,
+              ),
+        ].take(20).toList(),
+      );
+
+  /// A parent sets the training time of a counted workout. The server re-works the child's totals and keeps a record of the change.
+  Future<void> correctTime(ChildWorkout workout, int minutes) => _correct({'profileId': workout.profileId, 'sessionId': workout.id, 'activeMinutes': minutes});
+
+  /// A parent removes a counted workout. The server re-works the child's totals and keeps a record of the change.
+  Future<void> removeWorkout(ChildWorkout workout) => _correct({'profileId': workout.profileId, 'sessionId': workout.id, 'remove': true});
+
+  Future<void> _correct(Map<String, Object?> data) async {
+    try {
+      final result = await FirebaseFunctions.instance.httpsCallable('correctSession').call<Map<Object?, Object?>>(data);
+      if (result.data['updated'] != true) throw const SessionCorrectionException('The server did not confirm that change. Try again.');
+    } on FirebaseFunctionsException catch (error) {
+      throw SessionCorrectionException(switch (error.code) {
+        'invalid-argument' || 'permission-denied' || 'not-found' || 'failed-precondition' => error.message ?? 'We could not finish that request.',
+        'unavailable' || 'deadline-exceeded' => 'We could not reach the server. Check your connection and try again.',
+        _ => 'Something went wrong. Try again.',
+      });
+    }
+  }
 
   /// The drills and sets of a pending workout.
   Future<List<PendingDrill>> loadPendingDrills(String profileId, String sessionId) async {

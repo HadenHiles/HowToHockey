@@ -307,6 +307,8 @@ class FakeSessionRepository extends SessionRepository {
   final pending = <String, List<PendingWorkout>>{};
   final pendingDrills = <PendingDrill>[];
   final reviewed = <String>[];
+  final corrections = <String>[];
+  final recent = <String, List<ChildWorkout>>{};
   final stats = <String, LifetimeStats>{};
   final _changes = StreamController<String>.broadcast();
   Object? failWith;
@@ -326,6 +328,35 @@ class FakeSessionRepository extends SessionRepository {
   void setPending(String profileId, List<PendingWorkout> workouts) {
     pending[profileId] = workouts;
     _changes.add('pending:$profileId');
+  }
+
+  void setRecent(String profileId, List<ChildWorkout> workouts) {
+    recent[profileId] = workouts;
+    _changes.add('recent:$profileId');
+  }
+
+  @override
+  Stream<List<ChildWorkout>> watchRecent(String profileId) async* {
+    yield recent[profileId] ?? const [];
+    await for (final changed in _changes.stream) {
+      if (changed == 'recent:$profileId') yield recent[profileId] ?? const [];
+    }
+  }
+
+  @override
+  Future<void> correctTime(ChildWorkout workout, int minutes) async {
+    if (failWith != null) throw failWith!;
+    corrections.add('time:${workout.id}:$minutes');
+  }
+
+  @override
+  Future<void> removeWorkout(ChildWorkout workout) async {
+    if (failWith != null) throw failWith!;
+    corrections.add('remove:${workout.id}');
+    setRecent(workout.profileId, [
+      for (final w in recent[workout.profileId] ?? const <ChildWorkout>[])
+        if (w.id != workout.id) w,
+    ]);
   }
 
   @override

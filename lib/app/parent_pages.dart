@@ -229,7 +229,7 @@ class ParentChildPage extends ConsumerWidget {
           },
         ),
         const SizedBox(height: AppSpacing.sm),
-        _ActionCard(icon: Icons.verified_outlined, title: 'Verify workouts', detail: 'Confirm finished workouts', onTap: () => context.go('/parent/verify')),
+        _ActionCard(icon: Icons.history, title: 'Workouts', detail: 'Fix a time or remove a workout', onTap: () => context.push('/parent/kids/${kid.id}/workouts')),
         const SizedBox(height: AppSpacing.xl),
         const SectionHeading(title: 'Controls'),
         const SizedBox(height: AppSpacing.md),

@@ -38,6 +38,44 @@ function cleanWeights(raw: unknown): Partial<Record<Pillar, number>> {
   return out;
 }
 
+type Built = { workout: WorkoutInput } | { reject: string };
+
+/** Turns a stored session (its drills, plus the catalog's numbers for known drills) into what the credit maths needs. */
+function buildWorkout(sessionId: string, data: Record<string, unknown>, drills: { id: string; data: Record<string, unknown> }[], catalog: Map<string, Record<string, unknown>>, now: Date): Built {
+  const startedAtMs = millis(data.startedAt);
+  if (data.status !== 'completed' || startedAtMs == null) return { reject: 'not a finished session' };
+  if (startedAtMs > now.getTime() + 86_400_000 || startedAtMs < now.getTime() - MAX_AGE_DAYS * 86_400_000) return { reject: 'date out of range' };
+  const tz = num(data.tzOffsetMinutes) ?? 0;
+  const tzOffsetMinutes = Math.max(-840, Math.min(840, Math.round(tz)));
+
+  const sets: WorkoutInput['sets'] = [];
+  for (const doc of [...drills].sort((a, b) => Number(a.id) - Number(b.id))) {
+    const d = doc.data;
+    const drillId = typeof d.drillId === 'string' ? d.drillId : '';
+    const known = catalog.get(drillId);
+    const tracking = (known?.trackingType ?? d.trackingType) as Tracking;
+    if (!drillId || !TRACKING.includes(tracking)) continue;
+    const weights = known ? cleanWeights(known.skillWeights) : cleanWeights(d.skillWeights);
+    const estimated = num(known?.estimatedSecondsPerSet ?? d.estimatedSecondsPerSet);
+    if (Object.keys(weights).length === 0 || estimated == null || estimated < 1 || estimated > 600) continue;
+    const spec: DrillSpec = { id: drillId, title: String(known?.title ?? d.title ?? drillId).slice(0, 80), tracking, weights, estimatedSecondsPerSet: Math.round(estimated) };
+    for (const raw of Array.isArray(d.sets) ? d.sets : []) {
+      const log = raw && typeof raw === 'object' ? cleanLog(raw as Record<string, unknown>) : null;
+      if (log) sets.push({ drill: spec, log });
+    }
+  }
+  if (sets.length === 0) return { reject: 'no usable sets' };
+  if (sets.length > MAX_SETS) return { reject: 'too many sets' };
+  const corrected = num(data.correctedSeconds);
+  return { workout: { id: sessionId, startedAtMs, tzOffsetMinutes, sets, ...(corrected != null ? { secondsOverride: corrected } : {}) } };
+}
+
+const knownDrills = async (db: Firestore, drillDocs: { data: Record<string, unknown> }[], read: (ref: FirebaseFirestore.DocumentReference) => Promise<FirebaseFirestore.DocumentSnapshot>) => {
+  const ids = [...new Set(drillDocs.map((d) => d.data.drillId).filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length < 100 && !id.includes('/')))];
+  const docs = await Promise.all(ids.map((id) => read(db.collection('drills').doc(id))));
+  return new Map(docs.filter((d) => d.exists).map((d) => [d.id, d.data()!]));
+};
+
 /**
  * Credits a finished session to its profile, once. Drills in the catalog use the catalog's numbers, so
  * a doctored phone can't change what a drill is worth; custom and manual drills use their own, within sane limits.
@@ -53,49 +91,53 @@ export async function processSession(db: Firestore, profileId: string, sessionId
     const data = session.data()!;
     // A child's workout waits for a parent to confirm it; nothing is credited until then.
     if (data.status === 'pending') return { status: 'skipped' };
-    const drillDocs = await tx.get(sessionRef.collection('drills'));
-    const ids = [...new Set(drillDocs.docs.map((d) => d.data().drillId).filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length < 100 && !id.includes('/')))];
-    const catalog = new Map((await Promise.all(ids.map((id) => tx.get(db.collection('drills').doc(id))))).filter((d) => d.exists).map((d) => [d.id, d.data()!]));
+    const drillDocs = (await tx.get(sessionRef.collection('drills'))).docs.map((d) => ({ id: d.id, data: d.data() }));
+    const catalog = await knownDrills(db, drillDocs, (ref) => tx.get(ref));
     const statsSnap = await tx.get(statsRef);
 
-    const reject = (reason: string): Outcome => {
-      tx.update(sessionRef, { processedAt: now, rejected: reason });
-      return { status: 'rejected', reason };
-    };
-
-    const startedAtMs = millis(data.startedAt);
-    if (data.status !== 'completed' || startedAtMs == null) return reject('not a finished session');
-    if (startedAtMs > now.getTime() + 86_400_000 || startedAtMs < now.getTime() - MAX_AGE_DAYS * 86_400_000) return reject('date out of range');
-    const tz = num(data.tzOffsetMinutes) ?? 0;
-    const tzOffsetMinutes = Math.max(-840, Math.min(840, Math.round(tz)));
-
-    const sets: WorkoutInput['sets'] = [];
-    for (const doc of [...drillDocs.docs].sort((a, b) => Number(a.id) - Number(b.id))) {
-      const d = doc.data();
-      const drillId = typeof d.drillId === 'string' ? d.drillId : '';
-      const known = catalog.get(drillId);
-      const tracking = (known?.trackingType ?? d.trackingType) as Tracking;
-      if (!drillId || !TRACKING.includes(tracking)) continue;
-      const weights = known ? cleanWeights(known.skillWeights) : cleanWeights(d.skillWeights);
-      const estimated = num(known?.estimatedSecondsPerSet ?? d.estimatedSecondsPerSet);
-      if (Object.keys(weights).length === 0 || estimated == null || estimated < 1 || estimated > 600) continue;
-      const spec: DrillSpec = { id: drillId, title: String(known?.title ?? d.title ?? drillId).slice(0, 80), tracking, weights, estimatedSecondsPerSet: Math.round(estimated) };
-      for (const raw of Array.isArray(d.sets) ? d.sets : []) {
-        const log = raw && typeof raw === 'object' ? cleanLog(raw as Record<string, unknown>) : null;
-        if (log) sets.push({ drill: spec, log });
-      }
+    const built = buildWorkout(sessionId, data, drillDocs, catalog, now);
+    if ('reject' in built) {
+      tx.update(sessionRef, { processedAt: now, rejected: built.reject });
+      return { status: 'rejected', reason: built.reject };
     }
-    if (sets.length === 0) return reject('no usable sets');
-    if (sets.length > MAX_SETS) return reject('too many sets');
 
     const before = statsSnap.exists ? readStats(statsSnap.data()!) : emptyStats();
-    const { stats, newBests } = addWorkout(before, { id: sessionId, startedAtMs, tzOffsetMinutes, sets }, tuning);
+    const { stats, newBests } = addWorkout(before, built.workout, tuning);
     const recent = [...(Array.isArray(statsSnap.data()?.recent) ? (statsSnap.data()!.recent as string[]) : []), sessionId].slice(-RECENT_IDS);
     tx.set(statsRef, { ...writeStats(stats), recent });
     for (const best of newBests) tx.set(profileRef.collection('prs').doc(best.key), bestDoc(best));
     tx.update(sessionRef, { processedAt: now, credit: { seconds: Math.round(stats.seconds - before.seconds), shots: stats.shots - before.shots, newBestKeys: newBests.map((b) => b.key) } });
     return { status: 'processed', newBestKeys: newBests.map((b) => b.key) };
   });
+}
+
+const REBUILD_LIMIT = 500;
+
+/**
+ * Works a profile's stats and personal bests out again from its counted sessions, oldest first, honouring parent
+ * corrections and removals. Used after a correction, because totals and bests can't be "un-added".
+ */
+export async function rebuildStats(db: Firestore, profileId: string, now: Date = new Date(), tuning: Tuning = DEFAULT_TUNING): Promise<Stats> {
+  const profileRef = db.collection('profiles').doc(profileId);
+  const sessions = await profileRef.collection('sessions').orderBy('startedAt', 'desc').limit(REBUILD_LIMIT).get();
+  const counted = sessions.docs.filter((d) => d.data().status === 'completed' && d.data().processedAt && !d.data().rejected && !d.data().removed).reverse();
+  let stats = emptyStats();
+  const ids: string[] = [];
+  for (const doc of counted) {
+    const drillDocs = (await doc.ref.collection('drills').get()).docs.map((d) => ({ id: d.id, data: d.data() }));
+    const catalog = await knownDrills(db, drillDocs, (ref) => ref.get());
+    const built = buildWorkout(doc.id, doc.data(), drillDocs, catalog, now);
+    if ('reject' in built) continue;
+    stats = addWorkout(stats, built.workout, tuning).stats;
+    ids.push(doc.id);
+  }
+  const prs = await profileRef.collection('prs').get();
+  const batch = db.batch();
+  for (const pr of prs.docs) batch.delete(pr.ref);
+  for (const best of Object.values(stats.bests)) batch.set(profileRef.collection('prs').doc(best.key), bestDoc(best));
+  batch.set(profileRef.collection('stats').doc('lifetime'), { ...writeStats(stats), recent: ids.slice(-RECENT_IDS) });
+  await batch.commit();
+  return stats;
 }
 
 function bestDoc(best: Best) {

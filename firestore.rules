@@ -99,6 +99,12 @@ service cloud.firestore {
           && request.resource.data.confirmedAt == request.time;
         allow delete: if ownsProfile(profileId) && resource.data.status == 'pending';
 
+        // Who changed a workout, when, and what it was before. Written only by the correction function.
+        match /audits/{auditId} {
+          allow read: if ownsProfile(profileId);
+          allow write: if false;
+        }
+
         match /drills/{index} {
           allow read: if canActAs(profileId);
           allow create: if canActAs(profileId) && index.matches('[0-9]{1,2}') && validSessionDrill(request.resource.data);

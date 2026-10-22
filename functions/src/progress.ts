@@ -52,6 +52,8 @@ export interface WorkoutInput {
   /** Minutes east of UTC for the player's phone when they trained, so days match what they see. */
   tzOffsetMinutes: number;
   sets: { drill: DrillSpec; log: SetLog }[];
+  /** A parent's corrected training time, in seconds, replacing what the sets add up to. */
+  secondsOverride?: number;
 }
 
 export interface Best {
@@ -104,7 +106,8 @@ export const isShootingDrill = (drill: DrillSpec): boolean => (drill.weights.sho
 export function creditFor(workout: WorkoutInput, daySecondsSoFar = 0, tuning: Tuning = DEFAULT_TUNING): Credit {
   const counted = workout.sets.filter((s) => isCountableSet(s.drill, s.log, tuning)).map((s) => ({ ...s, seconds: activeSeconds(s.drill, s.log) }));
   const raw = counted.reduce((sum, s) => sum + s.seconds, 0);
-  const allowed = Math.min(raw, tuning.maxSessionSeconds, Math.max(0, tuning.maxDaySeconds - daySecondsSoFar));
+  const target = workout.secondsOverride ?? raw;
+  const allowed = Math.min(target, tuning.maxSessionSeconds, Math.max(0, tuning.maxDaySeconds - daySecondsSoFar));
   const factor = raw === 0 ? 0 : allowed / raw;
 
   const pillarSeconds: Partial<Record<Pillar, number>> = {};
